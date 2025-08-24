@@ -1,0 +1,94 @@
+:root {
+    --primary-color: #007bff; /* Biru Terang */
+    --secondary-color: #1a2a45; /* Biru Gelap */
+    --accent-color: #f7c02e; /* Kuning Aksen */
+    --light-color: #f8f9fa;
+    --dark-color: #343a40;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--light-color);
+    color: var(--dark-color);
+}
+
+.navbar {
+    background-color: var(--secondary-color) !important;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.navbar .navbar-brand, .navbar .nav-link {
+    color: white !important;
+    font-weight: 500;
+}
+
+.navbar .nav-link:hover, .navbar .nav-link.active {
+    color: var(--accent-color) !important;
+}
+
+.hero-section {
+    background: linear-gradient(rgba(26, 42, 69, 0.8), rgba(26, 42, 69, 0.8)), url('https://images.unsplash.com/photo-1605152276529-6b359f528a43?q=80&w=2070&auto=format&fit=crop') no-repeat center center;
+    background-size: cover;
+    color: white;
+    padding: 120px 0;
+    text-align: center;
+}
+
+.hero-section h1 {
+    font-size: 3.5rem;
+    font-weight: 700;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+.hero-section p {
+    font-size: 1.25rem;
+    margin-bottom: 30px;
+}
+
+.btn-custom {
+    background-color: var(--accent-color);
+    border: none;
+    color: var(--secondary-color);
+    font-weight: bold;
+    padding: 12px 30px;
+    border-radius: 50px;
+    transition: all 0.3s ease;
+}
+
+.btn-custom:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 15px rgba(247, 192, 46, 0.4);
+}
+
+.form-container {
+    max-width: 500px;
+    margin: 50px auto;
+    padding: 30px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.form-container h2 {
+    color: var(--secondary-color);
+    margin-bottom: 25px;
+}
+
+#qr-code-container {
+    border: 2px dashed var(--primary-color);
+    padding: 20px;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+#qr-code-container canvas {
+    max-width: 100%;
+}
+
+.admin-dashboard table {
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+}
