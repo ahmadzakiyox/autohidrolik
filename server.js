@@ -102,6 +102,34 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
+app.get('/api/profile', auth, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id).select('-password');
+        res.json(user);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
+});
+
+app.put('/api/profile', auth, async (req, res) => {
+    const { username, email, fullName, phone, address, vehicles } = req.body;
+    const profileFields = {};
+    if (username) profileFields.username = username;
+    if (email) profileFields.email = email;
+    if (fullName) profileFields.fullName = fullName;
+    if (phone) profileFields.phone = phone;
+    if (address) profileFields.address = address;
+    if (vehicles) profileFields.vehicles = vehicles;
+    try {
+        let user = await User.findByIdAndUpdate(req.user.id, { $set: profileFields }, { new: true }).select('-password');
+        if (!user) return res.status(404).json({ msg: 'User tidak ditemukan' });
+        res.json(user);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
+});
 
 // --- RUTE ADMIN UNTUK MANAJEMEN PENGGUNA ---
 
