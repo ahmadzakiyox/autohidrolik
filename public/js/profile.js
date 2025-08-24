@@ -3,7 +3,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- PERBAIKAN DI SINI ---
     // Ganti 'localhost:3000' dengan URL Render Anda
-    const API_URL = 'https://autohidrolik.onrender.com/api'; 
+    const API_URL = 'https://autohidrolik.com/api'; 
     const token = localStorage.getItem('token');
 
     const profileLoading = document.getElementById('profile-loading');
