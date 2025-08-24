@@ -1,7 +1,9 @@
 // File: /js/profile.js
 
 document.addEventListener('DOMContentLoaded', () => {
-    const API_URL = 'http://localhost:3000/api'; // Ganti jika URL API Anda berbeda
+    // --- PERBAIKAN DI SINI ---
+    // Ganti 'localhost:3000' dengan URL Render Anda
+    const API_URL = 'https://autohidrolik.onrender.com/api'; 
     const token = localStorage.getItem('token');
 
     const profileLoading = document.getElementById('profile-loading');
