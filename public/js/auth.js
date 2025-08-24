@@ -1,88 +1,62 @@
+// File: /js/auth.js
+
 document.addEventListener('DOMContentLoaded', () => {
-    const registerForm = document.getElementById('register-form');
-    const loginForm = document.getElementById('login-form');
+    checkLoginStatus();
 
-    // Handle Registration
-    if (registerForm) {
-        registerForm.addEventListener('submit', async (e) => {
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            const username = document.getElementById('username').value;
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-
-            // Hapus pesan alert sebelumnya jika ada
-            const existingAlert = registerForm.querySelector('.alert');
-            if (existingAlert) existingAlert.remove();
-
-            try {
-                const res = await fetch('/api/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, email, password }),
-                });
-
-                const data = await res.json();
-                const alert = document.createElement('div');
-                alert.textContent = data.msg;
-
-                if (res.ok) {
-                    alert.className = 'alert alert-success mt-3';
-                    registerForm.reset(); // Kosongkan form jika berhasil
-                } else {
-                    alert.className = 'alert alert-danger mt-3';
-                }
-                registerForm.appendChild(alert);
-
-            } catch (err) {
-                console.error(err);
-                alert('Terjadi kesalahan. Silakan coba lagi.');
-            }
-        });
-    }
-
-    // Handle Login
-    if (loginForm) {
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-
-             // Hapus pesan alert sebelumnya jika ada
-            const existingAlert = loginForm.querySelector('.alert');
-            if (existingAlert) existingAlert.remove();
-
-            try {
-                const res = await fetch('/api/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password }),
-                });
-
-                const data = await res.json();
-                if (res.ok) {
-    localStorage.setItem('token', data.token);
-
-    // -- LOGIKA PENGALIHAN BERDASARKAN ROLE --
-    if (data.user.role === 'admin') {
-        window.location.href = '/admin.html'; // Arahkan admin ke dashboard
-    } else {
-        window.location.href = '/'; // Arahkan user biasa ke halaman utama
-    }
-    // -----------------------------------------
-
-} else {
-    const alert = document.createElement('div');
-    alert.className = 'alert alert-danger mt-3';
-    alert.textContent = data.msg || 'Login failed';
-    // Hapus alert lama sebelum menambahkan yang baru
-    const existingAlert = loginForm.querySelector('.alert');
-    if(existingAlert) existingAlert.remove();
-    loginForm.appendChild(alert);
-}
-            } catch (err) {
-                console.error(err);
-                alert('An error occurred.');
-            }
+            logout();
         });
     }
 });
+
+function checkLoginStatus() {
+    const token = localStorage.getItem('token');
+    const userRole = localStorage.getItem('userRole');
+
+    // Ambil semua elemen navigasi
+    const navOrder = document.getElementById('nav-order');
+    const navProfile = document.getElementById('nav-profile');
+    const navAdmin = document.getElementById('nav-admin');
+    const navLogin = document.getElementById('nav-login');
+    const navRegister = document.getElementById('nav-register');
+    const navLogout = document.getElementById('nav-logout');
+
+    if (token) {
+        // --- KONDISI SUDAH LOGIN ---
+        // Tampilkan menu untuk user yang sudah login
+        if (navOrder) navOrder.style.display = 'list-item';
+        if (navProfile) navProfile.style.display = 'list-item';
+        if (navLogout) navLogout.style.display = 'list-item';
+
+        // Sembunyikan menu untuk user yang belum login
+        if (navLogin) navLogin.style.display = 'none';
+        if (navRegister) navRegister.style.display = 'none';
+
+        // Tampilkan menu admin HANYA jika rolenya adalah 'admin'
+        if (userRole === 'admin' && navAdmin) {
+            navAdmin.style.display = 'list-item';
+        }
+
+    } else {
+        // --- KONDISI BELUM LOGIN ---
+        // Sembunyikan menu untuk user yang sudah login
+        if (navOrder) navOrder.style.display = 'none';
+        if (navProfile) navProfile.style.display = 'none';
+        if (navAdmin) navAdmin.style.display = 'none';
+        if (navLogout) navLogout.style.display = 'none';
+
+        // Tampilkan menu untuk user yang belum login
+        if (navLogin) navLogin.style.display = 'list-item';
+        if (navRegister) navRegister.style.display = 'list-item';
+    }
+}
+
+function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('userRole');
+    alert('Anda telah berhasil logout.');
+    window.location.href = '/login.html';
+}
