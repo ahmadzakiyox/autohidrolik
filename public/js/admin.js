@@ -1,7 +1,7 @@
 // File: /js/admin.js
 
 document.addEventListener('DOMContentLoaded', () => {
-    const API_URL = 'http://localhost:3000/api'; // Ganti jika URL API Anda berbeda
+    const API_URL = 'https://autohidrolik.onrender.com/api'; // Ganti jika URL API Anda berbeda
     const token = localStorage.getItem('token');
     const userRole = localStorage.getItem('userRole');
     const tableBody = document.getElementById('user-table-body');
