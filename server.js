@@ -3,7 +3,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const cors = require('cors');
+const cors = require('cors'); // Pastikan cors sudah diimpor
 require('dotenv').config();
 
 // --- Inisialisasi Aplikasi Express ---
@@ -13,7 +13,17 @@ const app = express();
 const User = require('./models/User');
 
 // --- Middleware ---
-app.use(cors());
+
+// --- PERBAIKAN UTAMA DI SINI ---
+// Konfigurasi CORS untuk mengizinkan domain frontend Anda
+const corsOptions = {
+  origin: 'https://autohidrolik.com', // Ganti dengan URL frontend Anda yang sebenarnya
+  optionsSuccessStatus: 200 
+};
+app.use(cors(corsOptions));
+// --- AKHIR PERBAIKAN ---
+
+// --- Middleware ---
 app.use(express.json());
 app.use(express.static('public'));
 
