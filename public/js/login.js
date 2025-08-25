@@ -1,79 +1,47 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - AUTOHIDROLIK</title>
-    <link rel="icon" type="image/png" href="/images/log.png">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg-color: #0d1117;
-            --container-bg: #161b22;
-            --input-bg: #1c2128;
-            --border-color: #3036d;
-            --text-primary: #c9d1d9;
-            --purple-accent: #a27bff;
-            --purple-hover: #c4a7ff;
+// File: /js/login.js
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Pastikan URL API ini sesuai dengan alamat backend Anda
+    const API_URL = 'https://autohidrolik.com';
+    const loginForm = document.getElementById('login-form');
+
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+
+        try {
+            const response = await fetch(`${API_URL}/api/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, password })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.msg || 'Login gagal!');
+            }
+
+            // Simpan token dan role ke Local Storage
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('userRole', data.user.role);
+
+            alert('Login berhasil!');
+
+            // Arahkan ke halaman yang sesuai berdasarkan role
+            if (data.user.role === 'admin') {
+                window.location.href = '/admin.html';
+            } else {
+                window.location.href = '/profile.html';
+            }
+
+        } catch (error) {
+            console.error('Login error:', error);
+            alert(`Error: ${error.message}`);
         }
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            font-family: 'Poppins', sans-serif;
-        }
-        .login-container {
-            max-width: 450px;
-            margin: 5rem auto;
-            padding: 2.5rem;
-            background: var(--container-bg);
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-        }
-        .form-control {
-            background-color: var(--input-bg);
-            border: 1px solid var(--border-color);
-            color: var(--text-primary);
-        }
-        .form-control:focus {
-            background-color: var(--input-bg);
-            border-color: var(--purple-accent);
-            box-shadow: 0 0 0 0.25rem rgba(162, 123, 255, 0.25);
-        }
-        .btn-custom {
-            background-color: var(--purple-accent);
-            border-color: var(--purple-accent);
-            color: #fff;
-            padding: 0.75rem;
-        }
-        .btn-custom:hover {
-            background-color: var(--purple-hover);
-            border-color: var(--purple-hover);
-        }
-        a {
-            color: var(--purple-accent);
-            text-decoration: none;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="login-container">
-            <h2 class="text-center mb-4">Selamat Datang Kembali</h2>
-            <form id="login-form">
-                <div class="mb-3">
-                    <label for="email" class="form-label">Alamat Email</label>
-                    <input type="email" class="form-control" id="email" required>
-                </div>
-                <div class="mb-4">
-                    <label for="password" class="form-label">Password</label>
-                    <input type="password" class="form-control" id="password" required>
-                </div>
-                <button type="submit" class="btn btn-custom w-100">Login</button>
-            </form>
-            <p class="mt-4 text-center">Belum punya akun? <a href="/register.html">Daftar di sini</a></p>
-        </div>
-    </div>
-    <script src="/js/login.js"></script>
-</body>
-</html>
+    });
+});
