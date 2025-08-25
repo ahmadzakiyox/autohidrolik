@@ -2,7 +2,7 @@
 
 document.addEventListener('DOMContentLoaded', () => {
     // Pastikan URL API ini sesuai dengan alamat backend Anda
-    const API_URL = 'https://autohidrolik.com'; 
+    const API_URL = 'http://localhost:3000'; 
     const registerForm = document.getElementById('register-form');
 
     registerForm.addEventListener('submit', async (e) => {
