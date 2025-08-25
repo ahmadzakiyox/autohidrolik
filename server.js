@@ -4,23 +4,20 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
+const path = require('path'); // Modul 'path' diperlukan
 require('dotenv').config();
 
-// --- Inisialisasi Aplikasi Express ---
+// Inisialisasi Aplikasi Express
 const app = express();
 
-// --- Import Model ---
+// Import Model
 const User = require('./models/User');
 const Review = require('./models/Review'); // Pastikan model Review diimpor
 
 // --- Middleware ---
-
-// --- PERBAIKAN UTAMA DI SINI ---
-// Konfigurasi CORS yang lebih fleksibel
 const whitelist = ['https://autohidrolik.com', 'https://www.autohidrolik.com'];
 const corsOptions = {
   origin: function (origin, callback) {
-    // Izinkan jika domain ada di whitelist atau jika origin tidak ada (misal: dari Postman)
     if (whitelist.indexOf(origin) !== -1 || !origin) {
       callback(null, true);
     } else {
@@ -30,26 +27,21 @@ const corsOptions = {
   optionsSuccessStatus: 200 
 };
 app.use(cors(corsOptions));
-// --- AKHIR PERBAIKAN ---
-
 app.use(express.json());
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
+
 
 // --- Koneksi ke MongoDB ---
 mongoose.connect(process.env.MONGO_URI, {})
   .then(() => console.log('Berhasil terhubung ke MongoDB Atlas'))
   .catch(err => console.log('Koneksi MongoDB gagal:', err));
 
-// --- Konfigurasi Variabel Global ---
-const PORT = process.env.PORT || 3000;
-const JWT_SECRET = process.env.JWT_SECRET || 'your_super_secret_key';
-
-// --- Middleware untuk Otentikasi Token ---
+// --- Middleware Otentikasi ---
 const auth = (req, res, next) => {
     const token = req.header('x-auth-token');
     if (!token) return res.status(401).json({ msg: 'Tidak ada token, otorisasi ditolak' });
     try {
-        const decoded = jwt.verify(token, JWT_SECRET);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_super_secret_key');
         req.user = decoded.user;
         next();
     } catch (e) {
@@ -57,7 +49,6 @@ const auth = (req, res, next) => {
     }
 };
 
-// --- Middleware untuk Cek Role Admin ---
 const adminAuth = async (req, res, next) => {
     try {
         const user = await User.findById(req.user.id);
@@ -75,53 +66,36 @@ const adminAuth = async (req, res, next) => {
 // --- API ROUTES ---
 // ======================================================
 
-// --- REVISI DI SINI ---
-// Rute Registrasi (Sudah disederhanakan)
+// Rute Registrasi
 app.post('/api/register', async (req, res) => {
+    const { username, email, phone, password } = req.body;
+    if (!username || !email || !phone || !password) {
+        return res.status(400).json({ msg: 'Mohon isi semua field yang diperlukan.' });
+    }
     try {
-        const { username, email, phone, password } = req.body;
-
-        if (!username || !email || !phone || !password) {
-            return res.status(400).json({ msg: 'Mohon isi semua field yang diperlukan.' });
-        }
-
-        let user = await User.findOne({ email: email });
-        if (user) {
-            return res.status(400).json({ msg: 'Email sudah terdaftar.' });
-        }
-
+        let user = await User.findOne({ email });
+        if (user) return res.status(400).json({ msg: 'Email sudah terdaftar.' });
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
-
-        user = new User({
-            username,
-            email,
-            phone,
-            password: hashedPassword,
-            isVerified: true
-        });
-
+        user = new User({ username, email, phone, password: hashedPassword, isVerified: true });
         await user.save();
         res.status(201).json({ msg: 'Pengguna berhasil didaftarkan!' });
-
     } catch (error) {
         console.error(error.message);
         res.status(500).send('Terjadi kesalahan pada server');
     }
 });
 
-// Rute Login (Sudah benar)
+// Rute Login
 app.post('/api/login', async (req, res) => {
     const { email, password } = req.body;
     try {
         let user = await User.findOne({ email });
         if (!user) return res.status(400).json({ msg: 'Kredensial tidak valid' });
-        
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.status(400).json({ msg: 'Kredensial tidak valid' });
-        
-        const payload = { user: { id: user.id } };
-        jwt.sign(payload, JWT_SECRET, { expiresIn: '1h' }, (err, token) => {
+        const payload = { user: { id: user.id, role: user.role } };
+        jwt.sign(payload, process.env.JWT_SECRET || 'your_super_secret_key', { expiresIn: '5h' }, (err, token) => {
             if (err) throw err;
             res.json({ token, user: { role: user.role } });
         });
@@ -131,8 +105,8 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-// Rute Profil (Sudah benar)
-app.post('/api/profile', auth, async (req, res) => {
+// Rute Profil (GET)
+app.get('/api/profile', auth, async (req, res) => {
     try {
         const user = await User.findById(req.user.id).select('-password');
         res.json(user);
@@ -142,6 +116,7 @@ app.post('/api/profile', auth, async (req, res) => {
     }
 });
 
+// Rute Update Profil
 app.put('/api/profile', auth, async (req, res) => {
     const { username, email, fullName, phone, address, vehicles } = req.body;
     const profileFields = {};
@@ -161,33 +136,7 @@ app.put('/api/profile', auth, async (req, res) => {
     }
 });
 
-// Rute untuk halaman utama
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-// Rute untuk halaman login
-app.get('/login', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'login.html'));
-});
-
-// Rute untuk halaman register
-app.get('/register', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'register.html'));
-});
-
-// Rute untuk halaman profil (memerlukan login)
-app.get('/profile', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'profile.html'));
-});
-
-// Rute untuk halaman admin (memerlukan login sebagai admin)
-app.get('/admin', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
-});
-// --- RUTE ADMIN UNTUK MANAJEMEN PENGGUNA ---
-
-// GET: Mendapatkan semua pengguna (Hanya Admin)
+// --- RUTE ADMIN: MANAJEMEN PENGGUNA ---
 app.get('/api/users', auth, adminAuth, async (req, res) => {
     try {
         const users = await User.find().select('-password').sort({ date: -1 });
@@ -198,23 +147,14 @@ app.get('/api/users', auth, adminAuth, async (req, res) => {
     }
 });
 
-// POST: Menambah pengguna baru (Hanya Admin)
 app.post('/api/users', auth, adminAuth, async (req, res) => {
     const { username, email, password, role } = req.body;
     try {
         let user = await User.findOne({ email });
         if (user) return res.status(400).json({ msg: 'Email sudah ada' });
-
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
-
-        user = new User({
-            username,
-            email,
-            password: hashedPassword,
-            role,
-            isVerified: true
-        });
+        user = new User({ username, email, password: hashedPassword, role, isVerified: true });
         await user.save();
         res.status(201).json(user);
     } catch (err) {
@@ -223,18 +163,10 @@ app.post('/api/users', auth, adminAuth, async (req, res) => {
     }
 });
 
-// PUT: Mengedit pengguna (Hanya Admin)
 app.put('/api/users/:id', auth, adminAuth, async (req, res) => {
     const { username, email, role } = req.body;
-    const updatedFields = { username, email, role };
-
     try {
-        let user = await User.findByIdAndUpdate(
-            req.params.id,
-            { $set: updatedFields },
-            { new: true }
-        ).select('-password');
-
+        let user = await User.findByIdAndUpdate(req.params.id, { $set: { username, email, role } }, { new: true }).select('-password');
         if (!user) return res.status(404).json({ msg: 'User tidak ditemukan' });
         res.json(user);
     } catch (err) {
@@ -243,13 +175,11 @@ app.put('/api/users/:id', auth, adminAuth, async (req, res) => {
     }
 });
 
-// DELETE: Menghapus pengguna (Hanya Admin)
 app.delete('/api/users/:id', auth, adminAuth, async (req, res) => {
     try {
-        let user = await User.findById(req.params.id);
+        const user = await User.findById(req.params.id);
         if (!user) return res.status(404).json({ msg: 'User tidak ditemukan' });
-
-        await user.deleteOne(); // Menggunakan deleteOne() pada dokumen
+        await user.deleteOne();
         res.json({ msg: 'User berhasil dihapus' });
     } catch (err) {
         console.error(err.message);
@@ -257,27 +187,20 @@ app.delete('/api/users/:id', auth, adminAuth, async (req, res) => {
     }
 });
 
-// GET: Mendapatkan semua ulasan (Publik)
+// --- RUTE REVIEW ---
 app.get('/api/reviews', async (req, res) => {
     try {
-        const reviews = await Review.find().sort({ date: -1 }).limit(6);
+        const reviews = await Review.find().sort({ date: -1 }).limit(6).populate('user', 'username');
         res.json(reviews);
     } catch (err) {
         res.status(500).send('Server error');
     }
 });
 
-// POST: Menambah ulasan baru (Dilindungi - butuh login)
 app.post('/api/reviews', auth, async (req, res) => {
     const { rating, comment } = req.body;
     try {
-        const user = await User.findById(req.user.id);
-        const newReview = new Review({
-            rating,
-            comment,
-            user: req.user.id,
-            username: user.username
-        });
+        const newReview = new Review({ rating, comment, user: req.user.id });
         const review = await newReview.save();
         res.status(201).json(review);
     } catch (err) {
@@ -286,25 +209,19 @@ app.post('/api/reviews', auth, async (req, res) => {
     }
 });
 
-// GET: Mendapatkan SEMUA ulasan
 app.get('/api/reviews/all', auth, adminAuth, async (req, res) => {
     try {
-        const reviews = await Review.find().sort({ date: -1 });
+        const reviews = await Review.find().sort({ date: -1 }).populate('user', 'username');
         res.json(reviews);
     } catch (err) {
         res.status(500).send('Server error');
     }
 });
 
-// PUT: Mengedit ulasan
 app.put('/api/reviews/:id', auth, adminAuth, async (req, res) => {
     const { rating, comment } = req.body;
     try {
-        let review = await Review.findByIdAndUpdate(
-            req.params.id,
-            { $set: { rating, comment } },
-            { new: true }
-        );
+        let review = await Review.findByIdAndUpdate(req.params.id, { $set: { rating, comment } }, { new: true });
         if (!review) return res.status(404).json({ msg: 'Ulasan tidak ditemukan' });
         res.json(review);
     } catch (err) {
@@ -313,7 +230,6 @@ app.put('/api/reviews/:id', auth, adminAuth, async (req, res) => {
     }
 });
 
-// DELETE: Menghapus ulasan
 app.delete('/api/reviews/:id', auth, adminAuth, async (req, res) => {
     try {
         const review = await Review.findById(req.params.id);
@@ -327,6 +243,26 @@ app.delete('/api/reviews/:id', auth, adminAuth, async (req, res) => {
 });
 
 
+// ======================================================
+// --- Rute untuk Menyajikan Halaman HTML ---
+// ======================================================
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+app.get('/login', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+app.get('/register', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'register.html'));
+});
+app.get('/profile', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'profile.html'));
+});
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
 
 // --- Jalankan Server ---
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server berjalan di port ${PORT}`));
