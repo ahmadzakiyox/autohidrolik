@@ -1,7 +1,7 @@
 // File: /js/scan.js
 
 document.addEventListener('DOMContentLoaded', function () {
-    const API_URL = 'http://localhost:3000'; // Sesuaikan dengan URL API Anda
+    const API_URL = 'https://autohidrolik.com'; // Sesuaikan dengan URL API Anda
     const token = localStorage.getItem('token');
     const userRole = localStorage.getItem('userRole');
 
