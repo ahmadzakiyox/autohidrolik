@@ -112,26 +112,26 @@
 </head>
 <body>
 
-    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+    <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
-            <a class="navbar-brand d-flex align-items-center" href="/">
-                <img src="/images/log.png" alt="AUTOHIDROLIK Logo" width="35" height="35" class="me-2">
-                <span class="fw-bold">AUTOHIDROLIK</span>
-            </a>
+            <a class="navbar-brand" href="#">✨ AUTOHIDROLIK</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item"><a class="nav-link active" href="/">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#layanan">Layanan</a></li>
                     <li class="nav-item"><a class="nav-link" href="#paket-member">Paket Member</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#mengapa-kami">Mengapa Kami</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#lokasi">Lokasi</a></li>
                     <li class="nav-item"><a class="nav-link" href="#review">Review</a></li>
+                    
+                    <!-- Menu Dinamis: Tampil setelah login -->
                     <li class="nav-item" id="nav-order" style="display: none;"><a class="nav-link" href="/order.html">Pesan Layanan</a></li>
                     <li class="nav-item" id="nav-profile" style="display: none;"><a class="nav-link" href="/profile.html">Profil</a></li>
                     <li class="nav-item" id="nav-admin" style="display: none;"><a class="nav-link" href="/admin.html">Admin Dashboard</a></li>
                     <li class="nav-item" id="nav-logout" style="display: none;"><a class="nav-link" href="#" id="logout-btn">Logout</a></li>
+
+                    <!-- Menu Dinamis: Tampil sebelum login -->
                     <li class="nav-item" id="nav-login"><a class="nav-link" href="/login.html">Login</a></li>
                     <li class="nav-item" id="nav-register"><a class="nav-link" href="/register.html">Register</a></li>
                 </ul>
