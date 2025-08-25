@@ -12,7 +12,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const viewBarcodeModal = new bootstrap.Modal(document.getElementById('viewBarcodeModal'));
     const setPackageModal = new bootstrap.Modal(document.getElementById('setPackageModal'));
 
-    if (!token) {
+     // Keamanan: Hanya admin yang boleh mengakses halaman ini
+    if (!token || userRole !== 'admin') {
+        alert('Akses ditolak. Anda harus login sebagai admin.');
         window.location.href = '/login';
         return;
     }
