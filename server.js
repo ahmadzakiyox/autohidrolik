@@ -76,13 +76,11 @@ const adminAuth = async (req, res, next) => {
 // ======================================================
 
 // --- REVISI DI SINI ---
-// Rute registrasi disederhanakan
+// Rute Registrasi (Sudah disederhanakan)
 app.post('/api/register', async (req, res) => {
     try {
-        // Langsung ambil data dari req.body
         const { username, email, phone, password } = req.body;
 
-        // Validasi dasar (bisa ditambahkan express-validator jika perlu)
         if (!username || !email || !phone || !password) {
             return res.status(400).json({ msg: 'Mohon isi semua field yang diperlukan.' });
         }
@@ -100,7 +98,7 @@ app.post('/api/register', async (req, res) => {
             email,
             phone,
             password: hashedPassword,
-            isVerified: true // Langsung set terverifikasi
+            isVerified: true
         });
 
         await user.save();
@@ -112,14 +110,16 @@ app.post('/api/register', async (req, res) => {
     }
 });
 
+// Rute Login (Sudah benar)
 app.post('/api/login', async (req, res) => {
     const { email, password } = req.body;
     try {
         let user = await User.findOne({ email });
         if (!user) return res.status(400).json({ msg: 'Kredensial tidak valid' });
-        if (!user.isVerified) return res.status(401).json({ msg: 'Akun belum diverifikasi.' });
+        
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.status(400).json({ msg: 'Kredensial tidak valid' });
+        
         const payload = { user: { id: user.id } };
         jwt.sign(payload, JWT_SECRET, { expiresIn: '1h' }, (err, token) => {
             if (err) throw err;
@@ -131,6 +131,7 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
+// Rute Profil (Sudah benar)
 app.get('/api/profile', auth, async (req, res) => {
     try {
         const user = await User.findById(req.user.id).select('-password');
