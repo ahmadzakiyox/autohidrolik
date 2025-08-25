@@ -220,6 +220,36 @@ app.delete('/api/users/:id', auth, adminAuth, async (req, res) => {
     }
 });
 
+// GET: Mendapatkan semua ulasan (Publik)
+app.get('/api/reviews', async (req, res) => {
+    try {
+        const reviews = await Review.find().sort({ date: -1 }).limit(6);
+        res.json(reviews);
+    } catch (err) {
+        res.status(500).send('Server error');
+    }
+});
+
+// POST: Menambah ulasan baru (Dilindungi - butuh login)
+app.post('/api/reviews', auth, async (req, res) => {
+    const { rating, comment } = req.body;
+    try {
+        const user = await User.findById(req.user.id);
+        const newReview = new Review({
+            rating,
+            comment,
+            user: req.user.id,
+            username: user.username
+        });
+        const review = await newReview.save();
+        res.status(201).json(review);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
+});
+
+
 
 // --- Jalankan Server ---
 app.listen(PORT, () => console.log(`Server berjalan di port ${PORT}`));
