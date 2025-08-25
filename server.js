@@ -242,6 +242,30 @@ app.delete('/api/reviews/:id', auth, adminAuth, async (req, res) => {
     }
 });
 
+// --- PENAMBAHAN BARU: Rute untuk konfirmasi pembayaran oleh admin ---
+app.post('/api/confirm-payment/:userId', auth, adminAuth, async (req, res) => {
+    try {
+        const user = await User.findById(req.params.userId);
+
+        if (!user) {
+            return res.status(404).json({ msg: 'Pengguna tidak ditemukan.' });
+        }
+
+        if (!user.membership) {
+            return res.status(400).json({ msg: 'Pengguna ini bukan member.' });
+        }
+
+        // Ubah status pembayaran menjadi true
+        user.membership.isPaid = true;
+        await user.save();
+
+        res.json({ msg: 'Pembayaran berhasil dikonfirmasi.', user });
+
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).send('Server error');
+    }
+});
 
 // ======================================================
 // --- Rute untuk Menyajikan Halaman HTML ---
