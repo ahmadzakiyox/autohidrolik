@@ -15,7 +15,7 @@ const User = require('./models/User');
 const Review = require('./models/Review'); // Pastikan model Review diimpor
 
 // --- Middleware ---
-const whitelist = ['http://localhost:3000', 'https://www.autohidrolik.com'];
+const whitelist = ['https://autohidrolik.com', 'https://www.autohidrolik.com'];
 const corsOptions = {
   origin: function (origin, callback) {
     if (whitelist.indexOf(origin) !== -1 || !origin) {
