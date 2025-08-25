@@ -132,7 +132,7 @@ app.post('/api/login', async (req, res) => {
 });
 
 // Rute Profil (Sudah benar)
-app.get('/api/profile', auth, async (req, res) => {
+app.post('/api/profile', auth, async (req, res) => {
     try {
         const user = await User.findById(req.user.id).select('-password');
         res.json(user);
@@ -161,6 +161,30 @@ app.put('/api/profile', auth, async (req, res) => {
     }
 });
 
+// Rute untuk halaman utama
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Rute untuk halaman login
+app.get('/login', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
+// Rute untuk halaman register
+app.get('/register', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'register.html'));
+});
+
+// Rute untuk halaman profil (memerlukan login)
+app.get('/profile', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'profile.html'));
+});
+
+// Rute untuk halaman admin (memerlukan login sebagai admin)
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
 // --- RUTE ADMIN UNTUK MANAJEMEN PENGGUNA ---
 
 // GET: Mendapatkan semua pengguna (Hanya Admin)
