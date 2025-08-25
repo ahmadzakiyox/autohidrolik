@@ -1,102 +1,174 @@
 // File: /js/index.js
 
 document.addEventListener('DOMContentLoaded', () => {
-    const API_URL = 'https://autohidrolik.com/api'; // Sesuaikan dengan URL Render Anda
+    // Pastikan URL API ini sesuai dengan alamat backend Anda
+    const API_URL = 'https://autohidrolik.com';
     const token = localStorage.getItem('token');
-    
-    const purchaseModal = new bootstrap.Modal(document.getElementById('purchaseModal'));
-    const packageNameElement = document.getElementById('package-name');
-    const buyButtons = document.querySelectorAll('.buy-btn');
+    const userRole = localStorage.getItem('userRole');
 
-    const reviewList = document.getElementById('review-list');
-    const addReviewSection = document.getElementById('add-review-section');
-    const addReviewForm = document.getElementById('add-review-form');
+    // --- 1. LOGIKA UNTUK MENGATUR NAVBAR ---
+    const setupNavbar = () => {
+        const navLogin = document.getElementById('nav-login');
+        const navRegister = document.getElementById('nav-register');
+        const navOrder = document.getElementById('nav-order');
+        const navProfile = document.getElementById('nav-profile');
+        const navAdmin = document.getElementById('nav-admin');
+        const navLogout = document.getElementById('nav-logout');
+        const addReviewSection = document.getElementById('add-review-section');
 
-    // --- Logika Tombol Beli Paket ---
-    buyButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            const packageName = button.getAttribute('data-package');
-            packageNameElement.textContent = packageName;
-            purchaseModal.show();
-        });
-    });
+        if (token) {
+            // Pengguna sudah login
+            if (navLogin) navLogin.style.display = 'none';
+            if (navRegister) navRegister.style.display = 'none';
+            if (navOrder) navOrder.style.display = 'block';
+            if (navProfile) navProfile.style.display = 'block';
+            if (navLogout) navLogout.style.display = 'block';
+            if (addReviewSection) addReviewSection.style.display = 'block'; // Tampilkan form review
 
-    // --- Logika Ulasan ---
-    // Fungsi untuk menampilkan bintang rating
-    const renderStars = (rating) => {
-        let stars = '';
-        for (let i = 1; i <= 5; i++) {
-            stars += `<i class="bi ${i <= rating ? 'bi-star-fill' : 'bi-star'}"></i>`;
+            if (userRole === 'admin' && navAdmin) {
+                navAdmin.style.display = 'block';
+            }
+        } else {
+            // Pengguna belum login
+            if (navLogin) navLogin.style.display = 'block';
+            if (navRegister) navRegister.style.display = 'block';
+            if (navOrder) navOrder.style.display = 'none';
+            if (navProfile) navProfile.style.display = 'none';
+            if (navAdmin) navAdmin.style.display = 'none';
+            if (navLogout) navLogout.style.display = 'none';
+            if (addReviewSection) addReviewSection.style.display = 'none'; // Sembunyikan form review
         }
-        return stars;
+
+        const logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                localStorage.removeItem('token');
+                localStorage.removeItem('userRole');
+                alert('Anda telah berhasil logout.');
+                window.location.href = '/login.html';
+            });
+        }
     };
 
-    // Ambil dan tampilkan ulasan saat halaman dimuat
+    // --- 2. LOGIKA UNTUK MENAMPILKAN ULASAN ---
     const fetchReviews = async () => {
+        const reviewList = document.getElementById('review-list');
+        if (!reviewList) return;
+
         try {
-            const response = await fetch(`${API_URL}/reviews`);
+            const response = await fetch(`${API_URL}/api/reviews`); // Asumsi endpoint ini ada
+            if (!response.ok) throw new Error('Gagal memuat ulasan.');
+            
             const reviews = await response.json();
             reviewList.innerHTML = ''; // Kosongkan daftar
+
             if (reviews.length === 0) {
                 reviewList.innerHTML = '<p class="text-center text-muted">Belum ada ulasan.</p>';
                 return;
             }
-            reviews.forEach(review => {
-                const reviewCard = `
-                    <div class="col-md-6 col-lg-4 mb-4">
-                        <div class="card h-100">
+
+            reviews.forEach((review, index) => {
+                const stars = '★'.repeat(review.rating) + '☆'.repeat(5 - review.rating);
+                const carouselItem = document.createElement('div');
+                carouselItem.className = `carousel-item ${index === 0 ? 'active' : ''}`;
+                carouselItem.innerHTML = `
+                    <div class="d-flex justify-content-center">
+                        <div class="card p-4 text-center" style="max-width: 700px;">
                             <div class="card-body">
-                                <div class="stars mb-2">${renderStars(review.rating)}</div>
+                                <div class="stars mb-3">${stars}</div>
                                 <p class="card-text fst-italic">"${review.comment}"</p>
-                                <footer class="blockquote-footer mt-3">${review.username}</footer>
+                                <h5 class="mt-4 fw-bold">- ${review.user ? review.user.username : 'Anonim'}</h5>
                             </div>
                         </div>
                     </div>
                 `;
-                reviewList.insertAdjacentHTML('beforeend', reviewCard);
+                reviewList.appendChild(carouselItem);
             });
+
         } catch (error) {
-            console.error('Gagal mengambil ulasan:', error);
+            console.error('Error fetching reviews:', error);
+            reviewList.innerHTML = '<p class="text-center text-danger">Tidak dapat memuat ulasan saat ini.</p>';
         }
     };
-
-    // Tampilkan form ulasan jika user sudah login
-    if (token) {
-        addReviewSection.style.display = 'block';
-    }
-
-    // Handle pengiriman form ulasan
-    if(addReviewForm) {
+    
+    // --- 3. LOGIKA UNTUK MENGIRIM ULASAN BARU ---
+    const addReviewForm = document.getElementById('add-review-form');
+    if (addReviewForm) {
         addReviewForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const reviewData = {
-                rating: document.getElementById('rating').value,
-                comment: document.getElementById('comment').value
-            };
+            if (!token) {
+                alert('Anda harus login untuk memberikan ulasan.');
+                window.location.href = '/login.html';
+                return;
+            }
+
+            const rating = document.getElementById('rating').value;
+            const comment = document.getElementById('comment').value;
 
             try {
-                const response = await fetch(`${API_URL}/reviews`, {
+                const response = await fetch(`${API_URL}/api/reviews`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'x-auth-token': token
                     },
-                    body: JSON.stringify(reviewData)
+                    body: JSON.stringify({ rating, comment })
                 });
 
                 if (!response.ok) {
-                    throw new Error('Gagal mengirim ulasan. Silakan coba lagi.');
+                    const errorData = await response.json();
+                    throw new Error(errorData.msg || 'Gagal mengirim ulasan.');
                 }
 
-                alert('Terima kasih! Ulasan Anda berhasil dikirim.');
+                alert('Ulasan Anda berhasil dikirim!');
                 addReviewForm.reset();
                 fetchReviews(); // Muat ulang daftar ulasan
+
             } catch (error) {
-                alert(error.message);
+                alert(`Error: ${error.message}`);
             }
         });
     }
 
-    // Panggil fungsi untuk memuat ulasan
+    // --- 4. LOGIKA UNTUK TOMBOL "BELI PAKET" ---
+    const purchaseModal = new bootstrap.Modal(document.getElementById('purchaseModal'));
+    document.querySelectorAll('.buy-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            if (!token) {
+                alert('Silakan login terlebih dahulu untuk membeli paket.');
+                window.location.href = '/login.html';
+                return;
+            }
+            const packageName = button.dataset.package;
+            document.getElementById('package-name').textContent = packageName;
+            purchaseModal.show();
+        });
+    });
+
+    // --- 5. EFEK VISUAL (SCROLL & FADE-IN) ---
+    const nav = document.querySelector('.navbar');
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 50) {
+            nav.classList.add('navbar-scrolled');
+        } else {
+            nav.classList.remove('navbar-scrolled');
+        }
+    });
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('is-visible');
+            }
+        });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.fade-in-section').forEach(section => {
+        observer.observe(section);
+    });
+
+    // --- PANGGIL SEMUA FUNGSI INISIALISASI ---
+    setupNavbar();
     fetchReviews();
 });
