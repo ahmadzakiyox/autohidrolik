@@ -1,7 +1,7 @@
 // File: /js/index.js
 
 document.addEventListener('DOMContentLoaded', () => {
-    const API_URL = 'https://autohidrolik./api'; // Sesuaikan dengan URL Render Anda
+    const API_URL = 'https://autohidrolik.com/api'; // Sesuaikan dengan URL Render Anda
     const token = localStorage.getItem('token');
     
     const purchaseModal = new bootstrap.Modal(document.getElementById('purchaseModal'));
