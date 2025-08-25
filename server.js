@@ -20,6 +20,7 @@ const Review = require('./models/Review'); // Pastikan model Review diimpor
 const whitelist = ['https://autohidrolik.com', 'https://www.autohidrolik.com'];
 const corsOptions = {
   origin: function (origin, callback) {
+    // Izinkan jika domain ada di whitelist atau jika origin tidak ada (misal: dari Postman)
     if (whitelist.indexOf(origin) !== -1 || !origin) {
       callback(null, true);
     } else {
