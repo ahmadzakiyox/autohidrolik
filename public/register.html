@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register - AUTOHIDROLIK</title>
+    <link rel="icon" type="image/png" href="/images/log.png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        /* --- TEMA GITHUB DARK PURPLE (Konsisten dengan profile.html) --- */
         :root {
             --bg-color: #0d1117;
             --container-bg: #161b22;
@@ -19,54 +19,37 @@
             --purple-accent: #a27bff;
             --purple-hover: #c4a7ff;
         }
-
         body {
             background-color: var(--bg-color);
             color: var(--text-primary);
             font-family: 'Poppins', sans-serif;
         }
-
         .form-container {
-            max-width: 700px;
-            margin: 3rem auto;
+            max-width: 500px; /* Diperkecil karena form lebih simpel */
+            margin: 4rem auto;
             padding: 2.5rem;
             background: var(--container-bg);
             border-radius: 8px;
             border: 1px solid var(--border-color);
         }
-
-        h2, h5 {
+        h2 {
             color: var(--text-headings);
             font-weight: 500;
         }
-        
-        #step-indicator {
-             color: var(--purple-accent);
-        }
-
         .form-label {
             color: var(--text-primary);
-            margin-bottom: 0.5rem;
         }
-
-        .form-control, .form-select, .form-control:disabled {
+        .form-control {
             background-color: var(--input-bg);
             border: 1px solid var(--border-color);
             color: var(--text-primary);
-            padding: 0.75rem 1rem;
         }
-
-        .form-control::placeholder {
-            color: var(--text-secondary);
-        }
-
-        .form-control:focus, .form-select:focus {
+        .form-control:focus {
             background-color: var(--input-bg);
             border-color: var(--purple-accent);
             color: var(--text-primary);
             box-shadow: 0 0 0 0.25rem rgba(162, 123, 255, 0.25);
         }
-
         .btn-custom {
             background-color: var(--purple-accent);
             border-color: var(--purple-accent);
@@ -74,51 +57,18 @@
             padding: 0.75rem;
             font-weight: 500;
         }
-
         .btn-custom:hover {
             background-color: var(--purple-hover);
             border-color: var(--purple-hover);
         }
-
-        .btn-outline-primary {
-            color: var(--purple-accent);
-            border-color: var(--purple-accent);
-            padding: 0.5rem;
-            font-weight: 500;
-        }
-
-        .btn-outline-primary:hover {
-            background-color: var(--purple-accent);
-            color: #fff;
-        }
-
         a {
             color: var(--purple-accent);
             text-decoration: none;
             font-weight: 500;
         }
-
         a:hover {
             color: var(--purple-hover);
-            text-decoration: underline;
         }
-
-        hr {
-            border-top: 1px solid var(--border-color);
-            opacity: 0.5;
-        }
-
-        .text-muted {
-            color: var(--text-secondary) !important;
-        }
-
-        .vehicle-entry {
-            background-color: #0d1117; /* Lebih gelap agar kontras */
-            border: 1px solid var(--border-color) !important;
-            padding: 1.5rem !important;
-        }
-
-        /* Navbar Styles */
         .navbar {
             background-color: var(--container-bg);
             border-bottom: 1px solid var(--border-color);
@@ -127,45 +77,16 @@
             color: var(--text-headings);
             font-weight: bold;
         }
-        .navbar-brand:hover {
-            color: #fff;
-        }
-        .nav-link {
-            color: var(--text-secondary);
-            transition: color 0.3s ease;
-        }
-        .nav-link:hover, .nav-link.active {
-            color: var(--purple-hover);
-        }
-        .navbar-toggler {
-            border-color: var(--border-color);
-        }
-        .navbar-toggler-icon {
-            filter: invert(0.8);
-        }
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg">
+    <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
-            <a class="navbar-brand" href="#">AUTOHIDROLIK</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+            <a class="navbar-brand" href="/">AUTOHIDROLIK</a>
+            <div class="collapse navbar-collapse justify-content-end">
                 <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Layanan</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/login.html">Login</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" aria-current="page" href="#">Daftar</a>
-                    </li>
+                    <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/login.html">Login</a></li>
                 </ul>
             </div>
         </div>
@@ -173,88 +94,31 @@
 
     <div class="container">
         <div class="form-container">
-            <div class="text-center mb-4">
-                <a href="/">
-                    <img src="/images/log.png" alt="AUTOHIDROLIK Logo" width="60">
-                </a>
-            <h2 class="text-center mb-2">Buat Akun Baru</h2>
-            <p id="step-indicator" class="text-center mb-4">Langkah 1 dari 2: Buat Akun Dasar</p>
-
-            <div id="step-1">
-                <form id="initial-register-form">
-                    <div class="mb-3">
-                        <label for="email" class="form-label">Alamat Email</label>
-                        <input type="email" class="form-control" id="email" required placeholder="nama@email.com">
-                    </div>
-                     <div class="mb-3">
-                        <label for="username" class="form-label">Username</label>
-                        <input type="text" class="form-control" id="username" required placeholder="pilih username unik">
-                    </div>
-                    <div class="mb-3">
-                        <label for="password" class="form-label">Password</label>
-                        <input type="password" class="form-control" id="password" required>
-                    </div>
-                    <div class="mb-4">
-                        <label for="confirm-password" class="form-label">Konfirmasi Password</label>
-                        <input type="password" class="form-control" id="confirm-password" required>
-                    </div>
-                    <button type="submit" class="btn btn-custom w-100 mt-2">Lanjutkan ke Data Diri</button>
-                </form>
-                <p class="mt-4 text-center text-muted">Sudah punya akun? <a href="/login.html">Login di sini</a></p>
-            </div>
-
-            <div id="step-2" class="d-none">
-                <form id="complete-profile-form">
-                    <h5 class="mb-3">Data Diri</h5>
-                     <div class="mb-3">
-                        <label class="form-label">Alamat Email</label>
-                        <input type="email" class="form-control" id="email-display" disabled>
-                     </div>
-                    <div class="mb-3">
-                        <label for="fullName" class="form-label">Nama Lengkap</label>
-                        <input type="text" class="form-control" id="fullName" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="phone" class="form-label">Nomor HP</label>
-                        <input type="tel" class="form-control" id="phone" placeholder="Contoh: 08123456789" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="address" class="form-label">Alamat Rumah</label>
-                        <textarea class="form-control" id="address" rows="3" required></textarea>
-                    </div>
-
-                    <hr class="my-4">
-
-                    <h5 class="mb-3">Data Kendaraan (Minimal 1)</h5>
-                    <div id="vehicle-list">
-                        <div class="vehicle-entry p-3 mb-3 border rounded">
-                            <h6>Kendaraan 1</h6>
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Jenis Kendaraan</label>
-                                    <select class="form-select vehicle-type" required>
-                                        <option value="" selected disabled>Pilih Jenis</option>
-                                        <option value="Motor">Motor</option>
-                                        <option value="Mobil Kecil">Mobil Kecil</option>
-                                        <option value="Mobil Sedang">Mobil Sedang</option>
-                                        <option value="Mobil Besar">Mobil Besar</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Merk & Tipe</label>
-                                    <input type="text" class="form-control vehicle-brand" placeholder="Contoh: Toyota Avanza" required>
-                                </div>
-                            </div>
-                            <div class="mb-2">
-                                <label class="form-label">Nomor Polisi (Nopol)</label>
-                                <input type="text" class="form-control vehicle-license" placeholder="Contoh: B 1234 ABC" required>
-                            </div>
-                        </div>
-                    </div>
-                    <button type="button" id="add-vehicle-btn" class="btn btn-outline-primary w-100 mb-4">Tambah Kendaraan Lain</button>
-                    <button type="submit" class="btn btn-custom w-100 btn-lg">Daftar & Buat Akun</button>
-                </form>
-            </div>
+            <h2 class="text-center mb-4">Buat Akun Baru</h2>
+            <form id="register-form">
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username</label>
+                    <input type="text" class="form-control" id="username" required placeholder="pilih username unik">
+                </div>
+                <div class="mb-3">
+                    <label for="email" class="form-label">Alamat Email</label>
+                    <input type="email" class="form-control" id="email" required placeholder="nama@email.com">
+                </div>
+                <div class="mb-3">
+                    <label for="phone" class="form-label">Nomor WhatsApp</label>
+                    <input type="tel" class="form-control" id="phone" required placeholder="Contoh: 081234567890">
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="password" required>
+                </div>
+                <div class="mb-4">
+                    <label for="confirm-password" class="form-label">Konfirmasi Password</label>
+                    <input type="password" class="form-control" id="confirm-password" required>
+                </div>
+                <button type="submit" class="btn btn-custom w-100 mt-2">Daftar Akun</button>
+            </form>
+            <p class="mt-4 text-center text-muted">Sudah punya akun? <a href="/login.html">Login di sini</a></p>
         </div>
     </div>
     
