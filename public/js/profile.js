@@ -24,19 +24,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(`${API_URL}/api/profile`, {
                 headers: { 'x-auth-token': token }
             });
-
-            if (!response.ok) {
-                localStorage.removeItem('token');
-                localStorage.removeItem('userRole');
-                throw new Error('Sesi tidak valid, silakan login kembali.');
-            }
-
+            if (!response.ok) throw new Error('Sesi tidak valid.');
             const user = await response.json();
             displayProfileData(user);
-
         } catch (error) {
             alert(error.message);
-            window.location.href = '/login.html';
+            window.location.href = '/login';
         }
     };
 
@@ -45,24 +38,57 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('profile-email').textContent = user.email || '-';
         document.getElementById('profile-phone').textContent = user.phone || '-';
 
-        // --- REVISI DI SINI ---
-        // Membuat data gabungan untuk barcode
-        if (user.username && user.email && user.phone) {
-            // Gabungkan username, email, dan nomor hp menjadi satu string
-            const barcodeData = `${user.username};${user.email};${user.phone}`;
+        const membershipStatus = document.getElementById('membership-status');
+        const memberCodeSection = document.getElementById('member-code-section');
+
+        if (user.membership) {
+            // Tampilan jika pengguna sudah membeli paket
+            membershipStatus.innerHTML = `
+                <h5 class="card-title">${user.membership.packageName}</h5>
+                <p class="display-4 fw-bold">${user.membership.remainingWashes}x</p>
+                <p class="text-muted">Sisa Jatah Pencucian</p>
+                <hr>
+                <p>Status Pembayaran: 
+                    ${user.membership.isPaid 
+                        ? '<span class="badge bg-success">Lunas</span>' 
+                        : '<span class="badge bg-warning text-dark">Menunggu Konfirmasi</span>'}
+                </p>
+            `;
             
-            JsBarcode("#barcode-container", barcodeData, {
-                format: "CODE128",
-                lineColor: "#000",
-                width: 1.5, // Sedikit diperkecil agar muat
-                height: 80,
-                displayValue: false // Teks tidak ditampilkan agar barcode lebih bersih
-            });
+            if (user.membership.isPaid && user.membership.remainingWashes > 0) {
+                // Tampilkan barcode HANYA jika sudah lunas dan jatah masih ada
+                memberCodeSection.innerHTML = `
+                    <div id="barcode-wrapper">
+                        <svg id="barcode-container"></svg>
+                    </div>
+                    <p class="mt-3 text-muted">Tunjukkan kode ini kepada staf kami.</p>
+                `;
+                JsBarcode("#barcode-container", user._id, {
+                    format: "CODE128",
+                    lineColor: "#000",
+                    width: 2,
+                    height: 80,
+                    displayValue: false
+                });
+            } else if (!user.membership.isPaid) {
+                memberCodeSection.innerHTML = `<p class="text-center text-muted p-4">Barcode akan muncul setelah pembayaran dikonfirmasi oleh admin.</p>`;
+            } else {
+                memberCodeSection.innerHTML = `<p class="text-center text-muted p-4">Jatah cuci Anda sudah habis.</p>`;
+            }
+
+        } else {
+            // Tampilan untuk non-member
+            membershipStatus.innerHTML = `
+                <p class="text-muted">Anda saat ini bukan member aktif.</p>
+                <a href="/" class="btn btn-primary">Lihat Paket Member</a>
+            `;
+            memberCodeSection.innerHTML = `
+                <p class="text-center text-muted p-4">Beli paket member untuk mendapatkan kode Anda.</p>
+            `;
         }
 
-        // Tampilkan konten setelah semua data dimuat
-        if (profileLoading) profileLoading.classList.add('d-none');
-        if (profileContent) profileContent.classList.remove('d-none');
+        profileLoading.classList.add('d-none');
+        profileContent.classList.remove('d-none');
     };
 
     fetchProfileData();
