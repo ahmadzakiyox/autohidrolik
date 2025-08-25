@@ -8,7 +8,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css">
     <style>
-        /* Menggunakan tema dark purple yang konsisten */
         :root {
             --bg-color: #0d1117;
             --container-bg: #161b22;
@@ -49,7 +48,6 @@
             color: var(--text-primary);
             border: 1px solid var(--border-color);
         }
-        /* Styling untuk container barcode */
         #barcode-wrapper {
             padding: 1.5rem;
             background: #fff;
@@ -83,20 +81,9 @@
                     <div class="card-body">
                         <ul class="list-group list-group-flush">
                             <li class="list-group-item"><strong>Username:</strong> <span id="profile-username"></span></li>
-                            <li class="list-group-item"><strong>Nama Lengkap:</strong> <span id="profile-fullname"></span></li>
                             <li class="list-group-item"><strong>Email:</strong> <span id="profile-email"></span></li>
-                            <li class="list-group-item"><strong>No. HP:</strong> <span id="profile-phone"></span></li>
-                            <li class="list-group-item"><strong>Alamat:</strong> <p id="profile-address" class="mb-0"></p></li>
+                            <li class="list-group-item"><strong>No. WhatsApp:</strong> <span id="profile-phone"></span></li>
                         </ul>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-header">
-                        <h5>Kendaraan Terdaftar</h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="profile-vehicle-list"></div>
                     </div>
                 </div>
             </div>
@@ -110,7 +97,7 @@
                          <div id="barcode-wrapper">
                             <svg id="barcode-container"></svg>
                          </div>
-                        <p class="mt-3 text-muted">Gunakan barcode ini untuk proses check-in yang lebih cepat di lokasi kami.</p>
+                        <p class="mt-3 text-muted">Gunakan barcode ini untuk proses check-in yang lebih cepat.</p>
                     </div>
                 </div>
             </div>
