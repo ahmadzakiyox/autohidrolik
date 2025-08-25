@@ -1,8 +1,8 @@
 // File: /js/profile.js
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Pastikan API_URL didefinisikan di file config.js atau di sini
-    const API_URL = 'https://autohidrolik.com/api'; 
+    // Ganti URL ini dengan URL API backend Anda yang sebenarnya
+    const API_URL = 'http://localhost:3000'; 
     const token = localStorage.getItem('token');
 
     const profileLoading = document.getElementById('profile-loading');
@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const fetchProfileData = async () => {
         try {
-            const response = await fetch(`${API_URL}/profile`, { // Pastikan endpoint /profile sudah benar
+            const response = await fetch(`${API_URL}/api/profile`, {
                 headers: { 'x-auth-token': token }
             });
 
@@ -45,7 +45,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('profile-email').textContent = user.email || '-';
         document.getElementById('profile-phone').textContent = user.phone || '-';
 
-        // Membuat BARCODE dari username pengguna
         if (user.username) {
             JsBarcode("#barcode-container", user.username, {
                 format: "CODE128",
@@ -56,7 +55,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // Tampilkan konten setelah semua data dimuat
         if (profileLoading) profileLoading.classList.add('d-none');
         if (profileContent) profileContent.classList.remove('d-none');
     };
