@@ -10,42 +10,120 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="/css/style.css">
     <style>
-        /* Menambahkan sedikit CSS kustom untuk review slider */
-        .carousel-item {
-            padding: 40px 20px;
+        /* --- TEMA BARU: GITHUB DARK PURPLE --- */
+        body {
+            background-color: #0d1117;
+            color: #c9d1d9;
         }
-        .carousel-inner .card {
-            border: none;
-            background-color: #f8f9fa;
+        .navbar {
+            transition: background-color 0.3s ease-in-out;
+        }
+        .navbar-scrolled {
+            background-color: #161b22 !important;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+        .hero-section {
+            background: #161b22;
+            background-image: linear-gradient(rgba(13, 17, 23, 0.8), rgba(13, 17, 23, 1));
+            background-size: cover;
+            background-position: center;
+        }
+        .card {
+            background-color: #161b22;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(130, 80, 223, 0.15);
+        }
+        .card .card-title, h1, h2, h4, h5, h6 {
+            color: #f0f6fc;
+        }
+        .text-primary {
+            color: #a777ff !important;
+        }
+        .btn-custom, .btn-primary {
+            background-color: #8250df;
+            border-color: #8250df;
+        }
+        .btn-custom:hover, .btn-primary:hover {
+            background-color: #956ae6;
+            border-color: #956ae6;
+        }
+        .bg-light {
+            background-color: #0d1117 !important;
+            border-top: 1px solid #30363d;
+            border-bottom: 1px solid #30363d;
+        }
+        footer.bg-dark {
+            background-color: #161b22 !important;
+        }
+        .navbar-toggler-icon {
+            filter: invert(1) grayscale(100%) brightness(200%);
+        }
+        .price-member {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #a777ff;
         }
         .stars {
-            color: #ffc107; /* Warna kuning untuk bintang */
-            font-size: 1.5rem;
+            color: #ffc107;
+        }
+        .feature-icon {
+            font-size: 3rem;
+            color: #8250df;
+        }
+        .map-container {
+            position: relative;
+            overflow: hidden;
+            padding-top: 56.25%; /* 16:9 Aspect Ratio */
+            border-radius: 15px;
+            border: 1px solid #30363d;
+        }
+        .map-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+        /* Animasi Fade-in */
+        .fade-in-section {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+        .fade-in-section.is-visible {
+            opacity: 1;
+            transform: translateY(0);
         }
     </style>
 </head>
 <body>
 
-    <nav class="navbar navbar-expand-lg navbar-dark">
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
         <div class="container">
-            <a class="navbar-brand" href="#">✨ AUTOHIDROLIK</a>
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <img src="/images/log.png" alt="AUTOHIDROLIK Logo" width="35" height="35" class="me-2">
+                <span class="fw-bold">AUTOHIDROLIK</span>
+            </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item"><a class="nav-link active" href="/">Home</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#layanan">Layanan</a></li>
                     <li class="nav-item"><a class="nav-link" href="#paket-member">Paket Member</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#mengapa-kami">Mengapa Kami</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#lokasi">Lokasi</a></li>
                     <li class="nav-item"><a class="nav-link" href="#review">Review</a></li>
-                    
-                    <!-- Menu Dinamis: Tampil setelah login -->
                     <li class="nav-item" id="nav-order" style="display: none;"><a class="nav-link" href="/order.html">Pesan Layanan</a></li>
                     <li class="nav-item" id="nav-profile" style="display: none;"><a class="nav-link" href="/profile.html">Profil</a></li>
                     <li class="nav-item" id="nav-admin" style="display: none;"><a class="nav-link" href="/admin.html">Admin Dashboard</a></li>
                     <li class="nav-item" id="nav-logout" style="display: none;"><a class="nav-link" href="#" id="logout-btn">Logout</a></li>
-
-                    <!-- Menu Dinamis: Tampil sebelum login -->
                     <li class="nav-item" id="nav-login"><a class="nav-link" href="/login.html">Login</a></li>
                     <li class="nav-item" id="nav-register"><a class="nav-link" href="/register.html">Register</a></li>
                 </ul>
@@ -54,192 +132,215 @@
     </nav>
 
     <header class="hero-section">
-        <div class="container">
+        <div class="container text-center">
             <h1>Kilau Sempurna, Dalam Sekejap.</h1>
-            <p>Berikan perawatan terbaik untuk kendaraan Anda bersama kami. Cepat, bersih, dan profesional.</p>
-            <a href="/register.html" class="btn btn-custom">Gabung Sekarang!</a>
+            <p class="lead">Berikan perawatan terbaik untuk kendaraan Anda bersama kami. Cepat, bersih, dan profesional.</p>
+            <a href="/register.html" class="btn btn-custom btn-lg mt-3">Gabung Sekarang!</a>
         </div>
     </header>
 
     <main class="container mt-5">
-        <section id="layanan" class="text-center mb-5">
-            <h2>Layanan Kami</h2>
-            <p class="lead">Kami menawarkan berbagai layanan cuci mobil profesional untuk semua jenis kendaraan.</p>
+        <section id="paket-member" class="text-center mb-5 pt-5 fade-in-section">
+            <h2>Paket Member</h2>
+            <p class="lead">Pilih paket terbaik untuk perawatan kendaraan Anda!</p>
             <div class="row mt-4">
-                <div class="col-md-4 mb-4">
+                <div class="col-md-6 col-lg-4 mb-4">
                     <div class="card h-100 shadow-sm">
-                        <div class="card-body">
-                            <h5 class="card-title">Cuci Cepat</h5>
-                            <p class="card-text">Pembersihan eksterior cepat menggunakan sampo premium dan pengeringan microfiber untuk Anda yang sibuk.</p>
-                            <h6 class="text-primary fw-bold mt-3">Mulai dari Rp 50.000</h6>
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">Body Wash</h5>
+                            <p class="card-text text-success fw-bold">10x Cuci + FREE 2x</p>
+                            <p class="price-member mt-auto">Rp 500.000</p>
+                            <button class="btn btn-primary mt-3 buy-btn" data-package="Body Wash">Beli Paket</button>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4 mb-4">
+                 <div class="col-md-6 col-lg-4 mb-4">
                     <div class="card h-100 shadow-sm">
-                        <div class="card-body">
-                            <h5 class="card-title">Cuci Detailing</h5>
-                            <p class="card-text">Pembersihan menyeluruh interior dan eksterior, termasuk vakum, pembersihan dashboard, dan semir ban.</p>
-                             <h6 class="text-primary fw-bold mt-3">Mulai dari Rp 100.000</h6>
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">Cuci Mobil Hidrolik</h5>
+                            <p class="card-text text-success fw-bold">8x Cuci + FREE 2x</p>
+                            <p class="price-member mt-auto">Rp 520.000</p>
+                            <button class="btn btn-primary mt-3 buy-btn" data-package="Cuci Mobil Hidrolik">Beli Paket</button>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4 mb-4">
+                <div class="col-md-6 col-lg-4 mb-4">
                     <div class="card h-100 shadow-sm">
-                        <div class="card-body">
-                            <h5 class="card-title">Paket Premium</h5>
-                            <p class="card-text">Semua layanan detailing ditambah dengan wax premium dan perlindungan cat untuk kilau maksimal dan tahan lama.</p>
-                             <h6 class="text-primary fw-bold mt-3">Mulai dari Rp 175.000</h6>
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">Cuci Motor Besar</h5>
+                            <p class="card-text text-success fw-bold">8x Cuci + FREE 2x</p>
+                            <p class="price-member mt-auto">Rp 200.000</p>
+                            <button class="btn btn-primary mt-3 buy-btn" data-package="Cuci Motor Besar">Beli Paket</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">Cuci Motor Kecil</h5>
+                            <p class="card-text text-success fw-bold">10x Cuci + FREE 2x</p>
+                            <p class="price-member mt-auto">Rp 200.000</p>
+                            <button class="btn btn-primary mt-3 buy-btn" data-package="Cuci Motor Kecil">Beli Paket</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100 shadow-sm border-primary">
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">Paket Kombinasi</h5>
+                            <p class="card-text">5x Body Wash + 5x Cuci Hidrolik</p>
+                            <p class="card-text text-success fw-bold">FREE 2x</p>
+                            <p class="price-member mt-auto">Rp 575.000</p>
+                            <button class="btn btn-primary mt-3 buy-btn" data-package="Paket Kombinasi">Beli Paket</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">Add-On Vacuum Cleaner</h5>
+                            <p class="card-text">(Hanya untuk Mobil)</p>
+                            <p class="price-member mt-auto">Rp 10.000</p>
+                            <button class="btn btn-primary mt-3 buy-btn" data-package="Add-On Vacuum Cleaner">Beli Paket</button>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section id="mengapa-kami" class="text-center py-5 bg-light rounded">
+        <!-- BAGIAN BARU: MENGAPA KAMI -->
+        <section id="mengapa-kami" class="text-center py-5 my-5 fade-in-section">
             <div class="container">
-                <h2>Mengapa Memilih AUTOHIDROLIK Carwash?</h2>
+                <h2>Mengapa Memilih AUTOHIDROLIK?</h2>
                 <p class="lead">Komitmen kami adalah kepuasan Anda.</p>
                 <div class="row mt-5">
                     <div class="col-md-4 mb-4">
-                        <div class="p-3">
-                            <i class="bi bi-shield-check fs-1 text-primary"></i>
-                            <h4 class="mt-3">Hasil Berkualitas</h4>
-                            <p>Kami menggunakan produk pembersih terbaik dan teknik profesional untuk memastikan mobil Anda bersih sempurna tanpa merusak cat.</p>
-                        </div>
+                        <i class="bi bi-shield-check feature-icon mb-3"></i>
+                        <h4>Hasil Berkualitas</h4>
+                        <p>Kami menggunakan produk pembersih terbaik untuk memastikan mobil Anda bersih sempurna tanpa merusak cat.</p>
                     </div>
                     <div class="col-md-4 mb-4">
-                        <div class="p-3">
-                            <i class="bi bi-clock-history fs-1 text-primary"></i>
-                            <h4 class="mt-3">Cepat & Efisien</h4>
-                            <p>Kami menghargai waktu Anda. Proses pengerjaan kami yang sistematis memastikan hasil maksimal dalam waktu sesingkat mungkin.</p>
-                        </div>
+                        <i class="bi bi-clock-history feature-icon mb-3"></i>
+                        <h4>Cepat & Efisien</h4>
+                        <p>Proses pengerjaan kami yang sistematis memastikan hasil maksimal dalam waktu sesingkat mungkin.</p>
                     </div>
                     <div class="col-md-4 mb-4">
-                        <div class="p-3">
-                           <i class="bi bi-geo-alt-fill fs-1 text-primary"></i>
-                            <h4 class="mt-3">Lokasi Strategis</h4>
-                            <p>Mudah dijangkau dari mana saja, dilengkapi dengan ruang tunggu yang nyaman saat Anda menunggu kendaraan Anda dirawat.</p>
-                        </div>
+                        <i class="bi bi-gem feature-icon mb-3"></i>
+                        <h4>Layanan Premium</h4>
+                        <p>Dilengkapi ruang tunggu nyaman dan staf profesional yang siap melayani kebutuhan kendaraan Anda.</p>
                     </div>
                 </div>
             </div>
         </section>
 
-         <section id="proses" class="text-center py-5 mt-5">
+        <!-- BAGIAN BARU: LOKASI KAMI -->
+        <section id="lokasi" class="py-5 my-5 bg-light rounded fade-in-section">
             <div class="container">
-                <h2>Proses Pengerjaan Kami</h2>
-                <p class="lead">Hanya dengan 4 langkah mudah untuk mobil yang berkilau.</p>
-                <div class="row mt-5 text-center">
-                    <div class="col-md-3 mb-4">
-                        <div class="p-3">
-                            <div class="display-4 text-primary fw-bold">1</div>
-                            <h5 class="mt-3">Pesan Layanan</h5>
-                            <p>Pilih paket layanan yang Anda inginkan melalui website atau datang langsung.</p>
+                <h2 class="text-center mb-5">Temukan Kami</h2>
+                <div class="row align-items-center">
+                    <div class="col-lg-6 mb-4 mb-lg-0">
+                        <div class="map-container">
+                            <!-- Ganti src dengan link Google Maps Anda -->
+                            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3966.521260322732!2d106.81956131476882!3d-6.194741395514637!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e69f5390917b759%3A0x6b45e67356080477!2sMonumen%20Nasional!5e0!3m2!1sid!2sid!4v1620371900000!5m2!1sid!2sid" allowfullscreen="" loading="lazy"></iframe>
                         </div>
                     </div>
-                    <div class="col-md-3 mb-4">
-                         <div class="p-3">
-                            <div class="display-4 text-primary fw-bold">2</div>
-                            <h5 class="mt-3">Inspeksi Awal</h5>
-                            <p>Tim kami akan memeriksa kondisi kendaraan Anda untuk penanganan terbaik.</p>
-                        </div>
-                    </div>
-                    <div class="col-md-3 mb-4">
-                        <div class="p-3">
-                            <div class="display-4 text-primary fw-bold">3</div>
-                            <h5 class="mt-3">Proses Pencucian</h5>
-                            <p>Kami melakukan pencucian detail sesuai paket yang Anda pilih dengan teliti.</p>
-                        </div>
-                    </div>
-                    <div class="col-md-3 mb-4">
-                        <div class="p-3">
-                            <div class="display-4 text-primary fw-bold">4</div>
-                            <h5 class="mt-3">Finishing & Serah Terima</h5>
-                            <p>Pengecekan akhir kualitas dan mobil bersih Anda siap untuk dibawa pulang.</p>
-                        </div>
+                    <div class="col-lg-6">
+                        <h4>Alamat Kami</h4>
+                        <p>Jalan Raya Mobil Bersih No. 123, Kota Anda, 12345</p>
+                        <h4>Jam Operasional</h4>
+                        <ul class="list-unstyled">
+                            <li><strong>Senin - Jumat:</strong> 08:00 - 20:00</li>
+                            <li><strong>Sabtu - Minggu:</strong> 08:00 - 22:00</li>
+                        </ul>
+                        <a href="https://wa.me/6281234567890" target="_blank" class="btn btn-success"><i class="bi bi-whatsapp"></i> Hubungi via WhatsApp</a>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section id="review" class="py-5 bg-light">
+        <section id="review" class="py-5 rounded fade-in-section">
             <div class="container">
                 <h2 class="text-center">Apa Kata Pelanggan Kami?</h2>
-                <p class="lead text-center mb-5">Kepuasan Anda adalah prioritas utama kami.</p>
-
-                <div id="customerReviewSlider" class="carousel slide" data-bs-ride="carousel">
-                    <div class="carousel-indicators">
-                        <button type="button" data-bs-target="#customerReviewSlider" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
-                        <button type="button" data-bs-target="#customerReviewSlider" data-bs-slide-to="1" aria-label="Slide 2"></button>
-                        <button type="button" data-bs-target="#customerReviewSlider" data-bs-slide-to="2" aria-label="Slide 3"></button>
-                    </div>
-                    <div class="carousel-inner">
-                        <div class="carousel-item active">
-                            <div class="d-flex justify-content-center">
-                                <div class="card p-4 text-center" style="max-width: 700px;">
-                                    <div class="card-body">
-                                        <div class="stars mb-3">
-                                            ★★★★★
-                                        </div>
-                                        <p class="card-text fst-italic">"Pelayanannya cepat dan hasilnya luar biasa bersih! Interior mobil saya jadi wangi dan seperti baru lagi. Sangat direkomendasikan!"</p>
-                                        <h5 class="mt-4 fw-bold">- Budi Santoso</h5>
-                                        <p class="text-muted">Pengguna Paket Detailing</p>
-                                    </div>
-                                </div>
-                            </div>
+                <div id="review-list" class="row mt-4"></div>
+                <div id="add-review-section" class="mt-5" style="display: none;">
+                    <hr>
+                    <h4 class="text-center mt-4">Bagikan Pengalaman Anda</h4>
+                    <form id="add-review-form" class="card p-4 mt-3">
+                        <div class="mb-3">
+                            <label for="rating" class="form-label">Rating</label>
+                            <select id="rating" class="form-select bg-dark text-white" required>
+                                <option value="5">★★★★★ (Luar Biasa)</option>
+                                <option value="4">★★★★☆ (Baik)</option>
+                                <option value="3">★★★☆☆ (Cukup)</option>
+                                <option value="2">★★☆☆☆ (Kurang)</option>
+                                <option value="1">★☆☆☆☆ (Buruk)</option>
+                            </select>
                         </div>
-                        <div class="carousel-item">
-                            <div class="d-flex justify-content-center">
-                                <div class="card p-4 text-center" style="max-width: 700px;">
-                                    <div class="card-body">
-                                        <div class="stars mb-3">
-                                            ★★★★★
-                                        </div>
-                                        <p class="card-text fst-italic">"Ambil paket premium, cat mobil jadi kinclong banget. Staff-nya ramah dan profesional. Pasti akan kembali lagi bulan depan."</p>
-                                        <h5 class="mt-4 fw-bold">- Anita Wijaya</h5>
-                                        <p class="text-muted">Pengguna Paket Premium</p>
-                                    </div>
-                                </div>
-                            </div>
+                        <div class="mb-3">
+                            <label for="comment" class="form-label">Ulasan Anda</label>
+                            <textarea id="comment" class="form-control bg-dark text-white" rows="4" required placeholder="Ceritakan pengalaman Anda di sini..."></textarea>
                         </div>
-                        <div class="carousel-item">
-                            <div class="d-flex justify-content-center">
-                                 <div class="card p-4 text-center" style="max-width: 700px;">
-                                    <div class="card-body">
-                                        <div class="stars mb-3">
-                                            ★★★★☆
-                                        </div>
-                                        <p class="card-text fst-italic">"Untuk cuci cepat, hasilnya memuaskan dan harganya terjangkau. Sedikit antri tapi sepadan dengan hasilnya. Good job!"</p>
-                                        <h5 class="mt-4 fw-bold">- Rian Pratama</h5>
-                                        <p class="text-muted">Pengguna Cuci Cepat</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <button class="carousel-control-prev" type="button" data-bs-target="#customerReviewSlider" data-bs-slide="prev">
-                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                        <span class="visually-hidden">Previous</span>
-                    </button>
-                    <button class="carousel-control-next" type="button" data-bs-target="#customerReviewSlider" data-bs-slide="next">
-                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                        <span class="visually-hidden">Next</span>
-                    </button>
+                        <button type="submit" class="btn btn-primary">Kirim Ulasan</button>
+                    </form>
                 </div>
             </div>
         </section>
-
     </main>
+
+    <div class="modal fade" id="purchaseModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content bg-dark text-white">
+                <div class="modal-header">
+                    <h5 class="modal-title">Konfirmasi Pembelian</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Anda akan membeli paket: <strong id="package-name"></strong>.</p>
+                    <p>Silakan hubungi admin kami melalui WhatsApp untuk menyelesaikan pembayaran.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                    <a href="https://wa.me/6281234567890" target="_blank" class="btn btn-success"><i class="bi bi-whatsapp"></i> Hubungi Admin</a>
+                </div>
+            </div>
+        </div>
+    </div>
     
     <footer class="bg-dark text-white text-center py-4 mt-5">
         <div class="container">
             <p class="mb-0">&copy; 2025 AUTOHIDROLIK Carwash. All Rights Reserved.</p>
-            <p>Jalan Raya Mobil Bersih No. 123, Kota Anda</p>
         </div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="/js/main.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/index.js"></script>
+    <script>
+        // Script untuk efek scroll pada navbar
+        const nav = document.querySelector('.navbar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                nav.classList.add('navbar-scrolled');
+            } else {
+                nav.classList.remove('navbar-scrolled');
+            }
+        });
+
+        // Script untuk animasi fade-in saat scroll
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                }
+            });
+        }, {
+            threshold: 0.1
+        });
+
+        const sections = document.querySelectorAll('.fade-in-section');
+        sections.forEach(section => {
+            observer.observe(section);
+        });
+    </script>
 </body>
 </html>
