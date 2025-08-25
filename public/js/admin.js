@@ -187,41 +187,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// Buat fungsi untuk mengekspor data ke Excel
-function exportUsersToExcel(users) {
-    // Siapkan data untuk worksheet
-    const dataToExport = users.map(user => ({
-        ID: user._id,
-        Username: user.username,
-        Email: user.email,
-        'Nama Lengkap': user.fullName || '-',
-        'Nomor HP': user.phone || '-',
-        Alamat: user.address || '-',
-        Role: user.role,
-        // Buat data QR sebagai string JSON untuk dimasukkan ke Excel
-        'Data QR Code': JSON.stringify(user)
-    }));
+// Fungsi untuk menampilkan QR code pengguna di dalam modal
+function showUserQrCode(user) {
+    const modalElement = document.getElementById('viewUserQrModal');
+    const userQrModal = new bootstrap.Modal(modalElement);
 
-    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Pengguna');
+    const usernameSpan = document.getElementById('qr-username');
+    const qrContainer = document.getElementById('qr-code-container');
 
-    // Atur lebar kolom agar lebih mudah dibaca
-    worksheet['!cols'] = [
-        { wch: 25 }, // ID
-        { wch: 20 }, // Username
-        { wch: 30 }, // Email
-        { wch: 25 }, // Nama Lengkap
-        { wch: 20 }, // Nomor HP
-        { wch: 40 }, // Alamat
-        { wch: 10 }, // Role
-        { wch: 50 }  // Data QR Code
-    ];
+    // 1. Bersihkan QR code sebelumnya
+    qrContainer.innerHTML = '';
 
-    // Buat dan unduh file Excel
-    XLSX.writeFile(workbook, 'Data_Pengguna_AUTOHIDROLIK.xlsx');
+    // 2. Set username di judul modal
+    usernameSpan.textContent = user.username;
+
+    // 3. Buat QR Code baru dengan data lengkap user
+    new QRCode(qrContainer, {
+        text: JSON.stringify(user, null, 2),
+        width: 220,
+        height: 220,
+    });
+
+    // 4. Tampilkan modal
+    userQrModal.show();
 }
-
-    fetchUsers();
-    fetchReviews();
-});
