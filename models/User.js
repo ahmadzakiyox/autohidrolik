@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-// --- Skema untuk Keanggotaan ---
+// --- PENAMBAHAN BARU: Skema untuk Keanggotaan ---
 const MembershipSchema = new Schema({
     packageName: {
         type: String,
@@ -18,10 +18,6 @@ const MembershipSchema = new Schema({
     purchaseDate: {
         type: Date,
         default: Date.now
-    },
-    isPaid: {
-        type: Boolean,
-        default: false // Default-nya false saat paket dibeli
     }
 });
 
@@ -56,9 +52,10 @@ const UserSchema = new Schema({
         type: Boolean,
         default: true
     },
+    // --- PENAMBAHAN BARU: Field untuk menyimpan data membership ---
     membership: {
         type: MembershipSchema,
-        default: null
+        default: null // Default-nya null, artinya non-member
     },
     date: {
         type: Date,
