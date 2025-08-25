@@ -1,56 +1,79 @@
-// File: /js/login.js
-
-document.addEventListener('DOMContentLoaded', () => {
-    const loginForm = document.getElementById('login-form');
-    // Pastikan URL ini sesuai dengan server Render Anda
-    const API_URL = 'https://autohidrolik.com/api'; 
-
-    // Cek jika ada parameter ?verified=true di URL
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('verified') === 'true') {
-        const messageDiv = document.getElementById('verification-message');
-        if (messageDiv) {
-            messageDiv.textContent = 'Verifikasi email berhasil! Silakan login.';
-            messageDiv.style.display = 'block';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - AUTOHIDROLIK</title>
+    <link rel="icon" type="image/png" href="/images/log.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --container-bg: #161b22;
+            --input-bg: #1c2128;
+            --border-color: #3036d;
+            --text-primary: #c9d1d9;
+            --purple-accent: #a27bff;
+            --purple-hover: #c4a7ff;
         }
-    }
-
-    if (!loginForm) return;
-
-    loginForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-
-        try {
-            const response = await fetch(`${API_URL}/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password }),
-            });
-
-            const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(result.msg || 'Terjadi kesalahan');
-            }
-
-            // Simpan token dan role ke localStorage
-            localStorage.setItem('token', result.token);
-            localStorage.setItem('userRole', result.user.role);
-
-            alert('Login berhasil!');
-            
-            // Arahkan ke dashboard jika admin, jika tidak ke profil
-            if (result.user.role === 'admin') {
-                window.location.href = '/admin.html';
-            } else {
-                window.location.href = '/profile.html';
-            }
-
-        } catch (error) {
-            console.error('Error:', error);
-            alert(`Login gagal: ${error.message}`);
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: 'Poppins', sans-serif;
         }
-    });
-});
+        .login-container {
+            max-width: 450px;
+            margin: 5rem auto;
+            padding: 2.5rem;
+            background: var(--container-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+        .form-control {
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+        .form-control:focus {
+            background-color: var(--input-bg);
+            border-color: var(--purple-accent);
+            box-shadow: 0 0 0 0.25rem rgba(162, 123, 255, 0.25);
+        }
+        .btn-custom {
+            background-color: var(--purple-accent);
+            border-color: var(--purple-accent);
+            color: #fff;
+            padding: 0.75rem;
+        }
+        .btn-custom:hover {
+            background-color: var(--purple-hover);
+            border-color: var(--purple-hover);
+        }
+        a {
+            color: var(--purple-accent);
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="login-container">
+            <h2 class="text-center mb-4">Selamat Datang Kembali</h2>
+            <form id="login-form">
+                <div class="mb-3">
+                    <label for="email" class="form-label">Alamat Email</label>
+                    <input type="email" class="form-control" id="email" required>
+                </div>
+                <div class="mb-4">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="password" required>
+                </div>
+                <button type="submit" class="btn btn-custom w-100">Login</button>
+            </form>
+            <p class="mt-4 text-center">Belum punya akun? <a href="/register.html">Daftar di sini</a></p>
+        </div>
+    </div>
+    <script src="/js/login.js"></script>
+</body>
+</html>
