@@ -1,49 +1,84 @@
 // File: /js/admin.js
 
 document.addEventListener('DOMContentLoaded', () => {
-    const API_URL = 'https://autohidrolik.com/api'; // Ganti jika URL API Anda berbeda
+    // API_URL diambil dari config.js
     const token = localStorage.getItem('token');
     const userRole = localStorage.getItem('userRole');
-    const tableBody = document.getElementById('user-table-body');
+    
+    const userTableBody = document.getElementById('user-table-body');
+    const reviewTableBody = document.getElementById('review-table-body');
 
-    const addUserForm = document.getElementById('add-user-form');
-    const editUserForm = document.getElementById('edit-user-form');
+    // Modals
     const addUserModal = new bootstrap.Modal(document.getElementById('addUserModal'));
     const editUserModal = new bootstrap.Modal(document.getElementById('editUserModal'));
+    const editReviewModal = new bootstrap.Modal(document.getElementById('editReviewModal'));
 
-    // --- Fungsi Utama: Ambil dan Tampilkan Semua Pengguna ---
+    // Forms
+    const addUserForm = document.getElementById('add-user-form');
+    const editUserForm = document.getElementById('edit-user-form');
+    const editReviewForm = document.getElementById('edit-review-form');
+
+    // --- Keamanan: Cek apakah pengguna adalah admin ---
+    if (!token || userRole !== 'admin') {
+        alert('Akses ditolak. Anda bukan admin.');
+        window.location.href = '/login.html';
+        return;
+    }
+
+    // --- Fungsi Fetch Data ---
     const fetchUsers = async () => {
         try {
-            const response = await fetch(`${API_URL}/users`, {
-                headers: { 'x-auth-token': token }
-            });
+            const response = await fetch(`${API_URL}/users`, { headers: { 'x-auth-token': token } });
             if (!response.ok) throw new Error('Gagal mengambil data pengguna');
-            
             const users = await response.json();
-            tableBody.innerHTML = ''; // Kosongkan tabel sebelum diisi
+            userTableBody.innerHTML = '';
             users.forEach(user => {
                 const row = `
                     <tr>
                         <td>${user.username}</td>
                         <td>${user.email}</td>
-                        <td>${user.fullName || '-'}</td>
                         <td><span class="badge bg-${user.role === 'admin' ? 'success' : 'secondary'}">${user.role}</span></td>
-                        <td>${new Date(user.date).toLocaleDateString()}</td>
                         <td>
-                            <button class="btn btn-sm btn-warning edit-btn" data-id="${user._id}" data-bs-toggle="modal" data-bs-target="#editUserModal"><i class="bi bi-pencil-square"></i></button>
-                            <button class="btn btn-sm btn-danger delete-btn" data-id="${user._id}"><i class="bi bi-trash3"></i></button>
+                            <button class="btn btn-sm btn-warning edit-user-btn" data-id="${user._id}" data-username="${user.username}" data-email="${user.email}" data-role="${user.role}"><i class="bi bi-pencil-square"></i></button>
+                            <button class="btn btn-sm btn-danger delete-user-btn" data-id="${user._id}"><i class="bi bi-trash3"></i></button>
                         </td>
                     </tr>
                 `;
-                tableBody.insertAdjacentHTML('beforeend', row);
+                userTableBody.insertAdjacentHTML('beforeend', row);
             });
         } catch (error) {
-            console.error('Error:', error);
             alert(error.message);
         }
     };
 
-    // --- Event Listener untuk Form Tambah Pengguna ---
+    const renderStars = (rating) => Array(5).fill(0).map((_, i) => `<i class="bi ${i < rating ? 'bi-star-fill text-warning' : 'bi-star'}"></i>`).join('');
+
+    const fetchReviews = async () => {
+        try {
+            const response = await fetch(`${API_URL}/reviews/all`, { headers: { 'x-auth-token': token } });
+            if (!response.ok) throw new Error('Gagal mengambil data ulasan');
+            const reviews = await response.json();
+            reviewTableBody.innerHTML = '';
+            reviews.forEach(review => {
+                const row = `
+                    <tr>
+                        <td>${review.username}</td>
+                        <td>${renderStars(review.rating)}</td>
+                        <td>${review.comment}</td>
+                        <td>
+                            <button class="btn btn-sm btn-warning edit-review-btn" data-id="${review._id}" data-rating="${review.rating}" data-comment="${review.comment}"><i class="bi bi-pencil-square"></i></button>
+                            <button class="btn btn-sm btn-danger delete-review-btn" data-id="${review._id}"><i class="bi bi-trash3"></i></button>
+                        </td>
+                    </tr>
+                `;
+                reviewTableBody.insertAdjacentHTML('beforeend', row);
+            });
+        } catch (error) {
+            alert(error.message);
+        }
+    };
+
+    // --- Event Listeners untuk Form Submissions ---
     addUserForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const newUser = {
@@ -55,10 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const response = await fetch(`${API_URL}/users`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-auth-token': token
-                },
+                headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
                 body: JSON.stringify(newUser)
             });
             if (!response.ok) {
@@ -66,13 +98,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error(err.msg || 'Gagal menambah user');
             }
             addUserModal.hide();
-            fetchUsers(); // Muat ulang data tabel
+            fetchUsers();
         } catch (error) {
             alert(error.message);
         }
     });
 
-    // --- Event Listener untuk Form Edit Pengguna ---
     editUserForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const id = document.getElementById('edit-user-id').value;
@@ -84,62 +115,69 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const response = await fetch(`${API_URL}/users/${id}`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-auth-token': token
-                },
+                headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
                 body: JSON.stringify(updatedUser)
             });
             if (!response.ok) throw new Error('Gagal mengupdate user');
             editUserModal.hide();
-            fetchUsers(); // Muat ulang data tabel
+            fetchUsers();
         } catch (error) {
             alert(error.message);
         }
     });
 
-    // --- Event Delegation untuk Tombol Edit dan Delete ---
-    tableBody.addEventListener('click', (e) => {
+    editReviewForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('edit-review-id').value;
+        const updatedReview = {
+            rating: document.getElementById('edit-rating').value,
+            comment: document.getElementById('edit-comment').value,
+        };
+        try {
+            const response = await fetch(`${API_URL}/reviews/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+                body: JSON.stringify(updatedReview)
+            });
+            if (!response.ok) throw new Error('Gagal mengupdate ulasan');
+            editReviewModal.hide();
+            fetchReviews();
+        } catch (error) {
+            alert(error.message);
+        }
+    });
+
+    // --- Event Delegation untuk Tombol di Tabel ---
+    document.querySelector('main').addEventListener('click', (e) => {
         const target = e.target.closest('button');
         if (!target) return;
-
         const id = target.dataset.id;
 
-        // Jika tombol Edit diklik
-        if (target.classList.contains('edit-btn')) {
-            const row = target.closest('tr');
-            const username = row.cells[0].innerText;
-            const email = row.cells[1].innerText;
-            const role = row.cells[3].innerText;
-            
+        if (target.classList.contains('edit-user-btn')) {
             document.getElementById('edit-user-id').value = id;
-            document.getElementById('edit-username').value = username;
-            document.getElementById('edit-email').value = email;
-            document.getElementById('edit-role').value = role;
+            document.getElementById('edit-username').value = target.dataset.username;
+            document.getElementById('edit-email').value = target.dataset.email;
+            document.getElementById('edit-role').value = target.dataset.role;
+            editUserModal.show();
         }
-
-        // Jika tombol Delete diklik
-        if (target.classList.contains('delete-btn')) {
-            if (confirm('Apakah Anda yakin ingin menghapus pengguna ini?')) {
-                deleteUser(id);
+        if (target.classList.contains('delete-user-btn')) {
+            if (confirm('Yakin ingin menghapus pengguna ini?')) {
+                fetch(`${API_URL}/users/${id}`, { method: 'DELETE', headers: { 'x-auth-token': token } }).then(fetchUsers);
+            }
+        }
+        if (target.classList.contains('edit-review-btn')) {
+            document.getElementById('edit-review-id').value = id;
+            document.getElementById('edit-rating').value = target.dataset.rating;
+            document.getElementById('edit-comment').value = target.dataset.comment;
+            editReviewModal.show();
+        }
+        if (target.classList.contains('delete-review-btn')) {
+            if (confirm('Yakin ingin menghapus ulasan ini?')) {
+                fetch(`${API_URL}/reviews/${id}`, { method: 'DELETE', headers: { 'x-auth-token': token } }).then(fetchReviews);
             }
         }
     });
 
-    // --- Fungsi untuk Menghapus Pengguna ---
-    const deleteUser = async (id) => {
-        try {
-            const response = await fetch(`${API_URL}/users/${id}`, {
-                method: 'DELETE',
-                headers: { 'x-auth-token': token }
-            });
-            if (!response.ok) throw new Error('Gagal menghapus user');
-            fetchUsers(); // Muat ulang data tabel
-        } catch (error) {
-            alert(error.message);
-        }
-    };
-
-    // --- Panggil fungsi untuk memuat data saat halaman dibuka ---
     fetchUsers();
+    fetchReviews();
 });
