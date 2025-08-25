@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 // Skema untuk setiap kendaraan yang dimiliki pengguna
+// Meskipun tidak digunakan di form registrasi, ini bisa diisi nanti di halaman profil
 const VehicleSchema = new Schema({
     type: {
         type: String,
@@ -23,6 +24,7 @@ const UserSchema = new Schema({
     username: {
         type: String,
         required: true,
+        unique: true,
         trim: true
     },
     email: {
@@ -32,35 +34,29 @@ const UserSchema = new Schema({
         lowercase: true,
         trim: true
     },
+    phone: { // Nomor WhatsApp/HP
+        type: String,
+        required: true, // Dijadikan wajib sesuai form baru
+        trim: true
+    },
     password: {
         type: String,
         required: true
     },
     fullName: {
         type: String,
-        default: ''
-    },
-    phone: {
-        type: String,
-        default: ''
+        default: '' // Opsional, bisa diisi nanti
     },
     address: {
         type: String,
-        default: ''
+        default: '' // Opsional, bisa diisi nanti
     },
     role: {
         type: String,
         enum: ['user', 'admin'],
         default: 'user'
     },
-    isVerified: {
-        type: Boolean,
-        default: true
-    },
-    emailToken: { // Digunakan untuk verifikasi email jika diperlukan
-        type: String 
-    },
-    vehicles: [VehicleSchema], // Array yang berisi dokumen kendaraan
+    vehicles: [VehicleSchema], // Opsional, bisa diisi nanti
     date: {
         type: Date,
         default: Date.now
