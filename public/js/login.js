@@ -3,7 +3,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('login-form');
     // Pastikan URL ini sesuai dengan server Render Anda
-    const API_URL = 'https://autohidrolik.onrender.com/api'; 
+    const API_URL = 'https://autohidrolik.com/api'; 
 
     // Cek jika ada parameter ?verified=true di URL
     const params = new URLSearchParams(window.location.search);
