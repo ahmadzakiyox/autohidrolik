@@ -75,26 +75,37 @@ const adminAuth = async (req, res, next) => {
 // --- API ROUTES ---
 // ======================================================
 
-// (Rute /api/register dan /api/login Anda tetap di sini...)
+// --- REVISI DI SINI ---
+// Rute registrasi disederhanakan
 app.post('/api/register', async (req, res) => {
     try {
-        const { personalData, vehicles } = req.body;
-        let user = await User.findOne({ email: personalData.email });
-        if (user) return res.status(400).json({ msg: 'Email sudah terdaftar.' });
+        // Langsung ambil data dari req.body
+        const { username, email, phone, password } = req.body;
+
+        // Validasi dasar (bisa ditambahkan express-validator jika perlu)
+        if (!username || !email || !phone || !password) {
+            return res.status(400).json({ msg: 'Mohon isi semua field yang diperlukan.' });
+        }
+
+        let user = await User.findOne({ email: email });
+        if (user) {
+            return res.status(400).json({ msg: 'Email sudah terdaftar.' });
+        }
+
         const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(personalData.password, salt);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
         user = new User({
-            username: personalData.username,
-            email: personalData.email,
+            username,
+            email,
+            phone,
             password: hashedPassword,
-            fullName: personalData.fullName,
-            phone: personalData.phone,
-            address: personalData.address,
-            vehicles: vehicles,
-            isVerified: true
+            isVerified: true // Langsung set terverifikasi
         });
+
         await user.save();
         res.status(201).json({ msg: 'Pengguna berhasil didaftarkan!' });
+
     } catch (error) {
         console.error(error.message);
         res.status(500).send('Terjadi kesalahan pada server');
