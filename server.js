@@ -250,6 +250,46 @@ app.post('/api/reviews', auth, async (req, res) => {
     }
 });
 
+// GET: Mendapatkan SEMUA ulasan
+app.get('/api/reviews/all', auth, adminAuth, async (req, res) => {
+    try {
+        const reviews = await Review.find().sort({ date: -1 });
+        res.json(reviews);
+    } catch (err) {
+        res.status(500).send('Server error');
+    }
+});
+
+// PUT: Mengedit ulasan
+app.put('/api/reviews/:id', auth, adminAuth, async (req, res) => {
+    const { rating, comment } = req.body;
+    try {
+        let review = await Review.findByIdAndUpdate(
+            req.params.id,
+            { $set: { rating, comment } },
+            { new: true }
+        );
+        if (!review) return res.status(404).json({ msg: 'Ulasan tidak ditemukan' });
+        res.json(review);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
+});
+
+// DELETE: Menghapus ulasan
+app.delete('/api/reviews/:id', auth, adminAuth, async (req, res) => {
+    try {
+        const review = await Review.findById(req.params.id);
+        if (!review) return res.status(404).json({ msg: 'Ulasan tidak ditemukan' });
+        await review.deleteOne();
+        res.json({ msg: 'Ulasan berhasil dihapus' });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
+});
+
 
 
 // --- Jalankan Server ---
