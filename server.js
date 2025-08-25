@@ -242,25 +242,63 @@ app.delete('/api/reviews/:id', auth, adminAuth, async (req, res) => {
     }
 });
 
-// --- PENAMBAHAN BARU: Rute untuk konfirmasi pembayaran oleh admin ---
+// Rute untuk membeli paket membership
+app.post('/api/purchase-membership', auth, async (req, res) => {
+    const { packageName, totalWashes } = req.body;
+    if (!packageName || !totalWashes) {
+        return res.status(400).json({ msg: 'Detail paket tidak lengkap.' });
+    }
+    try {
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ msg: 'Pengguna tidak ditemukan.' });
+        user.membership = {
+            packageName: packageName,
+            totalWashes: totalWashes,
+            remainingWashes: totalWashes,
+            isPaid: false // Set isPaid ke false saat pembelian
+        };
+        await user.save();
+        res.json({ msg: 'Pembelian paket member berhasil! Menunggu konfirmasi pembayaran dari admin.', user });
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).send('Server error');
+    }
+});
+
+// Rute untuk menggunakan jatah cuci (scan barcode)
+app.post('/api/use-wash', auth, adminAuth, async (req, res) => {
+    const { userId } = req.body;
+    try {
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).json({ msg: 'Pengguna tidak ditemukan.' });
+        if (!user.membership || !user.membership.isPaid) {
+            return res.status(400).json({ msg: 'Paket member pengguna ini belum lunas.' });
+        }
+        if (user.membership.remainingWashes <= 0) {
+            return res.status(400).json({ msg: 'Jatah cuci pengguna ini sudah habis.' });
+        }
+        user.membership.remainingWashes -= 1;
+        await user.save();
+        res.json({ 
+            msg: `Berhasil menggunakan 1 jatah cuci untuk ${user.username}.`,
+            remaining: user.membership.remainingWashes 
+        });
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).send('Server error');
+    }
+});
+
+// Rute untuk admin mengonfirmasi pembayaran
 app.post('/api/confirm-payment/:userId', auth, adminAuth, async (req, res) => {
     try {
         const user = await User.findById(req.params.userId);
-
-        if (!user) {
-            return res.status(404).json({ msg: 'Pengguna tidak ditemukan.' });
+        if (!user || !user.membership) {
+            return res.status(404).json({ msg: 'Data member tidak ditemukan.' });
         }
-
-        if (!user.membership) {
-            return res.status(400).json({ msg: 'Pengguna ini bukan member.' });
-        }
-
-        // Ubah status pembayaran menjadi true
         user.membership.isPaid = true;
         await user.save();
-
-        res.json({ msg: 'Pembayaran berhasil dikonfirmasi.', user });
-
+        res.json({ msg: `Pembayaran untuk ${user.username} telah dikonfirmasi.`, user });
     } catch (error) {
         console.error(error.message);
         res.status(500).send('Server error');
