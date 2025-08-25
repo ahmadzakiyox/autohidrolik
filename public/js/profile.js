@@ -2,7 +2,7 @@
 
 document.addEventListener('DOMContentLoaded', () => {
     // Ganti URL ini dengan URL API backend Anda yang sebenarnya
-    const API_URL = 'http://localhost:3000'; 
+    const API_URL = 'https://autohidrolik.com'; 
     const token = localStorage.getItem('token');
 
     const profileLoading = document.getElementById('profile-loading');
