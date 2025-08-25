@@ -1,7 +1,7 @@
 // File: /js/profile.js
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Ganti URL ini dengan URL API backend Anda yang sebenarnya
+    // Pastikan URL API ini sesuai dengan alamat backend Anda
     const API_URL = 'https://autohidrolik.com'; 
     const token = localStorage.getItem('token');
 
@@ -45,16 +45,22 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('profile-email').textContent = user.email || '-';
         document.getElementById('profile-phone').textContent = user.phone || '-';
 
-        if (user.username) {
-            JsBarcode("#barcode-container", user.username, {
+        // --- REVISI DI SINI ---
+        // Membuat data gabungan untuk barcode
+        if (user.username && user.email && user.phone) {
+            // Gabungkan username, email, dan nomor hp menjadi satu string
+            const barcodeData = `${user.username};${user.email};${user.phone}`;
+            
+            JsBarcode("#barcode-container", barcodeData, {
                 format: "CODE128",
                 lineColor: "#000",
-                width: 2,
+                width: 1.5, // Sedikit diperkecil agar muat
                 height: 80,
-                displayValue: true 
+                displayValue: false // Teks tidak ditampilkan agar barcode lebih bersih
             });
         }
 
+        // Tampilkan konten setelah semua data dimuat
         if (profileLoading) profileLoading.classList.add('d-none');
         if (profileContent) profileContent.classList.remove('d-none');
     };
