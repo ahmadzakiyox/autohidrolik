@@ -8,78 +8,23 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css">
     <style>
-        /* --- TEMA GITHUB DARK PURPLE --- */
-        body {
-            background-color: #0d1117;
-            color: #c9d1d9;
-            font-family: 'Poppins', sans-serif;
-        }
-        .navbar {
-            background-color: #161b22 !important;
-            border-bottom: 1px solid #30363d;
-        }
-        .navbar-brand {
-            color: #c9d1d9;
-            font-weight: bold;
-        }
-        .navbar-brand:hover {
-            color: #f0f6fc;
-        }
-        .nav-link {
-            color: #8b949e;
-            transition: color 0.3s ease;
-        }
-        .nav-link:hover {
-            color: #c9d1d9;
-        }
-        .navbar-toggler-icon {
-            filter: invert(1);
-        }
-        .card {
-            background-color: #161b22;
-            border: 1px solid #30363d;
-            border-radius: 8px;
-        }
-        .card .card-header {
-            background-color: #161b22;
-            border-bottom: 1px solid #30363d;
-        }
-        .card .card-title, h1, h2, h4, h5, h6 {
-            color: #f0f6fc;
-        }
-        .list-group-item {
-            background-color: transparent;
-            border-color: #30363d;
-            color: #c9d1d9;
+        body { background-color: #f4f7f6; }
+        .profile-container {
+            max-width: 900px;
+            margin: 2rem auto;
         }
         #qrcode-container {
             padding: 1rem;
-            background: #fff; /* White background for scannability */
+            background: #fff;
             border-radius: 8px;
             display: flex;
             justify-content: center;
             align-items: center;
-            border: 1px solid #30363d;
         }
-        .btn-secondary {
-            background-color: #30363d;
-            border-color: #30363d;
-            color: #c9d1d9;
+        #qrcode-container canvas {
+            max-width: 100%;
         }
-        .btn-secondary:hover {
-            background-color: #444c56;
-            border-color: #444c56;
-            color: #f0f6fc;
-        }
-        a {
-            color: #c9d1d9;
-            text-decoration: none;
-        }
-        .vehicle-entry {
-            background-color: #1c2128;
-            border: 1px solid #30363d !important;
-            border-radius: 8px;
-        }
+        
     </style>
 </head>
 
