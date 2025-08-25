@@ -1,7 +1,7 @@
 // File: /js/register.js (REVISED)
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Pastikan API_URL sudah didefinisikan di file config.js atau di sini
+    // Pastikan API_URL didefinisikan di file config.js atau di sini
     const API_URL = 'https://autohidrolik.com/api'; 
     const registerForm = document.getElementById('register-form');
 
