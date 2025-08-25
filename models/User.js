@@ -19,52 +19,26 @@ const MembershipSchema = new Schema({
         type: Date,
         default: Date.now
     },
+    // Field baru untuk melacak status pembayaran
     isPaid: {
         type: Boolean,
-        default: false // Status pembayaran, default-nya false
+        default: false 
     }
 });
 
 // Skema Utama Pengguna
 const UserSchema = new Schema({
-    username: {
-        type: String,
-        required: true,
-        trim: true
-    },
-    email: {
-        type: String,
-        required: true,
-        unique: true,
-        lowercase: true,
-        trim: true
-    },
-    password: {
-        type: String,
-        required: true
-    },
-    phone: {
-        type: String,
-        required: true,
-        trim: true
-    },
-    role: {
-        type: String,
-        enum: ['user', 'admin'],
-        default: 'user'
-    },
-    isVerified: {
-        type: Boolean,
-        default: true
-    },
+    username: { type: String, required: true, trim: true },
+    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+    password: { type: String, required: true },
+    phone: { type: String, required: true, trim: true },
+    role: { type: String, enum: ['user', 'admin'], default: 'user' },
+    isVerified: { type: Boolean, default: true },
     membership: {
         type: MembershipSchema,
         default: null // Menjadi member jika field ini diisi
     },
-    date: {
-        type: Date,
-        default: Date.now
-    }
+    date: { type: Date, default: Date.now }
 });
 
 module.exports = mongoose.model('User', UserSchema);
