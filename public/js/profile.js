@@ -2,7 +2,7 @@
 
 document.addEventListener('DOMContentLoaded', () => {
     // Pastikan URL API ini sesuai dengan alamat backend Anda
-    const API_URL = 'https://autohidrolik.com'; 
+    const API_URL = 'http://localhost:3000'; 
     const token = localStorage.getItem('token');
 
     const profileLoading = document.getElementById('profile-loading');
@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    const fetchProfileData = async () => {
+const fetchProfileData = async () => {
         try {
             const response = await fetch(`${API_URL}/api/profile`, {
                 headers: { 'x-auth-token': token }
