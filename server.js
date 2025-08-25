@@ -15,7 +15,7 @@ const User = require('./models/User');
 const Review = require('./models/Review'); // Pastikan model Review diimpor
 
 // --- Middleware ---
-const whitelist = ['https://autohidrolik.com', 'https://www.autohidrolik.com'];
+const whitelist = ['http://localhost:3000', 'https://www.autohidrolik.com'];
 const corsOptions = {
   origin: function (origin, callback) {
     if (whitelist.indexOf(origin) !== -1 || !origin) {
@@ -147,14 +147,25 @@ app.get('/api/users', auth, adminAuth, async (req, res) => {
     }
 });
 
+// POST: Menambah pengguna baru (Hanya Admin)
 app.post('/api/users', auth, adminAuth, async (req, res) => {
-    const { username, email, password, role } = req.body;
+    // --- PERBAIKAN DI SINI: Tambahkan 'phone' ---
+    const { username, email, phone, password, role } = req.body;
     try {
         let user = await User.findOne({ email });
         if (user) return res.status(400).json({ msg: 'Email sudah ada' });
+
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
-        user = new User({ username, email, password: hashedPassword, role, isVerified: true });
+
+        user = new User({
+            username,
+            email,
+            phone, // <-- Tambahkan field ini
+            password: hashedPassword,
+            role,
+            isVerified: true
+        });
         await user.save();
         res.status(201).json(user);
     } catch (err) {
@@ -251,16 +262,16 @@ app.post('/api/purchase-membership', auth, async (req, res) => {
     try {
         const user = await User.findById(req.user.id);
         if (!user) return res.status(404).json({ msg: 'Pengguna tidak ditemukan.' });
+        
         user.membership = {
             packageName: packageName,
             totalWashes: totalWashes,
             remainingWashes: totalWashes,
-            isPaid: false // Set isPaid ke false saat pembelian
+            isPaid: false // Diatur ke false, menunggu konfirmasi admin
         };
         await user.save();
-        res.json({ msg: 'Pembelian paket member berhasil! Menunggu konfirmasi pembayaran dari admin.', user });
+        res.json({ msg: 'Pembelian paket berhasil! Menunggu konfirmasi pembayaran dari admin.', user });
     } catch (error) {
-        console.error(error.message);
         res.status(500).send('Server error');
     }
 });
@@ -271,7 +282,8 @@ app.post('/api/use-wash', auth, adminAuth, async (req, res) => {
     try {
         const user = await User.findById(userId);
         if (!user) return res.status(404).json({ msg: 'Pengguna tidak ditemukan.' });
-        if (!user.membership || !user.membership.isPaid) {
+        if (!user.membership) return res.status(400).json({ msg: 'Pengguna bukan member.' });
+        if (!user.membership.isPaid) {
             return res.status(400).json({ msg: 'Paket member pengguna ini belum lunas.' });
         }
         if (user.membership.remainingWashes <= 0) {
@@ -284,7 +296,6 @@ app.post('/api/use-wash', auth, adminAuth, async (req, res) => {
             remaining: user.membership.remainingWashes 
         });
     } catch (error) {
-        console.error(error.message);
         res.status(500).send('Server error');
     }
 });
@@ -300,7 +311,29 @@ app.post('/api/confirm-payment/:userId', auth, adminAuth, async (req, res) => {
         await user.save();
         res.json({ msg: `Pembayaran untuk ${user.username} telah dikonfirmasi.`, user });
     } catch (error) {
-        console.error(error.message);
+        res.status(500).send('Server error');
+    }
+});
+
+// Rute untuk admin mengatur/mengubah paket member
+app.post('/api/purchase-membership-admin/:userId', auth, adminAuth, async (req, res) => {
+    const { packageName, totalWashes } = req.body;
+    if (!packageName || !totalWashes) {
+        return res.status(400).json({ msg: 'Detail paket tidak lengkap.' });
+    }
+    try {
+        const user = await User.findById(req.params.userId);
+        if (!user) return res.status(404).json({ msg: 'Pengguna tidak ditemukan.' });
+        
+        user.membership = {
+            packageName: packageName,
+            totalWashes: totalWashes,
+            remainingWashes: totalWashes,
+            isPaid: false // Admin harus konfirmasi pembayaran secara manual setelah ini
+        };
+        await user.save();
+        res.json({ msg: `Paket untuk ${user.username} berhasil diatur.`, user });
+    } catch (error) {
         res.status(500).send('Server error');
     }
 });
@@ -324,6 +357,12 @@ app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
+// --- PENAMBAHAN BARU: Rute untuk halaman scanner ---
+app.get('/scan', (req, res) => {
+    // Pastikan halaman ini hanya bisa diakses setelah login sebagai admin
+    // Middleware 'auth' dan 'adminAuth' bisa ditambahkan di sini jika perlu
+    res.sendFile(path.join(__dirname, 'public', 'scan.html'));
+});
 
 // --- Jalankan Server ---
 const PORT = process.env.PORT || 3000;
