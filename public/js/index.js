@@ -2,7 +2,7 @@
 
 document.addEventListener('DOMContentLoaded', () => {
     // Pastikan URL API ini sesuai dengan alamat backend Anda
-    const API_URL = 'http://localhost:3000';
+    const API_URL = 'https://autohidrolik.com';
     const token = localStorage.getItem('token');
     const userRole = localStorage.getItem('userRole');
      
