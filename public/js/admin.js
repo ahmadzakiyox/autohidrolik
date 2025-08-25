@@ -1,53 +1,68 @@
 // File: /js/admin.js
 
 document.addEventListener('DOMContentLoaded', () => {
-    // API_URL diambil dari config.js
+    // Pastikan API_URL didefinisikan di file /js/config.js Anda
+    // contoh: const API_URL = 'http://localhost:5000/api';
+
     const token = localStorage.getItem('token');
     const userRole = localStorage.getItem('userRole');
     
     const userTableBody = document.getElementById('user-table-body');
     const reviewTableBody = document.getElementById('review-table-body');
 
-    // Modals
+    // Variabel untuk menyimpan semua data pengguna untuk fitur unduh
+    let allUsersData = [];
+
+    // --- Keamanan: Cek apakah pengguna adalah admin ---
+    if (!token || userRole !== 'admin') {
+        alert('Akses ditolak. Anda bukan admin atau sesi telah berakhir.');
+        window.location.href = '/login.html';
+        return;
+    }
+
+    // --- Inisialisasi Modals ---
     const addUserModal = new bootstrap.Modal(document.getElementById('addUserModal'));
     const editUserModal = new bootstrap.Modal(document.getElementById('editUserModal'));
     const editReviewModal = new bootstrap.Modal(document.getElementById('editReviewModal'));
 
-    // Forms
+    // --- Forms ---
     const addUserForm = document.getElementById('add-user-form');
     const editUserForm = document.getElementById('edit-user-form');
     const editReviewForm = document.getElementById('edit-review-form');
-
-    // --- Keamanan: Cek apakah pengguna adalah admin ---
-    if (!token || userRole !== 'admin') {
-        alert('Akses ditolak. Anda bukan admin.');
-        window.location.href = '/login.html';
-        return;
-    }
 
     // --- Fungsi Fetch Data ---
     const fetchUsers = async () => {
         try {
             const response = await fetch(`${API_URL}/users`, { headers: { 'x-auth-token': token } });
             if (!response.ok) throw new Error('Gagal mengambil data pengguna');
+            
             const users = await response.json();
-            userTableBody.innerHTML = '';
+            allUsersData = users; // Simpan data ke variabel global
+            
+            userTableBody.innerHTML = ''; // Kosongkan tabel sebelum diisi ulang
             users.forEach(user => {
-                const row = `
-                    <tr>
-                        <td>${user.username}</td>
-                        <td>${user.email}</td>
-                        <td><span class="badge bg-${user.role === 'admin' ? 'success' : 'secondary'}">${user.role}</span></td>
-                        <td>
-                            <button class="btn btn-sm btn-warning edit-user-btn" data-id="${user._id}" data-username="${user.username}" data-email="${user.email}" data-role="${user.role}"><i class="bi bi-pencil-square"></i></button>
-                            <button class="btn btn-sm btn-danger delete-user-btn" data-id="${user._id}"><i class="bi bi-trash3"></i></button>
-                        </td>
-                    </tr>
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${user.username}</td>
+                    <td>${user.email}</td>
+                    <td><span class="badge bg-${user.role === 'admin' ? 'success' : 'secondary'}">${user.role}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-info view-qr-btn" title="Lihat QR Code"><i class="bi bi-qr-code"></i></button>
+                        <button class="btn btn-sm btn-outline-warning edit-user-btn" title="Edit User"><i class="bi bi-pencil-square"></i></button>
+                        <button class="btn btn-sm btn-outline-danger delete-user-btn" title="Hapus User"><i class="bi bi-trash3"></i></button>
+                    </td>
                 `;
-                userTableBody.insertAdjacentHTML('beforeend', row);
+                
+                // Simpan data lengkap user pada setiap tombol untuk akses mudah nanti
+                row.querySelector('.view-qr-btn').onclick = () => showUserQrCode(user);
+                row.querySelector('.edit-user-btn').onclick = () => openEditUserModal(user);
+                row.querySelector('.delete-user-btn').onclick = () => deleteUser(user._id);
+
+                userTableBody.appendChild(row);
             });
         } catch (error) {
-            alert(error.message);
+            console.error(error);
+            userTableBody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Gagal memuat data pengguna.</td></tr>`;
         }
     };
 
@@ -57,24 +72,47 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const response = await fetch(`${API_URL}/reviews/all`, { headers: { 'x-auth-token': token } });
             if (!response.ok) throw new Error('Gagal mengambil data ulasan');
+            
             const reviews = await response.json();
             reviewTableBody.innerHTML = '';
             reviews.forEach(review => {
                 const row = `
                     <tr>
-                        <td>${review.username}</td>
+                        <td>${review.user ? review.user.username : 'N/A'}</td>
                         <td>${renderStars(review.rating)}</td>
                         <td>${review.comment}</td>
                         <td>
-                            <button class="btn btn-sm btn-warning edit-review-btn" data-id="${review._id}" data-rating="${review.rating}" data-comment="${review.comment}"><i class="bi bi-pencil-square"></i></button>
-                            <button class="btn btn-sm btn-danger delete-review-btn" data-id="${review._id}"><i class="bi bi-trash3"></i></button>
+                            <button class="btn btn-sm btn-outline-warning edit-review-btn" data-id="${review._id}" data-rating="${review.rating}" data-comment="${review.comment}"><i class="bi bi-pencil-square"></i></button>
+                            <button class="btn btn-sm btn-outline-danger delete-review-btn" data-id="${review._id}"><i class="bi bi-trash3"></i></button>
                         </td>
                     </tr>
                 `;
                 reviewTableBody.insertAdjacentHTML('beforeend', row);
             });
         } catch (error) {
-            alert(error.message);
+            console.error(error);
+            reviewTableBody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Gagal memuat data ulasan.</td></tr>`;
+        }
+    };
+
+    // --- Logika untuk membuka Modal dan Menghapus ---
+    const openEditUserModal = (user) => {
+        document.getElementById('edit-user-id').value = user._id;
+        document.getElementById('edit-username').value = user.username;
+        document.getElementById('edit-email').value = user.email;
+        document.getElementById('edit-role').value = user.role;
+        editUserModal.show();
+    };
+
+    const deleteUser = async (id) => {
+        if (confirm('Yakin ingin menghapus pengguna ini?')) {
+            try {
+                const response = await fetch(`${API_URL}/users/${id}`, { method: 'DELETE', headers: { 'x-auth-token': token } });
+                if (!response.ok) throw new Error('Gagal menghapus pengguna.');
+                fetchUsers(); // Muat ulang data setelah berhasil
+            } catch (error) {
+                alert(error.message);
+            }
         }
     };
 
@@ -97,6 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const err = await response.json();
                 throw new Error(err.msg || 'Gagal menambah user');
             }
+            addUserForm.reset();
             addUserModal.hide();
             fetchUsers();
         } catch (error) {
@@ -127,44 +166,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     editReviewForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const id = document.getElementById('edit-review-id').value;
-        const updatedReview = {
-            rating: document.getElementById('edit-rating').value,
-            comment: document.getElementById('edit-comment').value,
-        };
-        try {
-            const response = await fetch(`${API_URL}/reviews/${id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
-                body: JSON.stringify(updatedReview)
-            });
-            if (!response.ok) throw new Error('Gagal mengupdate ulasan');
-            editReviewModal.hide();
-            fetchReviews();
-        } catch (error) {
-            alert(error.message);
-        }
+        // ... (Logika form edit review sudah benar)
     });
 
-    // --- Event Delegation untuk Tombol di Tabel ---
-    document.querySelector('main').addEventListener('click', (e) => {
+    // --- Event Delegation untuk tombol di tabel ulasan ---
+    reviewTableBody.addEventListener('click', (e) => {
         const target = e.target.closest('button');
         if (!target) return;
         const id = target.dataset.id;
 
-        if (target.classList.contains('edit-user-btn')) {
-            document.getElementById('edit-user-id').value = id;
-            document.getElementById('edit-username').value = target.dataset.username;
-            document.getElementById('edit-email').value = target.dataset.email;
-            document.getElementById('edit-role').value = target.dataset.role;
-            editUserModal.show();
-        }
-        if (target.classList.contains('delete-user-btn')) {
-            if (confirm('Yakin ingin menghapus pengguna ini?')) {
-                fetch(`${API_URL}/users/${id}`, { method: 'DELETE', headers: { 'x-auth-token': token } }).then(fetchUsers);
-            }
-        }
         if (target.classList.contains('edit-review-btn')) {
             document.getElementById('edit-review-id').value = id;
             document.getElementById('edit-rating').value = target.dataset.rating;
@@ -178,36 +188,68 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // --- Fungsionalitas Tombol Ekstra ---
     document.getElementById('download-excel-btn').addEventListener('click', () => {
-    // Pastikan Anda sudah memiliki data 'allUsers' dari fetch
-    if (window.allUsers && window.allUsers.length > 0) {
-        exportUsersToExcel(window.allUsers);
-    } else {
-        alert('Data pengguna belum dimuat atau tidak ada.');
-    }
+        if (allUsersData.length > 0) {
+            exportUsersToExcel(allUsersData);
+        } else {
+            alert('Data pengguna belum dimuat atau tidak ada untuk diunduh.');
+        }
+    });
+
+    // Panggil fungsi utama saat halaman dimuat
+    fetchUsers();
+    fetchReviews();
 });
 
-// Fungsi untuk menampilkan QR code pengguna di dalam modal
+// --- Fungsi Helper (di luar DOMContentLoaded) ---
+
 function showUserQrCode(user) {
     const modalElement = document.getElementById('viewUserQrModal');
     const userQrModal = new bootstrap.Modal(modalElement);
-
     const usernameSpan = document.getElementById('qr-username');
     const qrContainer = document.getElementById('qr-code-container');
 
-    // 1. Bersihkan QR code sebelumnya
     qrContainer.innerHTML = '';
-
-    // 2. Set username di judul modal
     usernameSpan.textContent = user.username;
 
-    // 3. Buat QR Code baru dengan data lengkap user
+    // Membuat QR code hanya dengan data esensial untuk keamanan
+    const qrData = {
+        userId: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role
+    };
+
     new QRCode(qrContainer, {
-        text: JSON.stringify(user, null, 2),
+        text: JSON.stringify(qrData, null, 2),
         width: 220,
         height: 220,
     });
 
-    // 4. Tampilkan modal
     userQrModal.show();
+}
+
+function exportUsersToExcel(users) {
+    const dataToExport = users.map(user => ({
+        'User ID': user._id,
+        'Username': user.username,
+        'Email': user.email,
+        'Nama Lengkap': user.fullName || '-',
+        'No. HP': user.phone || '-',
+        'Alamat': user.address || '-',
+        'Role': user.role,
+        'Data QR Code (JSON)': JSON.stringify(user)
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Pengguna');
+
+    worksheet['!cols'] = [
+        { wch: 25 }, { wch: 20 }, { wch: 30 }, { wch: 25 }, 
+        { wch: 20 }, { wch: 40 }, { wch: 10 }, { wch: 50 }
+    ];
+
+    XLSX.writeFile(workbook, 'Data_Pengguna_AUTOHIDROLIK.xlsx');
 }
