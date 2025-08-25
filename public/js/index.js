@@ -51,6 +51,62 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+     // --- Logika Tombol "Beli Paket" ---
+    const purchaseModal = new bootstrap.Modal(document.getElementById('purchaseModal'));
+    document.querySelectorAll('.buy-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            if (!token) {
+                alert('Silakan login terlebih dahulu untuk membeli paket.');
+                window.location.href = '/login';
+                return;
+            }
+            const cardBody = button.closest('.card-body');
+            const packageName = cardBody.querySelector('.card-title').textContent.trim();
+            const packageText = cardBody.querySelector('.text-success').textContent;
+            
+            const washes = packageText.match(/\d+/g);
+            const totalWashes = washes ? washes.reduce((sum, val) => sum + parseInt(val), 0) : 0;
+
+            document.getElementById('package-name').textContent = packageName;
+            
+            const confirmButton = document.getElementById('confirm-purchase-btn');
+            confirmButton.dataset.packageName = packageName;
+            confirmButton.dataset.totalWashes = totalWashes;
+
+            purchaseModal.show();
+        });
+    });
+
+    // Event listener untuk tombol konfirmasi di dalam modal
+    const confirmButton = document.getElementById('confirm-purchase-btn');
+    if(confirmButton) {
+        confirmButton.addEventListener('click', async () => {
+            const packageName = confirmButton.dataset.packageName;
+            const totalWashes = parseInt(confirmButton.dataset.totalWashes);
+
+            try {
+                const response = await fetch(`${API_URL}/api/purchase-membership`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-auth-token': token
+                    },
+                    body: JSON.stringify({ packageName, totalWashes })
+                });
+
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.msg || 'Gagal membeli paket.');
+
+                alert(result.msg);
+                purchaseModal.hide();
+                window.location.href = '/profile';
+
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        });
+    }
+    
     // --- 2. LOGIKA UNTUK MENAMPILKAN ULASAN ---
     const fetchReviews = async () => {
         const reviewList = document.getElementById('review-list');
@@ -167,7 +223,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.fade-in-section').forEach(section => {
         observer.observe(section);
     });
-
+     
     // --- PANGGIL SEMUA FUNGSI INISIALISASI ---
     setupNavbar();
     fetchReviews();
