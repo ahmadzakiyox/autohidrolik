@@ -178,6 +178,50 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    document.getElementById('download-excel-btn').addEventListener('click', () => {
+    // Pastikan Anda sudah memiliki data 'allUsers' dari fetch
+    if (window.allUsers && window.allUsers.length > 0) {
+        exportUsersToExcel(window.allUsers);
+    } else {
+        alert('Data pengguna belum dimuat atau tidak ada.');
+    }
+});
+
+// Buat fungsi untuk mengekspor data ke Excel
+function exportUsersToExcel(users) {
+    // Siapkan data untuk worksheet
+    const dataToExport = users.map(user => ({
+        ID: user._id,
+        Username: user.username,
+        Email: user.email,
+        'Nama Lengkap': user.fullName || '-',
+        'Nomor HP': user.phone || '-',
+        Alamat: user.address || '-',
+        Role: user.role,
+        // Buat data QR sebagai string JSON untuk dimasukkan ke Excel
+        'Data QR Code': JSON.stringify(user)
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Pengguna');
+
+    // Atur lebar kolom agar lebih mudah dibaca
+    worksheet['!cols'] = [
+        { wch: 25 }, // ID
+        { wch: 20 }, // Username
+        { wch: 30 }, // Email
+        { wch: 25 }, // Nama Lengkap
+        { wch: 20 }, // Nomor HP
+        { wch: 40 }, // Alamat
+        { wch: 10 }, // Role
+        { wch: 50 }  // Data QR Code
+    ];
+
+    // Buat dan unduh file Excel
+    XLSX.writeFile(workbook, 'Data_Pengguna_AUTOHIDROLIK.xlsx');
+}
+
     fetchUsers();
     fetchReviews();
 });
