@@ -1,30 +1,30 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-// Skema untuk setiap kendaraan yang dimiliki pengguna
-// Meskipun tidak digunakan di form registrasi, ini bisa diisi nanti di halaman profil
-const VehicleSchema = new Schema({
-    type: {
+// --- PENAMBAHAN BARU: Skema untuk Keanggotaan ---
+const MembershipSchema = new Schema({
+    packageName: {
         type: String,
         required: true
     },
-    brand: {
-        type: String,
+    totalWashes: {
+        type: Number,
         required: true
     },
-    licensePlate: {
-        type: String,
-        required: true,
-        uppercase: true
+    remainingWashes: {
+        type: Number,
+        required: true
+    },
+    purchaseDate: {
+        type: Date,
+        default: Date.now
     }
 });
 
-// Skema utama untuk pengguna (User)
 const UserSchema = new Schema({
     username: {
         type: String,
         required: true,
-        unique: true,
         trim: true
     },
     email: {
@@ -34,29 +34,29 @@ const UserSchema = new Schema({
         lowercase: true,
         trim: true
     },
-    phone: { // Nomor WhatsApp/HP
-        type: String,
-        required: true, // Dijadikan wajib sesuai form baru
-        trim: true
-    },
     password: {
         type: String,
         required: true
     },
-    fullName: {
+    phone: {
         type: String,
-        default: '' // Opsional, bisa diisi nanti
-    },
-    address: {
-        type: String,
-        default: '' // Opsional, bisa diisi nanti
+        required: true,
+        trim: true
     },
     role: {
         type: String,
         enum: ['user', 'admin'],
         default: 'user'
     },
-    vehicles: [VehicleSchema], // Opsional, bisa diisi nanti
+    isVerified: {
+        type: Boolean,
+        default: true
+    },
+    // --- PENAMBAHAN BARU: Field untuk menyimpan data membership ---
+    membership: {
+        type: MembershipSchema,
+        default: null // Default-nya null, artinya non-member
+    },
     date: {
         type: Date,
         default: Date.now
