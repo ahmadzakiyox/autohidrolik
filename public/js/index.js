@@ -2,10 +2,80 @@
 
 document.addEventListener('DOMContentLoaded', () => {
     // Pastikan URL API ini sesuai dengan alamat backend Anda
-    const API_URL = 'https://autohidrolik.com';
+    const API_URL = 'http://localhost:3000';
     const token = localStorage.getItem('token');
     const userRole = localStorage.getItem('userRole');
+     
+        // --- REVISI UTAMA DI SINI ---
+    // Logika untuk Tombol "Beli Paket"
+    const purchaseModalElement = document.getElementById('purchaseModal');
+    if (purchaseModalElement) {
+        const purchaseModal = new bootstrap.Modal(purchaseModalElement);
+        
+        document.querySelectorAll('.buy-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                if (!token) {
+                    alert('Silakan login terlebih dahulu untuk membeli paket.');
+                    window.location.href = '/login';
+                    return;
+                }
+                
+                // Ambil data dari kartu yang diklik
+                const cardBody = button.closest('.card-body');
+                const packageName = cardBody.querySelector('.card-title').textContent.trim();
+                const packagePrice = cardBody.querySelector('.price-member').textContent.trim();
+                const packageText = cardBody.querySelector('.text-success').textContent;
+                
+                // Ekstrak total cucian dari teks (misal: "10x Cuci + FREE 2x" -> 12)
+                const washes = packageText.match(/\d+/g);
+                const totalWashes = washes ? washes.reduce((sum, val) => sum + parseInt(val), 0) : 0;
 
+                // Isi modal dengan informasi yang sesuai
+                document.getElementById('package-name').textContent = packageName;
+                document.getElementById('package-price').textContent = packagePrice;
+                
+                // Simpan data ke tombol "Yakin" untuk dikirim ke API
+                const confirmButton = document.getElementById('confirm-purchase-btn');
+                confirmButton.dataset.packageName = packageName;
+                confirmButton.dataset.totalWashes = totalWashes;
+
+                purchaseModal.show();
+            });
+        });
+
+        // Event listener untuk tombol "Yakin" di dalam modal
+        const confirmButton = document.getElementById('confirm-purchase-btn');
+        if(confirmButton) {
+            confirmButton.addEventListener('click', async () => {
+                const packageName = confirmButton.dataset.packageName;
+                const totalWashes = parseInt(confirmButton.dataset.totalWashes);
+
+                try {
+                    const response = await fetch(`${API_URL}/api/purchase-membership`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'x-auth-token': token
+                        },
+                        body: JSON.stringify({ packageName, totalWashes })
+                    });
+
+                    const result = await response.json();
+                    if (!response.ok) {
+                        throw new Error(result.msg || 'Gagal membeli paket.');
+                    }
+
+                    alert(result.msg);
+                    purchaseModal.hide();
+                    window.location.href = '/profile'; // Arahkan ke profil untuk lihat status
+
+                } catch (error) {
+                    alert(`Error: ${error.message}`);
+                }
+            });
+        }
+    }
+    
     // --- 1. LOGIKA UNTUK MENGATUR NAVBAR ---
     const setupNavbar = () => {
         const navLogin = document.getElementById('nav-login');
@@ -50,62 +120,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     };
-
-     // --- Logika Tombol "Beli Paket" ---
-    const purchaseModal = new bootstrap.Modal(document.getElementById('purchaseModal'));
-    document.querySelectorAll('.buy-btn').forEach(button => {
-        button.addEventListener('click', () => {
-            if (!token) {
-                alert('Silakan login terlebih dahulu untuk membeli paket.');
-                window.location.href = '/login';
-                return;
-            }
-            const cardBody = button.closest('.card-body');
-            const packageName = cardBody.querySelector('.card-title').textContent.trim();
-            const packageText = cardBody.querySelector('.text-success').textContent;
-            
-            const washes = packageText.match(/\d+/g);
-            const totalWashes = washes ? washes.reduce((sum, val) => sum + parseInt(val), 0) : 0;
-
-            document.getElementById('package-name').textContent = packageName;
-            
-            const confirmButton = document.getElementById('confirm-purchase-btn');
-            confirmButton.dataset.packageName = packageName;
-            confirmButton.dataset.totalWashes = totalWashes;
-
-            purchaseModal.show();
-        });
-    });
-
-    // Event listener untuk tombol konfirmasi di dalam modal
-    const confirmButton = document.getElementById('confirm-purchase-btn');
-    if(confirmButton) {
-        confirmButton.addEventListener('click', async () => {
-            const packageName = confirmButton.dataset.packageName;
-            const totalWashes = parseInt(confirmButton.dataset.totalWashes);
-
-            try {
-                const response = await fetch(`${API_URL}/api/purchase-membership`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'x-auth-token': token
-                    },
-                    body: JSON.stringify({ packageName, totalWashes })
-                });
-
-                const result = await response.json();
-                if (!response.ok) throw new Error(result.msg || 'Gagal membeli paket.');
-
-                alert(result.msg);
-                purchaseModal.hide();
-                window.location.href = '/profile';
-
-            } catch (error) {
-                alert(`Error: ${error.message}`);
-            }
-        });
-    }
     
     // --- 2. LOGIKA UNTUK MENAMPILKAN ULASAN ---
     const fetchReviews = async () => {
@@ -186,21 +200,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-
-    // --- 4. LOGIKA UNTUK TOMBOL "BELI PAKET" ---
-    const purchaseModal = new bootstrap.Modal(document.getElementById('purchaseModal'));
-    document.querySelectorAll('.buy-btn').forEach(button => {
-        button.addEventListener('click', () => {
-            if (!token) {
-                alert('Silakan login terlebih dahulu untuk membeli paket.');
-                window.location.href = '/login.html';
-                return;
-            }
-            const packageName = button.dataset.package;
-            document.getElementById('package-name').textContent = packageName;
-            purchaseModal.show();
-        });
-    });
 
     // --- 5. EFEK VISUAL (SCROLL & FADE-IN) ---
     const nav = document.querySelector('.navbar');
