@@ -1,8 +1,8 @@
-// File: /js/register.js (REVISED)
+// File: /js/register.js
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Pastikan API_URL didefinisikan di file config.js atau di sini
-    const API_URL = 'https://autohidrolik.com/api'; 
+    // Pastikan URL API ini sesuai dengan alamat backend Anda
+    const API_URL = 'http://localhost:3000'; 
     const registerForm = document.getElementById('register-form');
 
     registerForm.addEventListener('submit', async (e) => {
@@ -14,13 +14,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const password = document.getElementById('password').value;
         const confirmPassword = document.getElementById('confirm-password').value;
 
-        // Validasi password
         if (password !== confirmPassword) {
             alert('Password dan konfirmasi password tidak cocok!');
             return;
         }
 
-        // Siapkan data untuk dikirim ke backend
         const userData = {
             username,
             email,
@@ -29,8 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         try {
-            // Kirim data ke server
-            const response = await fetch(`${API_URL}/auth/register`, { // Pastikan endpoint API sudah benar
+            const response = await fetch(`${API_URL}/api/register`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -41,16 +38,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = await response.json();
 
             if (!response.ok) {
-                // Jika server memberikan pesan error (misal: email sudah terdaftar)
-                throw new Error(result.message || 'Terjadi kesalahan saat mendaftar.');
+                throw new Error(result.msg || 'Terjadi kesalahan saat mendaftar.');
             }
 
-            // Jika pendaftaran berhasil
             alert('Pendaftaran berhasil! Akun Anda telah dibuat. Silakan login.');
-            window.location.href = '/login.html'; // Arahkan ke halaman login
+            window.location.href = '/login.html';
 
         } catch (error) {
-            // Jika terjadi error koneksi atau error dari server
             console.error('Pendaftaran gagal:', error);
             alert(`Error: ${error.message}`);
         }
