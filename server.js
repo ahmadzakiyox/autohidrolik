@@ -3,7 +3,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const cors = require('cors'); // Pastikan cors sudah diimpor
+const cors = require('cors');
 require('dotenv').config();
 
 // --- Inisialisasi Aplikasi Express ---
@@ -11,19 +11,26 @@ const app = express();
 
 // --- Import Model ---
 const User = require('./models/User');
+const Review = require('./models/Review'); // Pastikan model Review diimpor
 
 // --- Middleware ---
 
 // --- PERBAIKAN UTAMA DI SINI ---
-// Konfigurasi CORS untuk mengizinkan domain frontend Anda
+// Konfigurasi CORS yang lebih fleksibel
+const whitelist = ['https://autohidrolik.com', 'https://www.autohidrolik.com'];
 const corsOptions = {
-  origin: 'https://autohidrolik.com', // Ganti dengan URL frontend Anda yang sebenarnya
+  origin: function (origin, callback) {
+    if (whitelist.indexOf(origin) !== -1 || !origin) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   optionsSuccessStatus: 200 
 };
 app.use(cors(corsOptions));
 // --- AKHIR PERBAIKAN ---
 
-// --- Middleware ---
 app.use(express.json());
 app.use(express.static('public'));
 
