@@ -1,7 +1,7 @@
 // File: /js/admin.js
 
 document.addEventListener('DOMContentLoaded', () => {
-    const API_URL = 'https://autohidrolik.com/'; // Sesuaikan dengan URL API Anda
+    const API_URL = 'https://autohidrolik.com'; // Sesuaikan dengan URL API Anda
     const token = localStorage.getItem('token');
     const userTableBody = document.getElementById('user-table-body');
     const memberCountElement = document.getElementById('member-count');
