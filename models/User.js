@@ -19,10 +19,9 @@ const MembershipSchema = new Schema({
         type: Date,
         default: Date.now
     },
-    // --- PENAMBAHAN BARU ---
     isPaid: {
         type: Boolean,
-        default: false // Default-nya false saat paket pertama kali dibeli
+        default: false // Default-nya false saat paket dibeli
     }
 });
 
