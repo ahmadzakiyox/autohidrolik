@@ -1,62 +1,62 @@
 // File: /js/auth.js
 
 document.addEventListener('DOMContentLoaded', () => {
-    checkLoginStatus();
-
-    const logoutBtn = document.getElementById('logout-btn');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            logout();
-        });
-    }
-});
-
-function checkLoginStatus() {
     const token = localStorage.getItem('token');
     const userRole = localStorage.getItem('userRole');
 
-    // Ambil semua elemen navigasi
+    // Ambil semua elemen menu dari navbar
+    const navLogin = document.getElementById('nav-login');
+    const navRegister = document.getElementById('nav-register');
+    
     const navOrder = document.getElementById('nav-order');
     const navProfile = document.getElementById('nav-profile');
     const navAdmin = document.getElementById('nav-admin');
-    const navLogin = document.getElementById('nav-login');
-    const navRegister = document.getElementById('nav-register');
     const navLogout = document.getElementById('nav-logout');
 
     if (token) {
-        // --- KONDISI SUDAH LOGIN ---
-        // Tampilkan menu untuk user yang sudah login
-        if (navOrder) navOrder.style.display = 'list-item';
-        if (navProfile) navProfile.style.display = 'list-item';
-        if (navLogout) navLogout.style.display = 'list-item';
+        // --- KONDISI JIKA PENGGUNA SUDAH LOGIN ---
 
-        // Sembunyikan menu untuk user yang belum login
+        // Sembunyikan tombol Login dan Register
         if (navLogin) navLogin.style.display = 'none';
         if (navRegister) navRegister.style.display = 'none';
 
-        // Tampilkan menu admin HANYA jika rolenya adalah 'admin'
+        // Tampilkan menu untuk pengguna yang sudah login
+        if (navOrder) navOrder.style.display = 'block';
+        if (navProfile) navProfile.style.display = 'block';
+        if (navLogout) navLogout.style.display = 'block';
+
+        // Tampilkan menu Admin HANYA jika rolenya adalah 'admin'
         if (userRole === 'admin' && navAdmin) {
-            navAdmin.style.display = 'list-item';
+            navAdmin.style.display = 'block';
         }
 
     } else {
-        // --- KONDISI BELUM LOGIN ---
-        // Sembunyikan menu untuk user yang sudah login
+        // --- KONDISI JIKA PENGGUNA BELUM LOGIN ---
+
+        // Tampilkan tombol Login dan Register
+        if (navLogin) navLogin.style.display = 'block';
+        if (navRegister) navRegister.style.display = 'block';
+
+        // Sembunyikan menu untuk pengguna yang sudah login
         if (navOrder) navOrder.style.display = 'none';
         if (navProfile) navProfile.style.display = 'none';
         if (navAdmin) navAdmin.style.display = 'none';
         if (navLogout) navLogout.style.display = 'none';
-
-        // Tampilkan menu untuk user yang belum login
-        if (navLogin) navLogin.style.display = 'list-item';
-        if (navRegister) navRegister.style.display = 'list-item';
     }
-}
 
-function logout() {
-    localStorage.removeItem('token');
-    localStorage.removeItem('userRole');
-    alert('Anda telah berhasil logout.');
-    window.location.href = '/login.html';
-}
+    // --- FUNGSI UNTUK LOGOUT ---
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault(); // Mencegah link berpindah halaman secara default
+            
+            // Hapus data sesi dari penyimpanan browser
+            localStorage.removeItem('token');
+            localStorage.removeItem('userRole');
+            
+            // Arahkan pengguna ke halaman login
+            alert('Anda telah berhasil logout.');
+            window.location.href = '/login.html';
+        });
+    }
+});
