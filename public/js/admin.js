@@ -5,6 +5,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('token');
     const userTableBody = document.getElementById('user-table-body');
     const memberCountElement = document.getElementById('member-count');
+    const reviewTableBody = document.getElementById('review-table-body'); // Tambahkan ini
+    const editReviewModal = new bootstrap.Modal(document.getElementById('editReviewModal')); // Tambahkan ini
 
     // Inisialisasi semua modal
     const addUserModal = new bootstrap.Modal(document.getElementById('addUserModal'));
@@ -246,7 +248,88 @@ document.addEventListener('DOMContentLoaded', () => {
             alert(error.message); 
         }
     });
+
+      // --- PENAMBAHAN BARU: Fungsi untuk mengambil dan menampilkan ulasan ---
+    const fetchReviews = async () => {
+        try {
+            const response = await fetch(`${API_URL}/api/reviews/all`, {
+                headers: { 'x-auth-token': token }
+            });
+            if (!response.ok) throw new Error('Gagal mengambil data ulasan.');
+            
+            const reviews = await response.json();
+            displayReviews(reviews);
+        } catch (error) {
+            console.error(error);
+            reviewTableBody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Gagal memuat ulasan.</td></tr>`;
+        }
+    };
+
+    const displayReviews = (reviews) => {
+        reviewTableBody.innerHTML = '';
+        reviews.forEach(review => {
+            const row = document.createElement('tr');
+            const stars = '★'.repeat(review.rating) + '☆'.repeat(5 - review.rating);
+            row.innerHTML = `
+                <td>${review.username || 'N/A'}</td>
+                <td class="text-warning">${stars}</td>
+                <td>${review.comment}</td>
+                <td>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-warning edit-review-btn"><i class="bi bi-pencil-square"></i></button>
+                        <button class="btn btn-sm btn-outline-danger delete-review-btn"><i class="bi bi-trash3"></i></button>
+                    </div>
+                </td>
+            `;
+
+            row.querySelector('.edit-review-btn').addEventListener('click', () => openEditReviewModal(review));
+            row.querySelector('.delete-review-btn').addEventListener('click', () => deleteReview(review._id));
+
+            reviewTableBody.appendChild(row);
+        });
+    };
+
+    // --- PENAMBAHAN BARU: Logika untuk modal dan aksi ulasan ---
+    const openEditReviewModal = (review) => {
+        document.getElementById('edit-review-id').value = review._id;
+        document.getElementById('edit-rating').value = review.rating;
+        document.getElementById('edit-comment').value = review.comment;
+        editReviewModal.show();
+    };
+
+    document.getElementById('edit-review-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const reviewId = document.getElementById('edit-review-id').value;
+        const updatedData = {
+            rating: document.getElementById('edit-rating').value,
+            comment: document.getElementById('edit-comment').value,
+        };
+        try {
+            const response = await fetch(`${API_URL}/api/reviews/${reviewId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+                body: JSON.stringify(updatedData)
+            });
+            if (!response.ok) throw new Error('Gagal mengupdate ulasan.');
+            editReviewModal.hide();
+            fetchReviews();
+        } catch (error) { alert(error.message); }
+    });
+
+    const deleteReview = async (reviewId) => {
+        if (confirm('Anda yakin ingin menghapus ulasan ini?')) {
+            try {
+                const response = await fetch(`${API_URL}/api/reviews/${reviewId}`, {
+                    method: 'DELETE',
+                    headers: { 'x-auth-token': token }
+                });
+                if (!response.ok) throw new Error('Gagal menghapus ulasan.');
+                fetchReviews();
+            } catch (error) { alert(error.message); }
+        }
+    };
     
     // Panggil fungsi utama
     fetchUsers();
+    fetchReviews(); // Tambahkan ini
 });
