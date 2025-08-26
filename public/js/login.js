@@ -1,8 +1,7 @@
 // File: /js/login.js
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Pastikan URL API ini sesuai dengan alamat backend Anda
-    const API_URL = 'https://autohidrolik.com';
+    const API_URL = 'https://autohidrolik.com'; // Sesuaikan dengan URL API Anda
     const loginForm = document.getElementById('login-form');
 
     loginForm.addEventListener('submit', async (e) => {
@@ -26,7 +25,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error(data.msg || 'Login gagal!');
             }
 
-            // Simpan token dan role ke Local Storage
+            // --- PERBAIKAN DI SINI ---
+            // Simpan token DAN role ke Local Storage
             localStorage.setItem('token', data.token);
             localStorage.setItem('userRole', data.user.role);
 
@@ -34,9 +34,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Arahkan ke halaman yang sesuai berdasarkan role
             if (data.user.role === 'admin') {
-                window.location.href = '/admin.html';
+                window.location.href = '/admin';
             } else {
-                window.location.href = '/profile.html';
+                window.location.href = '/profile';
             }
 
         } catch (error) {
