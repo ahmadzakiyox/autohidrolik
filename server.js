@@ -86,17 +86,28 @@ app.post('/api/register', async (req, res) => {
     }
 });
 
-// Rute Login
+// Rute Login (Diperbaiki)
 app.post('/api/login', async (req, res) => {
     const { email, password } = req.body;
     try {
         let user = await User.findOne({ email });
         if (!user) return res.status(400).json({ msg: 'Kredensial tidak valid' });
+        
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.status(400).json({ msg: 'Kredensial tidak valid' });
-        const payload = { user: { id: user.id, role: user.role } };
+        
+        // --- PERBAIKAN DI SINI ---
+        // Sertakan 'role' di dalam payload token
+        const payload = { 
+            user: { 
+                id: user.id,
+                role: user.role // Tambahkan baris ini
+            } 
+        };
+
         jwt.sign(payload, process.env.JWT_SECRET || 'your_super_secret_key', { expiresIn: '5h' }, (err, token) => {
             if (err) throw err;
+            // Kirim juga 'role' di dalam respons JSON
             res.json({ token, user: { role: user.role } });
         });
     } catch (err) {
@@ -104,7 +115,6 @@ app.post('/api/login', async (req, res) => {
         res.status(500).send('Server error');
     }
 });
-
 // Rute Profil (GET)
 app.get('/api/profile', auth, async (req, res) => {
     try {
