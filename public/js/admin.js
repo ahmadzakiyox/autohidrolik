@@ -11,8 +11,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const editUserModal = new bootstrap.Modal(document.getElementById('editUserModal'));
     const viewBarcodeModal = new bootstrap.Modal(document.getElementById('viewBarcodeModal'));
     const setPackageModal = new bootstrap.Modal(document.getElementById('setPackageModal'));
+    const userRole = localStorage.getItem('userRole'); // Mengambil role dari localStorage
 
-   if (!token) {
+    // Pengecekan ini akan mencegah non-admin mengakses halaman
+    if (!token || userRole !== 'admin') {
+        alert('Akses ditolak. Anda bukan admin.');
         window.location.href = '/login';
         return;
     }
