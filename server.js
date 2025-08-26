@@ -221,7 +221,21 @@ app.get('/api/reviews', async (req, res) => {
 app.post('/api/reviews', auth, async (req, res) => {
     const { rating, comment } = req.body;
     try {
-        const newReview = new Review({ rating, comment, user: req.user.id });
+        // --- PERBAIKAN DI SINI ---
+        // 1. Cari pengguna yang sedang login untuk mendapatkan username-nya
+        const user = await User.findById(req.user.id);
+        if (!user) {
+            return res.status(404).json({ msg: 'Pengguna tidak ditemukan.' });
+        }
+
+        // 2. Sertakan username saat membuat ulasan baru
+        const newReview = new Review({
+            rating,
+            comment,
+            user: req.user.id,
+            username: user.username // <-- Tambahkan baris ini
+        });
+
         const review = await newReview.save();
         res.status(201).json(review);
     } catch (err) {
