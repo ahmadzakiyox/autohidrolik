@@ -1,80 +1,66 @@
-// File: /js/admin.js
-
 document.addEventListener('DOMContentLoaded', () => {
-    const API_URL = 'https://autohidrolik.com'; // Sesuaikan dengan URL API Anda
+    const API_URL = 'https://autohidrolik.com';
     const token = localStorage.getItem('token');
-    const userTableBody = document.getElementById('user-table-body');
-    const memberCountElement = document.getElementById('member-count');
-    const reviewTableBody = document.getElementById('review-table-body'); // Tambahkan ini
-    const editReviewModal = new bootstrap.Modal(document.getElementById('editReviewModal')); // Tambahkan ini
+    
+    if (!token) {
+        window.location.href = '/login';
+        return;
+    }
 
     // Inisialisasi semua modal
     const addUserModal = new bootstrap.Modal(document.getElementById('addUserModal'));
     const editUserModal = new bootstrap.Modal(document.getElementById('editUserModal'));
     const viewBarcodeModal = new bootstrap.Modal(document.getElementById('viewBarcodeModal'));
     const setPackageModal = new bootstrap.Modal(document.getElementById('setPackageModal'));
-    const userRole = localStorage.getItem('userRole'); // Mengambil role dari localStorage
+    const editReviewModal = new bootstrap.Modal(document.getElementById('editReviewModal'));
 
-    // Pengecekan ini akan mencegah non-admin mengakses halaman
-    if (!token || userRole !== 'admin') {
-        alert('Akses ditolak. Anda bukan admin.');
-        window.location.href = '/login';
-        return;
-    }
+    // --- FUNGSI UNTUK PENGGUNA (USERS) ---
+    const userTableBody = document.getElementById('user-table-body');
+    const memberCountElement = document.getElementById('member-count');
 
     const fetchUsers = async () => {
         try {
-            const response = await fetch(`${API_URL}/api/users`, {
-                headers: { 'x-auth-token': token }
-            });
+            const response = await fetch(`${API_URL}/api/users`, { headers: { 'x-auth-token': token } });
             if (!response.ok) throw new Error('Gagal mengambil data pengguna.');
-            
             const users = await response.json();
             displayUsers(users);
         } catch (error) {
             console.error(error);
-            userTableBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Gagal memuat data.</td></tr>`;
+            userTableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">Gagal memuat data pengguna.</td></tr>`;
         }
     };
 
     const displayUsers = (users) => {
         userTableBody.innerHTML = '';
         let memberCount = 0;
+        let userCounter = 1;
 
         users.forEach(user => {
-            // Jangan tampilkan atau hitung admin
             if (user.role === 'admin') return;
 
             const row = document.createElement('tr');
-            
             let membershipStatus = '<span class="text-muted">Non-Member</span>';
             let paymentStatus = '-';
-            let actionButtons = `
-                <button class="btn btn-sm btn-outline-success set-package-btn" title="Atur Paket Member"><i class="bi bi-gem"></i></button>
-                <button class="btn btn-sm btn-outline-warning edit-user-btn" title="Edit User"><i class="bi bi-pencil-square"></i></button>
-                <button class="btn btn-sm btn-outline-danger delete-user-btn" title="Hapus User"><i class="bi bi-trash3"></i></button>
-            `;
-
+            let actionButtons = `<button class="btn btn-sm btn-outline-success set-package-btn" title="Atur Paket"><i class="bi bi-gem"></i></button> <button class="btn btn-sm btn-outline-warning edit-user-btn" title="Edit"><i class="bi bi-pencil-square"></i></button> <button class="btn btn-sm btn-outline-danger delete-user-btn" title="Hapus"><i class="bi bi-trash3"></i></button>`;
+            
             if (user.membership) {
-                memberCount++; // Hitung sebagai member jika memiliki data membership
+                memberCount++;
                 membershipStatus = `${user.membership.packageName} (${user.membership.remainingWashes}x)`;
-                
+                paymentStatus = user.membership.isPaid
+                    ? '<span class="badge bg-success">Lunas</span>'
+                    : '<span class="badge bg-warning text-dark">Belum Bayar</span>';
                 if (user.membership.isPaid) {
-                    paymentStatus = '<span class="badge bg-success">Lunas</span>';
-                    // Tambahkan tombol lihat barcode jika sudah lunas
-                    actionButtons = `
-                        <button class="btn btn-sm btn-outline-info view-barcode-btn" title="Lihat Barcode"><i class="bi bi-qr-code"></i></button>
-                    ` + actionButtons;
+                    actionButtons = `<button class="btn btn-sm btn-outline-info view-barcode-btn" title="Barcode"><i class="bi bi-qr-code"></i></button> ` + actionButtons;
                 } else {
-                    paymentStatus = '<span class="badge bg-warning text-dark">Belum Bayar</span>';
-                    // Tambahkan tombol konfirmasi jika belum lunas
-                    actionButtons = `
-                        <button class="btn btn-sm btn-info confirm-payment-btn" title="Konfirmasi Bayar"><i class="bi bi-check-circle"></i></button>
-                    ` + actionButtons;
+                    actionButtons = `<button class="btn btn-sm btn-info confirm-payment-btn" title="Konfirmasi Bayar"><i class="bi bi-check-circle"></i></button> ` + actionButtons;
                 }
             }
+            
+            // --- PERUBAHAN DI SINI ---
+            const formattedCounter = String(userCounter).padStart(3, '0'); // Mengubah 1 menjadi "001"
 
             row.innerHTML = `
+                <td>${formattedCounter}</td> 
                 <td>${user.username}</td>
                 <td>${user.email}</td>
                 <td>${membershipStatus}</td>
@@ -82,22 +68,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td><div class="btn-group">${actionButtons}</div></td>
             `;
 
-            // Menambahkan event listener ke setiap tombol
             row.querySelector('.edit-user-btn')?.addEventListener('click', () => openEditModal(user));
             row.querySelector('.delete-user-btn')?.addEventListener('click', () => deleteUser(user._id));
             row.querySelector('.view-barcode-btn')?.addEventListener('click', () => openBarcodeModal(user));
             row.querySelector('.set-package-btn')?.addEventListener('click', () => openSetPackageModal(user));
             row.querySelector('.confirm-payment-btn')?.addEventListener('click', () => handleConfirmPayment(user._id));
-
             userTableBody.appendChild(row);
+            
+            userCounter++;
         });
-
-        // Update hitungan member
         memberCountElement.textContent = memberCount;
     };
-
-    // --- Logika untuk Modal ---
-
+    
     const openEditModal = (user) => {
         document.getElementById('edit-user-id').value = user._id;
         document.getElementById('edit-username').value = user.username;
@@ -109,20 +91,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const openBarcodeModal = (user) => {
         document.getElementById('barcode-username').textContent = user.username;
-        JsBarcode("#barcode-container", user._id, {
-            format: "CODE128", width: 2, height: 80, displayValue: false
+        JsBarcode("#barcode-container", user.memberId, {
+            format: "CODE128", 
+            width: 2, 
+            height: 80, 
+            displayValue: true
         });
         viewBarcodeModal.show();
     };
-
+    
     const openSetPackageModal = (user) => {
         document.getElementById('package-username').textContent = user.username;
         document.getElementById('set-package-userid').value = user._id;
         document.getElementById('set-package-form').reset();
         setPackageModal.show();
     };
-
-    // --- Logika untuk Aksi (Add, Edit, Delete, dll.) ---
 
     document.getElementById('add-user-form').addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -139,12 +122,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
                 body: JSON.stringify(userData)
             });
-            if (!response.ok) throw new Error('Gagal menambah user.');
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(errData.msg || 'Gagal menambah user.');
+            }
             addUserModal.hide();
             fetchUsers();
         } catch (error) { alert(error.message); }
     });
-  
+
     document.getElementById('edit-user-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const userId = document.getElementById('edit-user-id').value;
@@ -191,20 +177,18 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (error) { alert(error.message); }
         }
     };
-
+    
     document.getElementById('set-package-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const userId = document.getElementById('set-package-userid').value;
         const select = document.getElementById('package-name');
         const selectedOption = select.options[select.selectedIndex];
-        
         const packageData = {
             packageName: selectedOption.value,
             totalWashes: parseInt(selectedOption.dataset.washes)
         };
-
         try {
-            const response = await fetch(`${API_URL}/api/purchase-membership-admin/${userId}`, { // Rute baru diperlukan
+            const response = await fetch(`${API_URL}/api/purchase-membership-admin/${userId}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
                 body: JSON.stringify(packageData)
@@ -214,54 +198,19 @@ document.addEventListener('DOMContentLoaded', () => {
             fetchUsers();
         } catch (error) { alert(error.message); }
     });
-    
-     // --- Logika untuk Aksi (Add, Edit, Delete, dll.) ---
 
-    document.getElementById('add-user-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        // --- PERBAIKAN DI SINI: Tambahkan 'phone' ---
-        const userData = {
-            username: document.getElementById('add-username').value,
-            email: document.getElementById('add-email').value,
-            phone: document.getElementById('add-phone').value, // <-- Tambahkan baris ini
-            password: document.getElementById('add-password').value,
-            role: document.getElementById('add-role').value,
-        };
+    // --- FUNGSI UNTUK ULASAN (REVIEWS) ---
+    const reviewTableBody = document.getElementById('review-table-body');
 
-        try {
-            const response = await fetch(`${API_URL}/api/users`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
-                body: JSON.stringify(userData)
-            });
-            
-            // Cek jika respons tidak OK
-            if (!response.ok) {
-                const errorData = await response.json(); // Coba dapatkan pesan error dari server
-                throw new Error(errorData.msg || 'Gagal menambah user.');
-            }
-
-            addUserModal.hide();
-            fetchUsers(); // Muat ulang data setelah berhasil
-        } catch (error) { 
-            alert(error.message); 
-        }
-    });
-
-      // --- PENAMBAHAN BARU: Fungsi untuk mengambil dan menampilkan ulasan ---
     const fetchReviews = async () => {
         try {
-            const response = await fetch(`${API_URL}/api/reviews/all`, {
-                headers: { 'x-auth-token': token }
-            });
+            const response = await fetch(`${API_URL}/api/reviews/all`, { headers: { 'x-auth-token': token } });
             if (!response.ok) throw new Error('Gagal mengambil data ulasan.');
-            
             const reviews = await response.json();
             displayReviews(reviews);
         } catch (error) {
             console.error(error);
-            reviewTableBody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Gagal memuat ulasan.</td></tr>`;
+            reviewTableBody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Gagal memuat data ulasan.</td></tr>`;
         }
     };
 
@@ -269,10 +218,11 @@ document.addEventListener('DOMContentLoaded', () => {
         reviewTableBody.innerHTML = '';
         reviews.forEach(review => {
             const row = document.createElement('tr');
-            const stars = '★'.repeat(review.rating) + '☆'.repeat(5 - review.rating);
+            const ratingStars = '<span class="rating-stars">' + '★'.repeat(review.rating) + '☆'.repeat(5 - review.rating) + '</span>';
+            const username = review.user ? review.user.username : '<em class="text-muted">User Dihapus</em>';
             row.innerHTML = `
-                <td>${review.username || 'N/A'}</td>
-                <td class="text-warning">${stars}</td>
+                <td>${username}</td>
+                <td>${ratingStars}</td>
                 <td>${review.comment}</td>
                 <td>
                     <div class="btn-group">
@@ -281,15 +231,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </td>
             `;
-
             row.querySelector('.edit-review-btn').addEventListener('click', () => openEditReviewModal(review));
             row.querySelector('.delete-review-btn').addEventListener('click', () => deleteReview(review._id));
-
             reviewTableBody.appendChild(row);
         });
     };
 
-    // --- PENAMBAHAN BARU: Logika untuk modal dan aksi ulasan ---
     const openEditReviewModal = (review) => {
         document.getElementById('edit-review-id').value = review._id;
         document.getElementById('edit-rating').value = review.rating;
@@ -300,7 +247,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('edit-review-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const reviewId = document.getElementById('edit-review-id').value;
-        const updatedData = {
+        const reviewData = {
             rating: document.getElementById('edit-rating').value,
             comment: document.getElementById('edit-comment').value,
         };
@@ -308,7 +255,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(`${API_URL}/api/reviews/${reviewId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
-                body: JSON.stringify(updatedData)
+                body: JSON.stringify(reviewData)
             });
             if (!response.ok) throw new Error('Gagal mengupdate ulasan.');
             editReviewModal.hide();
@@ -328,8 +275,15 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (error) { alert(error.message); }
         }
     };
+
+    // Logout
+    document.getElementById('logout-button').addEventListener('click', () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('userRole');
+        window.location.href = '/login';
+    });
     
-    // Panggil fungsi utama
+    // Panggil semua fungsi fetch data saat halaman dimuat
     fetchUsers();
-    fetchReviews(); // Tambahkan ini
+    fetchReviews();
 });
