@@ -6,12 +6,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('token');
     const userRole = localStorage.getItem('userRole');
      
-        // --- REVISI UTAMA DI SINI ---
-    // Logika untuk Tombol "Beli Paket"
+   // --- LOGIKA UNTUK TOMBOL "BELI PAKET" ---
     const purchaseModalElement = document.getElementById('purchaseModal');
     if (purchaseModalElement) {
         const purchaseModal = new bootstrap.Modal(purchaseModalElement);
+        const confirmButton = document.getElementById('confirm-purchase-btn');
         
+        // --- Wadah Notifikasi Baru ---
+        const purchaseMessage = document.getElementById('purchase-message');
+        const purchaseConfirmationContent = document.getElementById('purchase-confirmation-content');
+
         document.querySelectorAll('.buy-btn').forEach(button => {
             button.addEventListener('click', () => {
                 if (!token) {
@@ -20,35 +24,40 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
                 
-                // Ambil data dari kartu yang diklik
                 const cardBody = button.closest('.card-body');
                 const packageName = cardBody.querySelector('.card-title').textContent.trim();
                 const packagePrice = cardBody.querySelector('.price-member').textContent.trim();
                 const packageText = cardBody.querySelector('.text-success').textContent;
                 
-                // Ekstrak total cucian dari teks (misal: "10x Cuci + FREE 2x" -> 12)
                 const washes = packageText.match(/\d+/g);
                 const totalWashes = washes ? washes.reduce((sum, val) => sum + parseInt(val), 0) : 0;
 
-                // Isi modal dengan informasi yang sesuai
                 document.getElementById('package-name').textContent = packageName;
                 document.getElementById('package-price').textContent = packagePrice;
                 
-                // Simpan data ke tombol "Yakin" untuk dikirim ke API
-                const confirmButton = document.getElementById('confirm-purchase-btn');
                 confirmButton.dataset.packageName = packageName;
                 confirmButton.dataset.totalWashes = totalWashes;
+                
+                // Reset tampilan modal sebelum dibuka
+                purchaseMessage.innerHTML = '';
+                purchaseConfirmationContent.style.display = 'block';
+                confirmButton.disabled = false;
+                confirmButton.innerHTML = 'Yakin';
 
                 purchaseModal.show();
             });
         });
 
-        // Event listener untuk tombol "Yakin" di dalam modal
-        const confirmButton = document.getElementById('confirm-purchase-btn');
         if(confirmButton) {
             confirmButton.addEventListener('click', async () => {
                 const packageName = confirmButton.dataset.packageName;
                 const totalWashes = parseInt(confirmButton.dataset.totalWashes);
+
+                // Tampilkan status loading
+                confirmButton.disabled = true;
+                confirmButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Memproses...';
+                purchaseConfirmationContent.style.display = 'none'; // Sembunyikan teks konfirmasi awal
+                purchaseMessage.innerHTML = ''; // Kosongkan pesan sebelumnya
 
                 try {
                     const response = await fetch(`${API_URL}/api/purchase-membership`, {
@@ -64,13 +73,35 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (!response.ok) {
                         throw new Error(result.msg || 'Gagal membeli paket.');
                     }
+                    
+                    // --- Tampilkan notifikasi SUKSES ---
+                    purchaseMessage.innerHTML = `
+                        <div class="alert alert-success">
+                            <strong>Berhasil!</strong> ${result.msg}
+                        </div>
+                    `;
 
-                    alert(result.msg);
-                    purchaseModal.hide();
-                    window.location.href = '/profile'; // Arahkan ke profil untuk lihat status
+                    // Tunggu 3 detik lalu arahkan ke halaman profil
+                    setTimeout(() => {
+                        purchaseModal.hide();
+                        window.location.href = '/profile';
+                    }, 3000);
 
                 } catch (error) {
-                    alert(`Error: ${error.message}`);
+                    // --- Tampilkan notifikasi GAGAL ---
+                    purchaseMessage.innerHTML = `
+                        <div class="alert alert-danger">
+                            <strong>Error!</strong> ${error.message}
+                        </div>
+                    `;
+                    
+                    // Aktifkan kembali tombol setelah beberapa saat
+                    setTimeout(() => {
+                        confirmButton.disabled = false;
+                        confirmButton.innerHTML = 'Yakin';
+                        purchaseConfirmationContent.style.display = 'block';
+                        purchaseMessage.innerHTML = '';
+                    }, 3000);
                 }
             });
         }
