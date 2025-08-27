@@ -1,4 +1,4 @@
-// File: /js/profile.js (Sudah disesuaikan)
+// File: /js/profile.js
 
 document.addEventListener('DOMContentLoaded', () => {
     // Pastikan URL API ini sesuai dengan alamat backend Anda
@@ -56,25 +56,39 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
             
             if (user.membership.isPaid && user.membership.remainingWashes > 0) {
-                // Tampilkan barcode HANYA jika sudah lunas dan jatah masih ada
+                // Tampilkan QR code HANYA jika sudah lunas dan jatah masih ada
                 memberCodeSection.innerHTML = `
-                    <div id="barcode-wrapper">
-                        <svg id="barcode-container"></svg>
+                    <div id="qrcode-wrapper" class="d-flex flex-column align-items-center justify-content-center">
+                        <div id="qrcode-container"></div>
+                        <p class="mt-3 text-muted">Tunjukkan kode ini kepada staf kami.</p>
                     </div>
-                    <p class="mt-3 text-muted">Tunjukkan kode ini kepada staf kami.</p>
                 `;
-                // --- Kode JsBarcode yang sudah disesuaikan ---
-               // --- FUNGSI INI YANG DIPERBAIKI ---
-                // PASTIKAN MENGGUNAKAN user.memberId
-                JsBarcode("#barcode-container", user.memberId, {
-                    format: "CODE128",
-                    lineColor: "#000",
-                    width: 1.5,
-                    height: 60,
-                    displayValue: true // Tampilkan teks ID juga
-                });
+                
+                const qrCodeContainer = document.getElementById('qrcode-container');
+                qrCodeContainer.innerHTML = ''; // Selalu bersihkan kontainer sebelum membuat QR code baru
+
+                if (user.memberId) {
+                    new QRCode(qrCodeContainer, {
+                        text: user.memberId,
+                        width: 180,
+                        height: 180,
+                        colorDark : "#000000",
+                        colorLight : "#ffffff",
+                        correctLevel : QRCode.CorrectLevel.H
+                    });
+                    
+                    // Tambahkan teks memberId di bawah QR code
+                    const memberIdText = document.createElement('p');
+                    memberIdText.className = 'mt-2 fw-bold';
+                    memberIdText.textContent = user.memberId;
+                    qrCodeContainer.appendChild(memberIdText);
+
+                } else {
+                    qrCodeContainer.innerHTML = '<p class="text-danger">Member ID tidak ditemukan.</p>';
+                }
+
             } else if (!user.membership.isPaid) {
-                memberCodeSection.innerHTML = `<p class="text-center text-muted p-4">Barcode akan muncul setelah pembayaran dikonfirmasi oleh admin.</p>`;
+                memberCodeSection.innerHTML = `<p class="text-center text-muted p-4">QR code akan muncul setelah pembayaran dikonfirmasi oleh admin.</p>`;
             } else {
                 memberCodeSection.innerHTML = `<p class="text-center text-muted p-4">Jatah cuci Anda sudah habis.</p>`;
             }
