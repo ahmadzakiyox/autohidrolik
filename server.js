@@ -195,10 +195,19 @@ app.post('/api/users', auth, adminAuth, async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        user = new User({ username, email, phone, password: hashedPassword, role, isVerified: true });
+        // Buat memberId terlebih dahulu
+        const memberId = await generateUniqueMemberId();
         
-        // --- PERUBAHAN LOGIKA ID ---
-        user.memberId = await generateUniqueMemberId(); // Gunakan fungsi ID acak
+        // Buat user baru dengan semua data
+        user = new User({ 
+            username, 
+            email, 
+            phone, 
+            password: hashedPassword, 
+            role, 
+            isVerified: true,
+            memberId: memberId // Masukkan memberId saat pembuatan
+        });
         
         await user.save();
         res.status(201).json(user);
