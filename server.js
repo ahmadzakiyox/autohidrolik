@@ -61,7 +61,15 @@ const adminAuth = async (req, res, next) => {
     }
 };
 
-
+// Fungsi untuk membuat ID member unik
+async function getNextSequenceValue(sequenceName) {
+    const sequenceDocument = await Counter.findByIdAndUpdate(
+        sequenceName,
+        { $inc: { seq: 1 } },
+        { new: true, upsert: true }
+    );
+    return sequenceDocument.seq;
+}
 // ======================================================
 // --- API ROUTES ---
 // ======================================================
@@ -75,10 +83,17 @@ app.post('/api/register', async (req, res) => {
     try {
         let user = await User.findOne({ email });
         if (user) return res.status(400).json({ msg: 'Email sudah terdaftar.' });
+
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
+        
         user = new User({ username, email, phone, password: hashedPassword, isVerified: true });
-        await user.save();
+        
+        // Logika penting untuk membuat memberId
+        const nextId = await getNextSequenceValue('userId');
+        user.memberId = `AH-${String(nextId).padStart(5, '0')}`;
+        
+        await user.save(); // Simpan user dengan memberId
         res.status(201).json({ msg: 'Pengguna berhasil didaftarkan!' });
     } catch (error) {
         console.error(error.message);
@@ -157,9 +172,8 @@ app.get('/api/users', auth, adminAuth, async (req, res) => {
     }
 });
 
-// POST: Menambah pengguna baru (Hanya Admin)
+// POST: Menambah pengguna baru (oleh Admin)
 app.post('/api/users', auth, adminAuth, async (req, res) => {
-    // --- PERBAIKAN DI SINI: Tambahkan 'phone' ---
     const { username, email, phone, password, role } = req.body;
     try {
         let user = await User.findOne({ email });
@@ -168,15 +182,13 @@ app.post('/api/users', auth, adminAuth, async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        user = new User({
-            username,
-            email,
-            phone, // <-- Tambahkan field ini
-            password: hashedPassword,
-            role,
-            isVerified: true
-        });
-        await user.save();
+        user = new User({ username, email, phone, password: hashedPassword, role, isVerified: true });
+        
+        // Logika penting untuk membuat memberId
+        const nextId = await getNextSequenceValue('userId');
+        user.memberId = `AH-${String(nextId).padStart(5, '0')}`;
+        
+        await user.save(); // Simpan user dengan memberId
         res.status(201).json(user);
     } catch (err) {
         console.error(err.message);
