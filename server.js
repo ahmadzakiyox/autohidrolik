@@ -61,6 +61,31 @@ const adminAuth = async (req, res, next) => {
     }
 };
 
+// === FUNGSI BARU: Untuk membuat Member ID acak dan unik ===
+async function generateUniqueMemberId() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    const idLength = 6;
+    let newId;
+    let isUnique = false;
+
+    // Terus buat ID baru sampai menemukan yang unik
+    while (!isUnique) {
+        let randomPart = '';
+        for (let i = 0; i < idLength; i++) {
+            randomPart += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        newId = `AH-${randomPart}`;
+
+        // Cek ke database apakah ID sudah ada
+        const existingUser = await User.findOne({ memberId: newId });
+        if (!existingUser) {
+            isUnique = true; // Jika tidak ada, ID ini unik
+        }
+    }
+    return newId;
+}
+
+
 
 // ======================================================
 // --- API ROUTES ---
@@ -69,15 +94,18 @@ const adminAuth = async (req, res, next) => {
 // Rute Registrasi
 app.post('/api/register', async (req, res) => {
     const { username, email, phone, password } = req.body;
-    if (!username || !email || !phone || !password) {
-        return res.status(400).json({ msg: 'Mohon isi semua field yang diperlukan.' });
-    }
     try {
         let user = await User.findOne({ email });
         if (user) return res.status(400).json({ msg: 'Email sudah terdaftar.' });
+
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
+        
         user = new User({ username, email, phone, password: hashedPassword, isVerified: true });
+        
+        // --- PERUBAHAN LOGIKA ID ---
+        user.memberId = await generateUniqueMemberId(); // Gunakan fungsi ID acak
+        
         await user.save();
         res.status(201).json({ msg: 'Pengguna berhasil didaftarkan!' });
     } catch (error) {
@@ -157,9 +185,8 @@ app.get('/api/users', auth, adminAuth, async (req, res) => {
     }
 });
 
-// POST: Menambah pengguna baru (Hanya Admin)
+// POST: Menambah pengguna baru (oleh Admin)
 app.post('/api/users', auth, adminAuth, async (req, res) => {
-    // --- PERBAIKAN DI SINI: Tambahkan 'phone' ---
     const { username, email, phone, password, role } = req.body;
     try {
         let user = await User.findOne({ email });
@@ -168,14 +195,11 @@ app.post('/api/users', auth, adminAuth, async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        user = new User({
-            username,
-            email,
-            phone, // <-- Tambahkan field ini
-            password: hashedPassword,
-            role,
-            isVerified: true
-        });
+        user = new User({ username, email, phone, password: hashedPassword, role, isVerified: true });
+        
+        // --- PERUBAHAN LOGIKA ID ---
+        user.memberId = await generateUniqueMemberId(); // Gunakan fungsi ID acak
+        
         await user.save();
         res.status(201).json(user);
     } catch (err) {
