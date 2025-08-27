@@ -101,10 +101,18 @@ app.post('/api/register', async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
         
-        user = new User({ username, email, phone, password: hashedPassword, isVerified: true });
+        // Buat memberId terlebih dahulu
+        const memberId = await generateUniqueMemberId();
         
-        // --- PERUBAHAN LOGIKA ID ---
-        user.memberId = await generateUniqueMemberId(); // Gunakan fungsi ID acak
+        // Buat user baru dengan semua data yang diperlukan
+        user = new User({ 
+            username, 
+            email, 
+            phone, 
+            password: hashedPassword, 
+            isVerified: true,
+            memberId: memberId // Masukkan memberId saat pembuatan
+        });
         
         await user.save();
         res.status(201).json({ msg: 'Pengguna berhasil didaftarkan!' });
