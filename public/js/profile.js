@@ -1,4 +1,4 @@
-// File: /js/profile.js
+// File: /js/profile.js (Sudah disesuaikan)
 
 document.addEventListener('DOMContentLoaded', () => {
     // Pastikan URL API ini sesuai dengan alamat backend Anda
@@ -13,13 +13,13 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="text-center">
                 <h2>Data tidak ditemukan!</h2>
                 <p class="text-muted">Silakan login terlebih dahulu untuk melihat profil Anda.</p>
-                <a href="/login.html" class="btn btn-primary mt-3">Login</a>
+                <a href="/login" class="btn btn-primary mt-3">Login</a>
             </div>
         `;
         return;
     }
 
-const fetchProfileData = async () => {
+    const fetchProfileData = async () => {
         try {
             const response = await fetch(`${API_URL}/api/profile`, {
                 headers: { 'x-auth-token': token }
@@ -63,13 +63,10 @@ const fetchProfileData = async () => {
                     </div>
                     <p class="mt-3 text-muted">Tunjukkan kode ini kepada staf kami.</p>
                 `;
-                JsBarcode("#barcode-container", user._id, {
-                    format: "CODE128",
-                    lineColor: "#000",
-                    width: 2,
-                    height: 80,
-                    displayValue: false
-                });
+                // --- Kode JsBarcode yang sudah disesuaikan ---
+               JsBarcode("#barcode-container", user.memberId, { // <-- Gunakan user.memberId
+    format: "CODE128", width: 2, height: 80, displayValue: true
+});
             } else if (!user.membership.isPaid) {
                 memberCodeSection.innerHTML = `<p class="text-center text-muted p-4">Barcode akan muncul setelah pembayaran dikonfirmasi oleh admin.</p>`;
             } else {
