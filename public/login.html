@@ -12,7 +12,7 @@
             --bg-color: #0d1117;
             --container-bg: #232f41;
             --input-bg: #585d63;
-            --border-color: #3036d;
+            --border-color: #30363d;
             --text-primary: #c9d1d9;
             --purple-accent: #a27bff;
             --purple-hover: #c4a7ff;
@@ -65,11 +65,13 @@
                     <label for="email" class="form-label">Alamat Email</label>
                     <input type="email" class="form-control" id="email" required>
                 </div>
-                <div class="mb-4">
+                <div class="mb-3">
                     <label for="password" class="form-label">Password</label>
                     <input type="password" class="form-control" id="password" required>
                 </div>
-                <button type="submit" class="btn btn-custom w-100">Login</button>
+                
+                <div id="login-message" class="mb-3"></div>
+                <button type="submit" class="btn btn-custom w-100" id="login-button">Login</button>
             </form>
             <p class="mt-4 text-center">Belum punya akun? <a href="/register.html">Daftar di sini</a></p>
         </div>
