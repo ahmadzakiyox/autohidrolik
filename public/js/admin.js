@@ -89,13 +89,16 @@ document.addEventListener('DOMContentLoaded', () => {
         editUserModal.show();
     };
 
+// --- FUNGSI INI YANG DIPERBAIKI ---
     const openBarcodeModal = (user) => {
         document.getElementById('barcode-username').textContent = user.username;
+        
+        // PASTIKAN MENGGUNAKAN user.memberId
         JsBarcode("#barcode-container", user.memberId, {
             format: "CODE128", 
             width: 2, 
             height: 80, 
-            displayValue: true
+            displayValue: true // Tampilkan teks ID di bawah barcode
         });
         viewBarcodeModal.show();
     };
