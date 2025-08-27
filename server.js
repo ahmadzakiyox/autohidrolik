@@ -61,25 +61,22 @@ const adminAuth = async (req, res, next) => {
     }
 };
 
-// === FUNGSI BARU: Untuk membuat Member ID acak dan unik ===
+// Fungsi untuk membuat ID member unik acak
 async function generateUniqueMemberId() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     const idLength = 6;
     let newId;
     let isUnique = false;
 
-    // Terus buat ID baru sampai menemukan yang unik
     while (!isUnique) {
         let randomPart = '';
         for (let i = 0; i < idLength; i++) {
             randomPart += chars.charAt(Math.floor(Math.random() * chars.length));
         }
         newId = `AH-${randomPart}`;
-
-        // Cek ke database apakah ID sudah ada
         const existingUser = await User.findOne({ memberId: newId });
         if (!existingUser) {
-            isUnique = true; // Jika tidak ada, ID ini unik
+            isUnique = true;
         }
     }
     return newId;
@@ -95,29 +92,28 @@ async function generateUniqueMemberId() {
 app.post('/api/register', async (req, res) => {
     const { username, email, phone, password } = req.body;
     try {
-        let user = await User.findOne({ email });
-        if (user) return res.status(400).json({ msg: 'Email sudah terdaftar.' });
+        if (await User.findOne({ email })) {
+            return res.status(400).json({ msg: 'Email sudah terdaftar.' });
+        }
 
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
         
-        // Buat memberId terlebih dahulu
         const memberId = await generateUniqueMemberId();
         
-        // Buat user baru dengan semua data yang diperlukan
-        user = new User({ 
+        const newUser = new User({ 
             username, 
             email, 
             phone, 
             password: hashedPassword, 
             isVerified: true,
-            memberId: memberId // Masukkan memberId saat pembuatan
+            memberId: memberId 
         });
         
-        await user.save();
+        await newUser.save();
         res.status(201).json({ msg: 'Pengguna berhasil didaftarkan!' });
     } catch (error) {
-        console.error(error.message);
+        console.error("Error di /api/register:", error.message);
         res.status(500).send('Terjadi kesalahan pada server');
     }
 });
@@ -197,30 +193,29 @@ app.get('/api/users', auth, adminAuth, async (req, res) => {
 app.post('/api/users', auth, adminAuth, async (req, res) => {
     const { username, email, phone, password, role } = req.body;
     try {
-        let user = await User.findOne({ email });
-        if (user) return res.status(400).json({ msg: 'Email sudah ada' });
+        if (await User.findOne({ email })) {
+            return res.status(400).json({ msg: 'Email sudah ada' });
+        }
 
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        // Buat memberId terlebih dahulu
         const memberId = await generateUniqueMemberId();
         
-        // Buat user baru dengan semua data
-        user = new User({ 
+        const newUser = new User({ 
             username, 
             email, 
             phone, 
             password: hashedPassword, 
             role, 
             isVerified: true,
-            memberId: memberId // Masukkan memberId saat pembuatan
+            memberId: memberId
         });
         
-        await user.save();
-        res.status(201).json(user);
+        await newUser.save();
+        res.status(201).json(newUser);
     } catch (err) {
-        console.error(err.message);
+        console.error("Error di /api/users (POST):", err.message);
         res.status(500).send('Server error');
     }
 });
