@@ -1,11 +1,18 @@
-// File: /js/login.js
+// File: /js/login.js (Telah Diperbarui)
 
 document.addEventListener('DOMContentLoaded', () => {
-    const API_URL = 'https://autohidrolik.com'; // Sesuaikan dengan URL API Anda
+    const API_URL = 'https://autohidrolik.com';
     const loginForm = document.getElementById('login-form');
+    const loginMessage = document.getElementById('login-message'); // Wadah notifikasi
+    const loginButton = document.getElementById('login-button'); // Tombol login
 
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        
+        // Nonaktifkan tombol untuk mencegah klik ganda
+        loginButton.disabled = true;
+        loginButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
+        loginMessage.innerHTML = ''; // Kosongkan pesan sebelumnya
 
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
@@ -25,23 +32,37 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error(data.msg || 'Login gagal!');
             }
 
-            // --- PERBAIKAN DI SINI ---
-            // Simpan token DAN role ke Local Storage
+            // --- Ganti alert() dengan notifikasi inline ---
+            loginMessage.innerHTML = `
+                <div class="alert alert-success">
+                    <strong>Login Berhasil!</strong> Mengarahkan Anda ke halaman...
+                </div>
+            `;
+
+            // Simpan token dan role ke Local Storage
             localStorage.setItem('token', data.token);
             localStorage.setItem('userRole', data.user.role);
-
-            alert('Login berhasil!');
-
-            // Arahkan ke halaman yang sesuai berdasarkan role
-            if (data.user.role === 'admin') {
-                window.location.href = '/admin';
-            } else {
-                window.location.href = '/profile';
-            }
+            
+            // Beri jeda 1.5 detik sebelum redirect
+            setTimeout(() => {
+                if (data.user.role === 'admin') {
+                    window.location.href = '/admin.html';
+                } else {
+                    window.location.href = '/profile.html';
+                }
+            }, 1500);
 
         } catch (error) {
-            console.error('Login error:', error);
-            alert(`Error: ${error.message}`);
+            // Tampilkan pesan error di wadah notifikasi
+            loginMessage.innerHTML = `
+                <div class="alert alert-danger">
+                    <strong>Error!</strong> ${error.message}
+                </div>
+            `;
+            
+            // Aktifkan kembali tombol
+            loginButton.disabled = false;
+            loginButton.innerHTML = 'Login';
         }
     });
 });
