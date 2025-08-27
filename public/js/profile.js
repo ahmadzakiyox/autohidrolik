@@ -64,9 +64,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     <p class="mt-3 text-muted">Tunjukkan kode ini kepada staf kami.</p>
                 `;
                 // --- Kode JsBarcode yang sudah disesuaikan ---
-               JsBarcode("#barcode-container", user.memberId, { // <-- Gunakan user.memberId
-    format: "CODE128", width: 2, height: 80, displayValue: true
-});
+               // --- FUNGSI INI YANG DIPERBAIKI ---
+                // PASTIKAN MENGGUNAKAN user.memberId
+                JsBarcode("#barcode-container", user.memberId, {
+                    format: "CODE128",
+                    lineColor: "#000",
+                    width: 1.5,
+                    height: 60,
+                    displayValue: true // Tampilkan teks ID juga
+                });
             } else if (!user.membership.isPaid) {
                 memberCodeSection.innerHTML = `<p class="text-center text-muted p-4">Barcode akan muncul setelah pembayaran dikonfirmasi oleh admin.</p>`;
             } else {
