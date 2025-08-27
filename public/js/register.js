@@ -1,12 +1,20 @@
-// File: /js/register.js
-
 document.addEventListener('DOMContentLoaded', () => {
-    // Pastikan URL API ini sesuai dengan alamat backend Anda
-    const API_URL = 'https://autohidrolik.com'; 
+    const API_URL = 'http://localhost:3000'; // Pastikan URL ini benar
     const registerForm = document.getElementById('register-form');
+    
+    // Siapkan elemen untuk notifikasi (jika belum ada di HTML, bisa ditambahkan)
+    const formContainer = document.querySelector('.form-container');
+    let messageDiv = document.getElementById('register-message');
+    if (!messageDiv) {
+        messageDiv = document.createElement('div');
+        messageDiv.id = 'register-message';
+        messageDiv.className = 'mb-3';
+        registerForm.prepend(messageDiv);
+    }
 
     registerForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        messageDiv.innerHTML = ''; // Kosongkan pesan sebelumnya
 
         const username = document.getElementById('username').value;
         const email = document.getElementById('email').value;
@@ -15,38 +23,33 @@ document.addEventListener('DOMContentLoaded', () => {
         const confirmPassword = document.getElementById('confirm-password').value;
 
         if (password !== confirmPassword) {
-            alert('Password dan konfirmasi password tidak cocok!');
+            messageDiv.innerHTML = `<div class="alert alert-danger">Konfirmasi password tidak cocok!</div>`;
             return;
         }
-
-        const userData = {
-            username,
-            email,
-            phone,
-            password
-        };
 
         try {
             const response = await fetch(`${API_URL}/api/register`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(userData),
+                body: JSON.stringify({ username, email, phone, password })
             });
-            
-            const result = await response.json();
+
+            const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(result.msg || 'Terjadi kesalahan saat mendaftar.');
+                throw new Error(data.msg || 'Registrasi gagal!');
             }
 
-            alert('Pendaftaran berhasil! Akun Anda telah dibuat. Silakan login.');
-            window.location.href = '/login.html';
+            messageDiv.innerHTML = `<div class="alert alert-success">Registrasi berhasil! Anda akan dialihkan ke halaman login...</div>`;
+
+            setTimeout(() => {
+                window.location.href = '/login';
+            }, 2000);
 
         } catch (error) {
-            console.error('Pendaftaran gagal:', error);
-            alert(`Error: ${error.message}`);
+            messageDiv.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
         }
     });
 });
