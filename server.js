@@ -301,10 +301,10 @@ app.post('/api/purchase-membership', auth, async (req, res) => {
 });
 
 // Rute untuk menggunakan jatah cuci (scan barcode)
-app.post('/api/use-wash', auth, adminAuth, async (req, res) => {
+app.post('/api/use-wash', auth, adminAuth, async (req, res) => { // <-- PERBAIKAN DI SINI
     const { userId } = req.body;
     try {
-        const user = await User.findById(userId);
+        const user = await User.findOne({ memberId: userId });
         if (!user) return res.status(404).json({ msg: 'Pengguna tidak ditemukan.' });
         if (!user.membership) return res.status(400).json({ msg: 'Pengguna bukan member.' });
         if (!user.membership.isPaid) {
@@ -318,7 +318,7 @@ app.post('/api/use-wash', auth, adminAuth, async (req, res) => {
         res.json({ 
             msg: `Berhasil menggunakan 1 jatah cuci untuk ${user.username}.`,
             remaining: user.membership.remainingWashes 
-        });
+        }); 
     } catch (error) {
         res.status(500).send('Server error');
     }
