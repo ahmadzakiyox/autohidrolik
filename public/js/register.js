@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const API_URL = 'http://localhost:3000'; // Pastikan URL ini benar
+    const API_URL = 'https://autohidrolik.com'; // Pastikan URL ini benar
     const registerForm = document.getElementById('register-form');
     
     // Siapkan elemen untuk notifikasi (jika belum ada di HTML, bisa ditambahkan)
