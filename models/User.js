@@ -19,7 +19,6 @@ const MembershipSchema = new Schema({
         type: Date,
         default: Date.now
     },
-    // Field baru untuk melacak status pembayaran
     isPaid: {
         type: Boolean,
         default: false 
@@ -28,6 +27,13 @@ const MembershipSchema = new Schema({
 
 // Skema Utama Pengguna
 const UserSchema = new Schema({
+    // --- PENAMBAHAN KRUSIAL DI SINI ---
+    memberId: { 
+        type: String, 
+        unique: true, 
+        sparse: true // Pastikan unik dan hanya berlaku jika field ini ada
+    },
+    // ------------------------------------
     username: { type: String, required: true, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     password: { type: String, required: true },
