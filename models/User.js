@@ -22,27 +22,37 @@ const MembershipSchema = new Schema({
     isPaid: {
         type: Boolean,
         default: false 
-    }
+    },
+
+       // --- PENAMBAHAN BARU UNTUK MASA AKTIF ---
+    expiresAt: {
+        type: Date,
+        required: true
+    }   
 });
 
 // Skema Utama Pengguna
 const UserSchema = new Schema({
-    // --- PENAMBAHAN KRUSIAL DI SINI ---
     memberId: { 
         type: String, 
         unique: true, 
-        sparse: true // Pastikan unik dan hanya berlaku jika field ini ada
+        sparse: true
     },
-    // ------------------------------------
     username: { type: String, required: true, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     password: { type: String, required: true },
     phone: { type: String, required: true, trim: true },
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
-    isVerified: { type: Boolean, default: true },
+    
+    // --- PENAMBAHAN WAJIB DI SINI ---
+    isVerified: { type: Boolean, default: false },
+    otp: { type: String, default: null },
+    otpExpires: { type: Date, default: null },
+    // ------------------------------------
+
     membership: {
         type: MembershipSchema,
-        default: null // Menjadi member jika field ini diisi
+        default: null
     },
     date: { type: Date, default: Date.now }
 });
