@@ -41,7 +41,6 @@ const transporter = nodemailer.createTransport({
     }
 });
 // Twilio (SMS)
-const twilioClient = twilio(process.env.TWILIO_SID, process.env.TWILIO_TOKEN);
 
 // --- Koneksi ke MongoDB ---
 mongoose.connect(process.env.MONGO_URI, {})
