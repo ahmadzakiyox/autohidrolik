@@ -1,7 +1,5 @@
-// File: /js/login.js
-
 document.addEventListener('DOMContentLoaded', () => {
-    const API_URL = 'https://autohidrolik.com';
+    const API_URL = 'http://localhost:3000';
     const loginForm = document.getElementById('login-form');
     const loginMessage = document.getElementById('login-message');
     const loginButton = document.getElementById('login-button');
@@ -19,16 +17,25 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const response = await fetch(`${API_URL}/api/login`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password })
             });
 
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.msg || 'Login gagal!');
+                // Cek flag 'notVerified' dari server
+                if (data.notVerified) {
+                    alert(data.msg); // Beri tahu user bahwa akun belum aktif
+                    // Arahkan ke halaman verifikasi
+                    window.location.href = `/verify.html?email=${encodeURIComponent(data.email)}`;
+                } else {
+                    throw new Error(data.msg || 'Login gagal!');
+                }
+                // Hentikan proses lebih lanjut jika ada error
+                loginButton.disabled = false;
+                loginButton.innerHTML = 'Login';
+                return;
             }
 
             loginMessage.innerHTML = `
@@ -60,17 +67,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- LOGIKA BARU UNTUK INTIP SANDI ---
+    // --- LOGIKA UNTUK INTIP SANDI ---
     const togglePassword = document.getElementById('toggle-password');
     const passwordInput = document.getElementById('password');
 
-    togglePassword.addEventListener('click', function () {
-        // Ganti tipe input dari password ke text atau sebaliknya
-        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-        passwordInput.setAttribute('type', type);
-        
-        // Ganti ikon mata
-        this.classList.toggle('bi-eye-slash-fill');
-        this.classList.toggle('bi-eye-fill');
-    });
+    if (togglePassword && passwordInput) {
+        togglePassword.addEventListener('click', function () {
+            // Toggle tipe input
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            
+            // Toggle ikon mata
+            this.classList.toggle('bi-eye-slash-fill');
+            this.classList.toggle('bi-eye-fill');
+        });
+    }
 });
