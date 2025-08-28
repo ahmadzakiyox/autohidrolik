@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const API_URL = 'http://localhost:3000';
+    const API_URL = 'https://autohidrolik.com';
     const loginForm = document.getElementById('login-form');
     const loginMessage = document.getElementById('login-message');
     const loginButton = document.getElementById('login-button');
