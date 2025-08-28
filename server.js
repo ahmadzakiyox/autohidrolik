@@ -328,39 +328,36 @@ app.delete('/api/users/:id', auth, adminAuth, async (req, res) => {
 
 // --- RUTE LUPA & RESET SANDI ---
 
-// 4. Rute Baru: Lupa Sandi (Kirim OTP)
 app.post('/api/forgot-password', async (req, res) => {
-    const { contact, method } = req.body; // contact bisa email atau phone, method 'email' atau 'sms'
+    // Sekarang kita hanya butuh email, bukan 'contact' atau 'method'
+    const { email } = req.body; 
     try {
-        const user = await User.findOne(method === 'email' ? { email: contact } : { phone: contact });
-        if (!user) return res.status(404).json({ msg: 'Pengguna tidak ditemukan.' });
+        // Cari pengguna hanya berdasarkan email
+        const user = await User.findOne({ email: email });
+        if (!user) {
+            return res.status(404).json({ msg: 'Pengguna dengan email tersebut tidak ditemukan.' });
+        }
 
         const otp = generateOTP();
         user.otp = otp;
-        user.otpExpires = Date.now() + 10 * 60 * 1000;
+        user.otpExpires = new Date(Date.now() + 10 * 60 * 1000); // OTP berlaku 10 menit
         await user.save();
 
-        if (method === 'email') {
-            await transporter.sendMail({
-                from: `"AUTOHIDROLIK" <${process.env.GMAIL_USER}>`,
-                to: user.email,
-                subject: 'Kode Reset Kata Sandi',
-                text: `Gunakan kode ini untuk mereset kata sandi Anda: ${otp}`
-            });
-        } else { // method === 'sms'
-            await twilioClient.messages.create({
-                body: `AUTOHIDROLIK: Kode reset sandi Anda adalah ${otp}`,
-                from: process.env.TWILIO_PHONE_NUMBER,
-                to: user.phone // Pastikan format nomor telepon benar (misal: +6281...)
-            });
-        }
+        // Kirim OTP hanya melalui email
+        await transporter.sendMail({
+            from: `"AUTOHIDROLIK" <${process.env.GMAIL_USER}>`,
+            to: user.email,
+            subject: 'Kode Reset Kata Sandi',
+            text: `Gunakan kode ini untuk mereset kata sandi Anda: ${otp}`
+        });
         
-        res.json({ msg: `Kode OTP telah dikirim ke ${contact}.` });
+        res.json({ msg: `Kode OTP telah dikirim ke ${email}.` });
     } catch (error) {
         console.error("Error di /api/forgot-password:", error);
         res.status(500).send('Server error');
     }
 });
+
 
 // 5. Rute Baru: Reset Sandi (Verifikasi OTP & Set Sandi Baru)
 app.post('/api/reset-password', async (req, res) => {
