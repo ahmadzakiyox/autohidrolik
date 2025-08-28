@@ -1,8 +1,5 @@
-// File: /js/profile.js
-
 document.addEventListener('DOMContentLoaded', () => {
-    // Pastikan URL API ini sesuai dengan alamat backend Anda
-    const API_URL = 'https://autohidrolik.com'; 
+    const API_URL = 'http://localhost:3000'; 
     const token = localStorage.getItem('token');
 
     const profileLoading = document.getElementById('profile-loading');
@@ -42,21 +39,32 @@ document.addEventListener('DOMContentLoaded', () => {
         const memberCodeSection = document.getElementById('member-code-section');
 
         if (user.membership) {
-            // Tampilan jika pengguna sudah membeli paket
+            // --- NEW LOGIC FOR EXPIRATION ---
+            const formatDate = (dateString) => {
+                const options = { year: 'numeric', month: 'long', day: 'numeric' };
+                return new Date(dateString).toLocaleDateString('id-ID', options);
+            };
+
+            const isExpired = new Date() > new Date(user.membership.expiresAt);
+
             membershipStatus.innerHTML = `
                 <h5 class="card-title">${user.membership.packageName}</h5>
                 <p class="display-4 fw-bold">${user.membership.remainingWashes}x</p>
                 <p class="text-muted">Sisa Jatah Pencucian</p>
                 <hr>
+                <p>Berlaku hingga: <strong>${formatDate(user.membership.expiresAt)}</strong></p>
                 <p>Status Pembayaran: 
                     ${user.membership.isPaid 
                         ? '<span class="badge bg-success">Lunas</span>' 
                         : '<span class="badge bg-warning text-dark">Menunggu Konfirmasi</span>'}
                 </p>
+                ${isExpired ? '<p class="text-danger fw-bold mt-2">Paket Anda sudah kedaluwarsa!</p>' : ''}
             `;
             
-            if (user.membership.isPaid && user.membership.remainingWashes > 0) {
-                // Tampilkan QR code HANYA jika sudah lunas dan jatah masih ada
+            // --- END OF NEW LOGIC ---
+            
+            if (user.membership.isPaid && user.membership.remainingWashes > 0 && !isExpired) {
+                // Display QR code ONLY if paid, washes remain, AND not expired
                 memberCodeSection.innerHTML = `
                     <div id="qrcode-wrapper" class="d-flex flex-column align-items-center justify-content-center">
                         <div id="qrcode-container"></div>
@@ -65,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
                 
                 const qrCodeContainer = document.getElementById('qrcode-container');
-                qrCodeContainer.innerHTML = ''; // Selalu bersihkan kontainer sebelum membuat QR code baru
+                qrCodeContainer.innerHTML = ''; 
 
                 if (user.memberId) {
                     new QRCode(qrCodeContainer, {
@@ -77,24 +85,23 @@ document.addEventListener('DOMContentLoaded', () => {
                         correctLevel : QRCode.CorrectLevel.H
                     });
                     
-                    // Tambahkan teks memberId di bawah QR code
                     const memberIdText = document.createElement('p');
                     memberIdText.className = 'mt-2 fw-bold';
                     memberIdText.textContent = user.memberId;
                     qrCodeContainer.appendChild(memberIdText);
-
                 } else {
-                    qrCodeContainer.innerHTML = '<p class="text-danger">Member ID tidak ditemukan.</p>';
+                    memberCodeSection.innerHTML = '<p class="text-danger">Member ID tidak ditemukan.</p>';
                 }
-
             } else if (!user.membership.isPaid) {
-                memberCodeSection.innerHTML = `<p class="text-center text-muted p-4">QR code akan muncul setelah pembayaran dikonfirmasi oleh admin.</p>`;
+                memberCodeSection.innerHTML = `<p class="text-center text-muted p-4">QR code akan muncul setelah pembayaran dikonfirmasi.</p>`;
+            } else if (isExpired) {
+                memberCodeSection.innerHTML = `<p class="text-center text-danger p-4 fw-bold">Paket telah hangus.</p>`;
             } else {
                 memberCodeSection.innerHTML = `<p class="text-center text-muted p-4">Jatah cuci Anda sudah habis.</p>`;
             }
 
         } else {
-            // Tampilan untuk non-member
+            // Display for non-members (no change)
             membershipStatus.innerHTML = `
                 <p class="text-muted">Anda saat ini bukan member aktif.</p>
                 <a href="/" class="btn btn-primary">Lihat Paket Member</a>
