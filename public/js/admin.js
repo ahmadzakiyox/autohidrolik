@@ -89,17 +89,35 @@ document.addEventListener('DOMContentLoaded', () => {
         editUserModal.show();
     };
 
-// --- FUNGSI INI YANG DIPERBAIKI ---
+// --- PERBAIKAN UTAMA DI FUNGSI INI ---
     const openBarcodeModal = (user) => {
         document.getElementById('barcode-username').textContent = user.username;
+        const qrCodeContainer = document.getElementById('barcode-container');
         
-        // PASTIKAN MENGGUNAKAN user.memberId
-        JsBarcode("#barcode-container", user.memberId, {
-            format: "CODE128", 
-            width: 2, 
-            height: 80, 
-            displayValue: true // Tampilkan teks ID di bawah barcode
-        });
+        // Selalu kosongkan kontainer sebelum membuat QR code baru
+        qrCodeContainer.innerHTML = '';
+
+        if (user.memberId) {
+            // Gunakan library QRCode.js
+            new QRCode(qrCodeContainer, {
+                text: user.memberId,
+                width: 200,
+                height: 200,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+
+            // Tambahkan teks ID di bawah QR code
+            const memberIdText = document.createElement('p');
+            memberIdText.className = 'mt-3 fw-bold';
+            memberIdText.textContent = user.memberId;
+            qrCodeContainer.appendChild(memberIdText);
+
+        } else {
+            qrCodeContainer.innerHTML = '<p class="text-danger">Member ID tidak ditemukan untuk pengguna ini.</p>';
+        }
+        
         viewBarcodeModal.show();
     };
     
