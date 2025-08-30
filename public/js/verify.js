@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const API_URL = 'http://localhost:3000'; // Ensure this URL is correct
+    const API_URL = 'https://autohidrolik.com'; // Ensure this URL is correct
     const form = document.getElementById('verify-otp-form');
     const messageDiv = document.getElementById('message');
     const submitButton = document.getElementById('submit-button');
@@ -93,4 +93,5 @@ document.addEventListener('DOMContentLoaded', () => {
         // For example, by fetching an /api/resend-otp endpoint
         alert('The resend OTP feature has not yet been implemented in the backend.');
     });
+
 });
