@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const API_URL = 'https://autohidrolik.com';
     const form = document.getElementById('forgot-password-form');
     const messageDiv = document.getElementById('message');
     const submitButton = document.getElementById('submit-button');
@@ -11,28 +10,25 @@ document.addEventListener('DOMContentLoaded', () => {
         submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Mengirim...';
         messageDiv.innerHTML = '';
 
-        // Ambil nilai dari input dengan ID 'email'
-        const email = document.getElementById('email').value;
+        const contact = document.getElementById('contact').value;
+        const method = document.getElementById('method').value;
 
         try {
-            const response = await fetch(`${API_URL}/api/forgot-password`, {
+            // URL API diperbaiki menjadi relatif
+            const response = await fetch('/api/forgot-password', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                // Kirim hanya email ke backend
-                body: JSON.stringify({ email: email })
+                body: JSON.stringify({ contact, method })
             });
 
             const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(result.msg || 'Gagal mengirim kode OTP.');
-            }
+            if (!response.ok) throw new Error(result.msg || 'Gagal mengirim kode OTP.');
 
             messageDiv.innerHTML = `<div class="alert alert-success">${result.msg} Anda akan dialihkan...</div>`;
 
             setTimeout(() => {
-                // Arahkan ke halaman verifikasi, kirim email sebagai parameter
-                window.location.href = `/verify.html?email=${encodeURIComponent(email)}&action=reset`;
+                // Halaman verifikasi diubah menjadi /verify
+                window.location.href = `/verify?contact=${encodeURIComponent(contact)}&method=${method}&action=reset`;
             }, 3000);
 
         } catch (error) {
@@ -42,5 +38,3 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
-
-
