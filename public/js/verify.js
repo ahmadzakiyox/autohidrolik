@@ -1,49 +1,41 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const API_URL = 'https://autohidrolik.com'; // Ensure this URL is correct
     const form = document.getElementById('verify-otp-form');
     const messageDiv = document.getElementById('message');
     const submitButton = document.getElementById('submit-button');
     const resetPasswordSection = document.getElementById('reset-password-section');
     const newPasswordInput = document.getElementById('new-password');
 
-    // Get parameters from the URL to determine the workflow
     const urlParams = new URLSearchParams(window.location.search);
-    const action = urlParams.get('action'); // 'reset' or null (for registration)
-    
-    // --- KEY FIX HERE ---
-    // Use 'email' for registration, or 'contact' for password reset
+    const action = urlParams.get('action');
     const contactInfo = action === 'reset' ? urlParams.get('contact') : urlParams.get('email');
     const method = urlParams.get('method');
 
-    // If no contact info (email/phone) is found, stop the process
     if (!contactInfo) {
-        messageDiv.innerHTML = `<div class="alert alert-danger">Contact information not found. Please repeat the process from the beginning.</div>`;
+        messageDiv.innerHTML = `<div class="alert alert-danger">Informasi kontak tidak ditemukan. Silakan ulangi proses dari awal.</div>`;
         submitButton.disabled = true;
         return;
     }
 
-    // Adjust the form display based on its purpose
     if (action === 'reset') {
         resetPasswordSection.style.display = 'block';
-        submitButton.textContent = 'Reset Password';
+        submitButton.textContent = 'Reset Sandi';
     } else {
-        submitButton.textContent = 'Verify Account';
+        submitButton.textContent = 'Verifikasi Akun';
     }
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
         submitButton.disabled = true;
-        submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Verifying...';
+        submitButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Memverifikasi...';
         messageDiv.innerHTML = '';
 
         const otp = document.getElementById('otp').value;
         let apiUrl = '';
         let payload = {};
 
-        // Prepare the data to be sent to the backend
         if (action === 'reset') {
-            apiUrl = `${API_URL}/api/reset-password`;
+            apiUrl = '/api/reset-password'; // URL API diperbaiki
             payload = {
                 contact: contactInfo,
                 method: method,
@@ -51,9 +43,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 newPassword: newPasswordInput.value
             };
         } else {
-            apiUrl = `${API_URL}/api/verify-otp`;
+            apiUrl = '/api/verify-otp'; // URL API diperbaiki
             payload = {
-                email: contactInfo, // On registration, contactInfo is the email
+                email: contactInfo,
                 otp: otp
             };
         }
@@ -66,32 +58,24 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             const result = await response.json();
+            if (!response.ok) throw new Error(result.msg || 'Proses verifikasi gagal.');
 
-            if (!response.ok) {
-                throw new Error(result.msg || 'Verification process failed.');
-            }
+            messageDiv.innerHTML = `<div class="alert alert-success">${result.msg} Anda akan dialihkan...</div>`;
 
-            messageDiv.innerHTML = `<div class="alert alert-success">${result.msg} You will be redirected...</div>`;
-
-            // Redirect to the login page after 3 seconds
             setTimeout(() => {
-                window.location.href = '/login.html';
+                window.location.href = '/login'; // Redirect ke halaman login
             }, 3000);
 
         } catch (error) {
             messageDiv.innerHTML = `<div class="alert alert-danger">${error.message}</div>`;
             submitButton.disabled = false;
-            submitButton.innerHTML = (action === 'reset') ? 'Reset Password' : 'Verify Account';
+            submitButton.innerHTML = (action === 'reset') ? 'Reset Sandi' : 'Verifikasi Akun';
         }
     });
 
-    // Logic for resending OTP
     const resendLink = document.getElementById('resend-otp-link');
-    resendLink.addEventListener('click', async (e) => {
+    resendLink.addEventListener('click', (e) => {
         e.preventDefault();
-        // Logic to resend OTP can be added here
-        // For example, by fetching an /api/resend-otp endpoint
-        alert('The resend OTP feature has not yet been implemented in the backend.');
+        alert('Fitur kirim ulang OTP belum diimplementasikan.');
     });
-
 });
