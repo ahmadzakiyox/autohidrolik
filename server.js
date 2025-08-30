@@ -360,25 +360,53 @@ app.post('/api/forgot-password', async (req, res) => {
 
 
 // 5. Rute Baru: Reset Sandi (Verifikasi OTP & Set Sandi Baru)
-app.post('/api/reset-password', async (req, res) => {
-    const { contact, otp, newPassword, method } = req.body;
-    try {
-        const user = await User.findOne({
-            [method === 'email' ? 'email' : 'phone']: contact,
-            otp,
-            otpExpires: { $gt: Date.now() }
-        });
-        
-        if (!user) return res.status(400).json({ msg: 'Kode OTP tidak valid atau kedaluwarsa.' });
+app.post('/api/forgot-password', async (req, res) => {
+    // 1. Log saat permintaan diterima
+    console.log('\n--- Menerima Permintaan Lupa Sandi ---');
+    console.log('Data yang diterima:', req.body);
 
-        user.password = await bcrypt.hash(newPassword, 10);
-        user.isVerified = true; // Pastikan user terverifikasi juga
-        user.otp = null;
-        user.otpExpires = null;
+    const { email } = req.body; 
+    try {
+        const user = await User.findOne({ email: email });
+
+        // 2. Log hasil pencarian pengguna
+        if (!user) {
+            console.log(`Pencarian Pengguna: Tidak ditemukan pengguna dengan email ${email}.`);
+            return res.status(404).json({ msg: 'Pengguna dengan email tersebut tidak ditemukan.' });
+        }
+        console.log(`Pencarian Pengguna: Ditemukan pengguna -> ${user.username}`);
+
+        // 3. Log OTP yang dibuat
+        const otp = generateOTP();
+        console.log(`OTP Dibuat: Kode OTP baru adalah ${otp}`);
+        
+        user.otp = otp;
+        user.otpExpires = Date.now() + 10 * 60 * 1000; // 10 menit
         await user.save();
 
-        res.json({ msg: 'Kata sandi berhasil direset! Silakan login dengan sandi baru Anda.' });
+        // 4. Log konfirmasi bahwa OTP sudah disimpan di database
+        console.log(`Penyimpanan: OTP untuk ${user.username} berhasil disimpan ke database.`);
+
+        // 5. Log simulasi pengiriman email (ini akan tetap menjadi cara Anda melihat OTP)
+        console.log(`============================================`);
+        console.log(`KODE OTP UNTUK RESET SANDI ${user.username} ADALAH: ${otp}`);
+        console.log(`============================================`);
+
+        // Kirim email sungguhan
+        await transporter.sendMail({
+            from: `"AUTOHIDROLIK" <${process.env.GMAIL_USER}>`,
+            to: user.email,
+            subject: 'Kode Reset Kata Sandi',
+            text: `Gunakan kode ini untuk mereset kata sandi Anda: ${otp}`
+        });
+        
+        console.log(`Pengiriman: Email OTP berhasil dikirim ke ${user.email}.`);
+        console.log('--- Permintaan Lupa Sandi Selesai ---');
+        res.json({ msg: `Kode OTP telah dikirim ke ${email}.` });
+
     } catch (error) {
+        // 6. Log jika terjadi error di server
+        console.error("!!! ERROR di /api/forgot-password:", error);
         res.status(500).send('Server error');
     }
 });
