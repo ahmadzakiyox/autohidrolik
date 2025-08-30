@@ -7,26 +7,28 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         
         submitButton.disabled = true;
-        submitButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Mengirim...';
+        submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Mengirim...';
         messageDiv.innerHTML = '';
 
-        const email = document.getElementById('email').value;
+        const contact = document.getElementById('contact').value;
+        const method = document.getElementById('method').value;
 
         try {
             const response = await fetch('/api/forgot-password', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email }) // Hanya kirim email
+                body: JSON.stringify({ contact, method })
             });
 
             const result = await response.json();
-            if (!response.ok) throw new Error(result.msg || 'Gagal mengirim kode OTP.');
+            if (!response.ok) {
+                throw new Error(result.msg || 'Gagal mengirim kode OTP.');
+            }
 
             messageDiv.innerHTML = `<div class="alert alert-success">${result.msg} Anda akan dialihkan...</div>`;
 
             setTimeout(() => {
-                // Arahkan ke halaman verifikasi dengan membawa email
-                window.location.href = `/verify?email=${encodeURIComponent(email)}&action=reset`;
+                window.location.href = `/verify?contact=${encodeURIComponent(contact)}&method=${method}&action=reset`;
             }, 3000);
 
         } catch (error) {
