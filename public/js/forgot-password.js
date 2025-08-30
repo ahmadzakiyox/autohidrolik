@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const API_URL = 'http://localhost:3000'; // Sesuaikan jika perlu
+    const API_URL = 'https://autohidrolik.com'; // Sesuaikan jika perlu
     const form = document.getElementById('forgot-password-form');
     const messageDiv = document.getElementById('message');
     const submitButton = document.getElementById('submit-button');
@@ -44,4 +44,5 @@ document.addEventListener('DOMContentLoaded', () => {
             submitButton.innerHTML = 'Kirim Kode OTP';
         }
     });
+
 });
