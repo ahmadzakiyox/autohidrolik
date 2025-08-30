@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const API_URL = 'https://autohidrolik.com/';
+    const API_URL = 'https://autohidrolik.com';
     const form = document.getElementById('forgot-password-form');
     const messageDiv = document.getElementById('message');
     const submitButton = document.getElementById('submit-button');
@@ -42,4 +42,5 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
 
