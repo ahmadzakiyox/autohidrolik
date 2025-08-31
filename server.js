@@ -326,6 +326,25 @@ app.delete('/api/users/:id', auth, adminAuth, async (req, res) => {
     }
 });
 
+app.post('/api/users/:id/reset-password', auth, adminAuth, async (req, res) => {
+    const { newPassword } = req.body;
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            return res.status(404).json({ msg: 'Pengguna tidak ditemukan.' });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(newPassword, salt);
+        await user.save();
+
+        res.json({ msg: `Kata sandi untuk ${user.username} berhasil direset.` });
+    } catch (err) {
+        console.error("Error di reset-password:", err.message);
+        res.status(500).send('Server error');
+    }
+});
+
 // --- RUTE LUPA & RESET SANDI ---
 
 app.post('/api/forgot-password', async (req, res) => {
