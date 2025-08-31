@@ -592,6 +592,44 @@ app.post('/api/confirm-payment/:userId', auth, adminAuth, async (req, res) => {
     }
 });
 
+// --- RUTE BARU: KIRIM ULANG OTP ---
+app.post('/api/resend-otp', async (req, res) => {
+    const { email } = req.body;
+    try {
+        const user = await User.findOne({ email: email });
+
+        if (!user) {
+            return res.status(404).json({ msg: 'Pengguna dengan email ini tidak ditemukan.' });
+        }
+        if (user.isVerified) {
+            return res.status(400).json({ msg: 'Akun ini sudah terverifikasi.' });
+        }
+
+        // Buat OTP baru dan perbarui masa berlakunya
+        const otp = generateOTP();
+        user.otp = otp;
+        user.otpExpires = new Date(Date.now() + 10 * 60 * 1000); // Berlaku 10 menit
+        await user.save();
+
+        console.log(`[Kirim Ulang] OTP baru untuk ${email} adalah: ${otp}`);
+
+        // Kirim OTP baru ke email pengguna
+        await transporter.sendMail({
+            from: `"AUTOHIDROLIK" <${process.env.GMAIL_USER}>`,
+            to: email,
+            subject: 'Kode Verifikasi Pendaftaran Baru',
+            text: `Kode OTP baru Anda adalah: ${otp}. Kode ini berlaku selama 10 menit.`
+        });
+
+        res.json({ msg: 'Kode OTP baru telah berhasil dikirim ke email Anda.' });
+
+    } catch (error) {
+        console.error("Error di /api/resend-otp:", error);
+        res.status(500).send('Server error');
+    }
+});
+
+
 // Rute untuk admin mengatur/mengubah paket member
 /*app.post('/api/purchase-membership-admin/:userId', auth, adminAuth, async (req, res) => {
     const { packageName, totalWashes } = req.body;
