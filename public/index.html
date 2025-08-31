@@ -15,33 +15,6 @@
             background-color: #0d1117;
             color: #c9d1d9;
         }
-
-          /* --- STYLING UNTUK HERO SECTION DENGAN LOGO WATERMARK --- */
-         .hero-section {
-            background: #0015ff;
-            background-image: linear-gradient(rgba(13, 17, 23, 0.8), rgba(13, 17, 23, 1));
-            background-size: cover;
-            background-position: center;
-            padding: 100px 0;
-        }
-
-        .hero-section .background-logo {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 1; /* Posisikan di bawah konten, di atas background */
-            opacity: 0.05; /* Buat sangat transparan */
-            width: 500px; /* Atur ukuran logo watermark */
-            pointer-events: none; /* Agar tidak bisa diklik */
-        }
-        
-        /* Pastikan konten di dalam hero section berada di atas watermark */
-        .hero-section .container {
-            position: relative;
-            z-index: 2;
-        }
-        /* --- AKHIR STYLING HERO SECTION --- */
         
         .navbar {
             transition: background-color 0.3s ease-in-out;
@@ -51,12 +24,23 @@
             box-shadow: 0 2px 10px rgba(0,0,0,0.5);
         }
         .hero-section {
-            background: #161b22;
-            background-image: linear-gradient(rgba(13, 17, 23, 0.8), rgba(13, 17, 23, 1));
+            /* === PERUBAHAN DI SINI === */
+            /* Gradien 3 warna baru yang disesuaikan dengan gambar undangan Anda */
+            background: linear-gradient(135deg, #012A61, #007BFF, #D4AF37);
+            
             background-size: cover;
             background-position: center;
             padding: 100px 0;
+            position: relative; /* Menambahkan position relative untuk watermark jika diperlukan */
         }
+        /* Saya menghapus rule duplikat untuk .hero-section dan watermark yang tidak terpakai */
+        
+        /* Pastikan konten di dalam hero section berada di atas elemen lain */
+        .hero-section .container {
+            position: relative;
+            z-index: 2;
+        }
+        /* --- AKHIR PERUBAHAN HERO SECTION --- */
         .card {
             background-color: #161b22;
             border: 1px solid #30363d;
