@@ -15,6 +15,35 @@
             background-color: #0d1117;
             color: #c9d1d9;
         }
+
+          /* --- STYLING UNTUK HERO SECTION DENGAN LOGO WATERMARK --- */
+        .hero-section {
+            background-color: #161b22;
+            padding: 100px 0;
+            color: white;
+            position: relative; /* Diperlukan agar watermark bisa diposisikan di dalamnya */
+            overflow: hidden; /* Mencegah watermark keluar dari section */
+            text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+        }
+
+        .hero-section .background-logo {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1; /* Posisikan di bawah konten, di atas background */
+            opacity: 0.05; /* Buat sangat transparan */
+            width: 500px; /* Atur ukuran logo watermark */
+            pointer-events: none; /* Agar tidak bisa diklik */
+        }
+        
+        /* Pastikan konten di dalam hero section berada di atas watermark */
+        .hero-section .container {
+            position: relative;
+            z-index: 2;
+        }
+        /* --- AKHIR STYLING HERO SECTION --- */
+        
         .navbar {
             transition: background-color 0.3s ease-in-out;
         }
@@ -139,13 +168,14 @@
         </div>
  </nav>
 
-    <header class="hero-section">
-        <div class="container text-center">
-            <h1>Bersih Cepat dan Hemat</h1>
-            <p class="lead">Berikan perawatan terbaik untuk kendaraan Anda bersama kami. Cepat, bersih, dan profesional.</p>
-            <a href="/register.html" class="btn btn-custom btn-lg mt-3">Gabung Sekarang! Dapatkan Diskon 20%</a>
-        </div>
-    </header>
+ <header class="hero-section">
+    <div class="container text-center">
+        <img src="/images/logo.png" alt="AUTOHIDROLIK Logo" style="height: 250px; margin-bottom: 50px;">
+        <h1 class="display-4">Bersih Cepat dan Hemat</h1>
+        <p class="lead">Berikan perawatan terbaik untuk kendaraan Anda bersama kami. Cepat, bersih, dan profesional.</p>
+        <a href="/register.html" class="btn btn-custom btn-lg mt-3">Gabung Sekarang! Dapatkan Diskon 20%</a>
+    </div>
+</header>
 
     <main class="container mt-5">
         <section id="paket-member" class="text-center mb-5 pt-5 fade-in-section">
