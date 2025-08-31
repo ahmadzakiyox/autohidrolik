@@ -673,6 +673,65 @@ app.post('/api/reset-password', async (req, res) => {
         res.status(500).send('Server error');
     }
 });
+
+// --- RUTE BARU: UNTUK DOWNLOAD DATA EXCEL ---
+app.get('/api/download-data', auth, adminAuth, async (req, res) => {
+    try {
+        const users = await User.find({ role: 'user' }).sort({ date: 1 });
+
+        const workbook = new exceljs.Workbook();
+        workbook.creator = 'AUTOHIDROLIK Admin';
+        workbook.created = new Date();
+
+        const memberSheet = workbook.addWorksheet('Data Member');
+        const nonMemberSheet = workbook.addWorksheet('Data Non-Member');
+
+        memberSheet.columns = [
+            { header: 'Tanggal Bergabung', key: 'date', width: 20 },
+            { header: 'Nama', key: 'username', width: 30 },
+            { header: 'Nama Paket Pembelian', key: 'packageName', width: 30 }
+        ];
+        nonMemberSheet.columns = [
+            { header: 'Tanggal Gabung', key: 'date', width: 20 },
+            { header: 'Nama', key: 'username', width: 30 }
+        ];
+
+        memberSheet.getRow(1).font = { bold: true };
+        nonMemberSheet.getRow(1).font = { bold: true };
+
+        users.forEach(user => {
+            if (user.membership && user.membership.isPaid) {
+                memberSheet.addRow({
+                    date: user.date,
+                    username: user.username,
+                    packageName: user.membership.packageName
+                });
+            } else {
+                nonMemberSheet.addRow({
+                    date: user.date,
+                    username: user.username
+                });
+            }
+        });
+
+        res.setHeader(
+            'Content-Type',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        );
+        res.setHeader(
+            'Content-Disposition',
+            `attachment; filename=data_autohidrolik_${new Date().toISOString().slice(0,10)}.xlsx`
+        );
+
+        await workbook.xlsx.write(res);
+        res.end();
+
+    } catch (error) {
+        console.error("Error saat membuat file Excel:", error);
+        res.status(500).send("Gagal membuat file Excel.");
+    }
+});
+
 // Rute untuk admin mengatur/mengubah paket member
 /*app.post('/api/purchase-membership-admin/:userId', auth, adminAuth, async (req, res) => {
     const { packageName, totalWashes } = req.body;
