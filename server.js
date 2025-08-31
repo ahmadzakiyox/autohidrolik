@@ -674,7 +674,7 @@ app.post('/api/reset-password', async (req, res) => {
     }
 });
 
-// --- RUTE BARU: UNTUK DOWNLOAD DATA EXCEL ---
+// --- New Route for Excel Data Download ---
 app.get('/api/download-data', auth, adminAuth, async (req, res) => {
     try {
         const users = await User.find({ role: 'user' }).sort({ date: 1 });
@@ -727,10 +727,11 @@ app.get('/api/download-data', auth, adminAuth, async (req, res) => {
         res.end();
 
     } catch (error) {
-        console.error("Error saat membuat file Excel:", error);
-        res.status(500).send("Gagal membuat file Excel.");
+        console.error("Error creating Excel file:", error);
+        res.status(500).send("Failed to create Excel file.");
     }
 });
+
 
 // Rute untuk admin mengatur/mengubah paket member
 /*app.post('/api/purchase-membership-admin/:userId', auth, adminAuth, async (req, res) => {
