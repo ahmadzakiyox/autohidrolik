@@ -20,6 +20,44 @@ document.addEventListener('DOMContentLoaded', () => {
     const userTableBody = document.getElementById('user-table-body');
     const memberCountElement = document.getElementById('member-count');
 
+     // --- LOGIKA BARU UNTUK TOMBOL DOWNLOAD ---
+    const downloadButton = document.getElementById('download-data-btn');
+    downloadButton.addEventListener('click', async () => {
+        downloadButton.disabled = true;
+        downloadButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Mengunduh...';
+
+        try {
+            const response = await fetch(`${API_URL}/api/download-data`, {
+                method: 'GET',
+                headers: { 'x-auth-token': token }
+            });
+
+            if (!response.ok) {
+                throw new Error('Gagal mengunduh data.');
+            }
+
+            // Proses untuk men-download file dari respons
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `data_autohidrolik_${new Date().toISOString().slice(0,10)}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            a.remove();
+
+        } catch (error) {
+            console.error('Error saat download:', error);
+            alert(error.message);
+        } finally {
+            downloadButton.disabled = false;
+            downloadButton.innerHTML = '<i class="bi bi-download"></i> Download Data';
+        }
+    });
+    // --- AKHIR LOGIKA BARU ---
+    
     const fetchUsers = async () => {
         try {
             const response = await fetch(`${API_URL}/api/users`, { headers: { 'x-auth-token': token } });
