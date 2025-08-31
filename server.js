@@ -629,7 +629,31 @@ app.post('/api/resend-otp', async (req, res) => {
     }
 });
 
+app.post('/api/reset-password', async (req, res) => {
+    // Pastikan Anda mengambil semua data yang diperlukan
+    const { email, otp, newPassword } = req.body;
+    try {
+        const user = await User.findOne({
+            email: email,
+            otp: otp,
+            otpExpires: { $gt: Date.now() }
+        });
+        
+        if (!user) {
+            return res.status(400).json({ msg: 'Kode OTP tidak valid atau kedaluwarsa.' });
+        }
 
+        user.password = await bcrypt.hash(newPassword, 10);
+        user.otp = null;
+        user.otpExpires = null;
+        await user.save();
+
+        res.json({ msg: 'Kata sandi berhasil direset! Silakan login dengan sandi baru Anda.' });
+    } catch (error) {
+        console.error("Error di /api/reset-password:", error);
+        res.status(500).send('Server error');
+    }
+});
 // Rute untuk admin mengatur/mengubah paket member
 /*app.post('/api/purchase-membership-admin/:userId', auth, adminAuth, async (req, res) => {
     const { packageName, totalWashes } = req.body;
