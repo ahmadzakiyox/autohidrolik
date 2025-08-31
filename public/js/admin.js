@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    // Initialize all modals
+// Initialize all modals
     const addUserModal = new bootstrap.Modal(document.getElementById('addUserModal'));
     const editUserModal = new bootstrap.Modal(document.getElementById('editUserModal'));
     const viewBarcodeModal = new bootstrap.Modal(document.getElementById('viewBarcodeModal'));
@@ -16,11 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const editReviewModal = new bootstrap.Modal(document.getElementById('editReviewModal'));
     const resetPasswordModal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
 
-    // --- USER MANAGEMENT FUNCTIONS ---
-    const userTableBody = document.getElementById('user-table-body');
-    const memberCountElement = document.getElementById('member-count');
-
-     // --- LOGIKA BARU UNTUK TOMBOL DOWNLOAD ---
+    // Download Button Logic
     const downloadButton = document.getElementById('download-data-btn');
     downloadButton.addEventListener('click', async () => {
         downloadButton.disabled = true;
@@ -31,12 +27,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 method: 'GET',
                 headers: { 'x-auth-token': token }
             });
+            if (!response.ok) throw new Error('Gagal mengunduh data.');
 
-            if (!response.ok) {
-                throw new Error('Gagal mengunduh data.');
-            }
-
-            // Proses untuk men-download file dari respons
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -47,7 +39,6 @@ document.addEventListener('DOMContentLoaded', () => {
             a.click();
             window.URL.revokeObjectURL(url);
             a.remove();
-
         } catch (error) {
             console.error('Error saat download:', error);
             alert(error.message);
@@ -56,7 +47,9 @@ document.addEventListener('DOMContentLoaded', () => {
             downloadButton.innerHTML = '<i class="bi bi-download"></i> Download Data';
         }
     });
-    // --- AKHIR LOGIKA BARU ---
+    // --- USER MANAGEMENT FUNCTIONS ---
+    const userTableBody = document.getElementById('user-table-body');
+    const memberCountElement = document.getElementById('member-count');
     
     const fetchUsers = async () => {
         try {
