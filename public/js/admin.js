@@ -2,19 +2,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const API_URL = 'https://autohidrolik.com';
     const token = localStorage.getItem('token');
     
-    if (!token) {
-        window.location.href = '/login';
+    if (!token || localStorage.getItem('userRole') !== 'admin') {
+        alert('Akses ditolak. Silakan login sebagai admin.');
+        window.location.href = '/login.html';
         return;
     }
 
-    // Inisialisasi semua modal
+    // Initialize all modals
     const addUserModal = new bootstrap.Modal(document.getElementById('addUserModal'));
     const editUserModal = new bootstrap.Modal(document.getElementById('editUserModal'));
     const viewBarcodeModal = new bootstrap.Modal(document.getElementById('viewBarcodeModal'));
     const setPackageModal = new bootstrap.Modal(document.getElementById('setPackageModal'));
     const editReviewModal = new bootstrap.Modal(document.getElementById('editReviewModal'));
+    const resetPasswordModal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
 
-    // --- FUNGSI UNTUK PENGGUNA (USERS) ---
+    // --- USER MANAGEMENT FUNCTIONS ---
     const userTableBody = document.getElementById('user-table-body');
     const memberCountElement = document.getElementById('member-count');
 
@@ -41,7 +43,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const row = document.createElement('tr');
             let membershipStatus = '<span class="text-muted">Non-Member</span>';
             let paymentStatus = '-';
-            let actionButtons = `<button class="btn btn-sm btn-outline-success set-package-btn" title="Atur Paket"><i class="bi bi-gem"></i></button> <button class="btn btn-sm btn-outline-warning edit-user-btn" title="Edit"><i class="bi bi-pencil-square"></i></button> <button class="btn btn-sm btn-outline-danger delete-user-btn" title="Hapus"><i class="bi bi-trash3"></i></button>`;
+            let actionButtons = `
+                <button class="btn btn-sm btn-outline-secondary reset-password-btn" title="Reset Sandi"><i class="bi bi-key-fill"></i></button>
+                <button class="btn btn-sm btn-outline-success set-package-btn" title="Atur Paket"><i class="bi bi-gem"></i></button> 
+                <button class="btn btn-sm btn-outline-warning edit-user-btn" title="Edit"><i class="bi bi-pencil-square"></i></button> 
+                <button class="btn btn-sm btn-outline-danger delete-user-btn" title="Hapus"><i class="bi bi-trash3"></i></button>
+            `;
             
             if (user.membership) {
                 memberCount++;
@@ -50,17 +57,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     ? '<span class="badge bg-success">Lunas</span>'
                     : '<span class="badge bg-warning text-dark">Belum Bayar</span>';
                 if (user.membership.isPaid) {
-                    actionButtons = `<button class="btn btn-sm btn-outline-info view-barcode-btn" title="Barcode"><i class="bi bi-qr-code"></i></button> ` + actionButtons;
+                    actionButtons = `<button class="btn btn-sm btn-outline-info view-barcode-btn" title="QR Code"><i class="bi bi-qr-code"></i></button> ` + actionButtons;
                 } else {
                     actionButtons = `<button class="btn btn-sm btn-info confirm-payment-btn" title="Konfirmasi Bayar"><i class="bi bi-check-circle"></i></button> ` + actionButtons;
                 }
             }
             
-            // --- PERUBAHAN DI SINI ---
-            const formattedCounter = String(userCounter).padStart(3, '0'); // Mengubah 1 menjadi "001"
-
+            const formattedCounter = String(userCounter).padStart(3, '0');
             row.innerHTML = `
-                <td>${formattedCounter}</td> 
+                <td>${formattedCounter}</td>
                 <td>${user.username}</td>
                 <td>${user.email}</td>
                 <td>${membershipStatus}</td>
@@ -73,6 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
             row.querySelector('.view-barcode-btn')?.addEventListener('click', () => openBarcodeModal(user));
             row.querySelector('.set-package-btn')?.addEventListener('click', () => openSetPackageModal(user));
             row.querySelector('.confirm-payment-btn')?.addEventListener('click', () => handleConfirmPayment(user._id));
+            row.querySelector('.reset-password-btn')?.addEventListener('click', () => openResetPasswordModal(user));
             userTableBody.appendChild(row);
             
             userCounter++;
@@ -89,16 +95,13 @@ document.addEventListener('DOMContentLoaded', () => {
         editUserModal.show();
     };
 
-// --- PERBAIKAN UTAMA DI FUNGSI INI ---
     const openBarcodeModal = (user) => {
         document.getElementById('barcode-username').textContent = user.username;
         const qrCodeContainer = document.getElementById('barcode-container');
         
-        // Selalu kosongkan kontainer sebelum membuat QR code baru
         qrCodeContainer.innerHTML = '';
 
         if (user.memberId) {
-            // Gunakan library QRCode.js
             new QRCode(qrCodeContainer, {
                 text: user.memberId,
                 width: 200,
@@ -108,7 +111,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 correctLevel: QRCode.CorrectLevel.H
             });
 
-            // Tambahkan teks ID di bawah QR code
             const memberIdText = document.createElement('p');
             memberIdText.className = 'mt-3 fw-bold';
             memberIdText.textContent = user.memberId;
@@ -126,6 +128,13 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('set-package-userid').value = user._id;
         document.getElementById('set-package-form').reset();
         setPackageModal.show();
+    };
+    
+    const openResetPasswordModal = (user) => {
+        document.getElementById('reset-password-username').textContent = user.username;
+        document.getElementById('reset-password-userid').value = user._id;
+        document.getElementById('reset-password-form').reset();
+        resetPasswordModal.show();
     };
 
     document.getElementById('add-user-form').addEventListener('submit', async (e) => {
@@ -171,6 +180,27 @@ document.addEventListener('DOMContentLoaded', () => {
             editUserModal.hide();
             fetchUsers();
         } catch (error) { alert(error.message); }
+    });
+
+    document.getElementById('reset-password-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const userId = document.getElementById('reset-password-userid').value;
+        const newPassword = document.getElementById('new-password-admin').value;
+
+        try {
+            const response = await fetch(`${API_URL}/api/users/${userId}/reset-password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+                body: JSON.stringify({ newPassword })
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.msg || 'Gagal reset sandi.');
+            
+            alert(result.msg);
+            resetPasswordModal.hide();
+        } catch (error) {
+            alert(`Error: ${error.message}`);
+        }
     });
 
     const deleteUser = async (userId) => {
@@ -220,7 +250,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) { alert(error.message); }
     });
 
-    // --- FUNGSI UNTUK ULASAN (REVIEWS) ---
+    // --- REVIEW MANAGEMENT FUNCTIONS ---
     const reviewTableBody = document.getElementById('review-table-body');
 
     const fetchReviews = async () => {
@@ -297,14 +327,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Logout
+    // --- LOGOUT ---
     document.getElementById('logout-button').addEventListener('click', () => {
         localStorage.removeItem('token');
         localStorage.removeItem('userRole');
-        window.location.href = '/login';
+        window.location.href = '/login.html';
     });
     
-    // Panggil semua fungsi fetch data saat halaman dimuat
+    // Initial data fetch
     fetchUsers();
     fetchReviews();
 });
