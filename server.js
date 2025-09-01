@@ -775,21 +775,21 @@ app.get('/api/download-data', auth, adminAuth, async (req, res) => {
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
-app.get('/login', (req, res) => {
+app.get('/Login', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
-app.get('/register', (req, res) => {
+app.get('/Register-User', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'register.html'));
 });
-app.get('/profile', (req, res) => {
+app.get('/Profile', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'profile.html'));
 });
-app.get('/admin', (req, res) => {
+app.get('/Admin-Dashboard', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
 // --- PENAMBAHAN BARU: Rute untuk halaman scanner ---
-app.get('/scan', (req, res) => {
+app.get('/Scanner-QRCODE', (req, res) => {
     // Pastikan halaman ini hanya bisa diakses setelah login sebagai admin
     // Middleware 'auth' dan 'adminAuth' bisa ditambahkan di sini jika perlu
     res.sendFile(path.join(__dirname, 'public', 'scan.html'));
