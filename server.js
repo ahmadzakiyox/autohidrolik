@@ -211,41 +211,28 @@ app.post('/api/verify-otp', async (req, res) => {
     }
 });
 
-// PENAMBAHAN BARU: Rute untuk statistik dashboard
+
+// --- RUTE STATISTIK DASHBOARD (DIPERBARUI) ---
 app.get('/api/dashboard-stats', auth, adminAuth, async (req, res) => {
     try {
-        // 1. Hitung member aktif (yang sudah bayar)
-        const activeMembers = await User.countDocuments({
-            'membership.isPaid': true
-        });
+        const activeMembers = await User.countDocuments({ 'membership.isPaid': true });
 
-        // 2. Dapatkan total pengunjung
         const visitorData = await Visitor.findOne({ identifier: 'global-visitor-count' });
         const totalVisitors = visitorData ? visitorData.count : 0;
 
-        // 3. Hitung total transaksi dari paket yang sudah dibayar
-        const paidUsers = await User.find({ 'membership.isPaid': true });
+        // --- LOGIKA BARU: HITUNG TOTAL DARI KOLEKSI TRANSAKSI ---
+        const transactionAggregation = await Transaction.aggregate([
+            {
+                $group: {
+                    _id: null, // Mengelompokkan semua dokumen menjadi satu
+                    totalAmount: { $sum: "$amount" } // Menjumlahkan semua nilai dari field 'amount'
+                }
+            }
+        ]);
         
-        // Daftar harga paket (Anda bisa menyimpannya di tempat lain jika perlu)
-      const packagePrices = {
-    'Body Wash (12x)': 500000,
-    'Cuci Mobil Hidrolik (10x)': 560000,
-    'Cuci Motor Besar': 200000,
-    'Cuci Motor Kecil': 200000,
-    'Paket Kombinasi': 600000,
-    'Add-On Vacuum Cleaner': 20000
-};
+        const totalTransactions = transactionAggregation.length > 0 ? transactionAggregation[0].totalAmount : 0;
+        // --- AKHIR LOGIKA BARU ---
 
-const totalTransactions = paidUsers.reduce((total, user) => {
-    // Pastikan user.membership dan packageName ada
-    if (user.membership && user.membership.packageName) {
-        const price = packagePrices[user.membership.packageName] || 0;
-        return total + price;
-    }
-    return total;
-}, 0);
-
-        // Kirim semua data sebagai satu objek JSON
         res.json({
             activeMembers,
             totalVisitors,
@@ -667,25 +654,53 @@ app.post('/api/use-wash', auth, adminAuth, async (req, res) => {
     }
 });*/
 
-// Rute untuk admin mengonfirmasi pembayaran (PENTING)
+// --- RUTE KONFIRMASI PEMBAYARAN (DIPERBARUI) ---
 app.post('/api/confirm-payment/:userId', auth, adminAuth, async (req, res) => {
     try {
         const user = await User.findById(req.params.userId);
         if (!user || !user.membership) {
             return res.status(404).json({ msg: 'Data member tidak ditemukan.' });
         }
+        
+        // Cek agar transaksi tidak dicatat dua kali
+        if (user.membership.isPaid) {
+            return res.status(400).json({ msg: 'Pembayaran ini sudah pernah dikonfirmasi.' });
+        }
+
         user.membership.isPaid = true;
-        
-        // --- TAMBAHKAN BARIS INI ---
-        user.markModified('membership'); 
-        
-        await user.save(); // Sekarang perubahan akan tersimpan
-        res.json({ msg: `Pembayaran untuk ${user.username} telah dikonfirmasi.`, user });
+        user.markModified('membership');
+        await user.save();
+
+        // --- LOGIKA BARU: CATAT TRANSAKSI ---
+        // Daftar harga untuk menentukan jumlah transaksi
+        const packagePrices = {
+            'Body Wash': 500000,
+            'Cuci Mobil Hidrolik': 560000,
+            'Cuci Motor Besar': 200000,
+            'Cuci Motor Kecil': 200000,
+            'Paket Kombinasi': 600000,
+            'Add-On Vacuum Cleaner': 20000
+        };
+        const transactionAmount = packagePrices[user.membership.packageName] || 0;
+
+        // Buat catatan transaksi baru
+        const newTransaction = new Transaction({
+            user: user._id,
+            username: user.username,
+            packageName: user.membership.packageName,
+            amount: transactionAmount
+        });
+        await newTransaction.save();
+        // --- AKHIR LOGIKA BARU ---
+
+        res.json({ msg: `Pembayaran untuk ${user.username} telah dikonfirmasi dan dicatat.`, user });
+
     } catch (error) {
         console.error("Error di /api/confirm-payment:", error.message);
         res.status(500).send('Server error');
     }
 });
+
 // --- RUTE BARU: KIRIM ULANG OTP ---
 app.post('/api/resend-otp', async (req, res) => {
     const { email } = req.body;
