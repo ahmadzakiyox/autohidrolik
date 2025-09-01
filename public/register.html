@@ -10,34 +10,38 @@
     <style>
         :root {
             --bg-color: #0d1117;
-            --container-bg: #232f41;;
-            --input-bg: #1c2128;
+            --container-bg: #161b22;
+            --input-bg: #010409;
             --border-color: #30363d;
             --text-primary: #c9d1d9;
-            --text-secondary: #8b949e;
-            --text-headings: #f0f6fc;
-            --purple-accent: #a27bff;
-            --purple-hover: #c4a7ff;
+            --purple-accent: #8250df;
+            --purple-hover: #956ae6;
         }
         body {
             background-color: var(--bg-color);
             color: var(--text-primary);
             font-family: 'Poppins', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .navbar {
+            background-color: var(--container-bg);
+            border-bottom: 1px solid var(--border-color);
+            width: 100%;
+        }
+        .navbar-brand {
+            font-weight: bold;
         }
         .form-container {
-            max-width: 500px;
+            width: 100%;
+            max-width: 480px;
             margin: 4rem auto;
             padding: 2.5rem;
             background: var(--container-bg);
             border-radius: 8px;
             border: 1px solid var(--border-color);
-        }
-        h2 {
-            color: var(--text-headings);
-            font-weight: 500;
-        }
-        .form-label {
-            color: var(--text-primary);
         }
         .form-control {
             background-color: var(--input-bg);
@@ -48,12 +52,11 @@
             background-color: var(--input-bg);
             border-color: var(--purple-accent);
             color: var(--text-primary);
-            box-shadow: 0 0 0 0.25rem rgba(162, 123, 255, 0.25);
+            box-shadow: 0 0 0 0.25rem rgba(130, 80, 223, 0.25);
         }
         .btn-custom {
             background-color: var(--purple-accent);
             border-color: var(--purple-accent);
-            color: #fff;
             padding: 0.75rem;
             font-weight: 500;
         }
@@ -61,22 +64,8 @@
             background-color: var(--purple-hover);
             border-color: var(--purple-hover);
         }
-        a {
-            color: var(--purple-accent);
-            text-decoration: none;
-            font-weight: 500;
-        }
-        a:hover {
-            color: var(--purple-hover);
-        }
-        .navbar {
-            background-color: var(--container-bg);
-            border-bottom: 1px solid var(--border-color);
-        }
-        .navbar-brand {
-            color: var(--text-headings);
-            font-weight: bold;
-        }
+        a { color: var(--purple-accent); text-decoration: none; }
+        a:hover { color: var(--purple-hover); }
     </style>
 </head>
 <body>
@@ -118,7 +107,7 @@
                 </div>
                 <button type="submit" class="btn btn-custom w-100 mt-2">Daftar Akun</button>
             </form>
-            <p class="mt-4 text-center text-muted">Sudah punya akun? <a href="/login">Login di sini</a></p>
+            <p class="mt-4 text-center text-secondary">Sudah punya akun? <a href="/login">Login di sini</a></p>
         </div>
     </div>
     
