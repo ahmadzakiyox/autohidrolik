@@ -98,6 +98,7 @@
             </div>
         </div>
 
+        <div id="alert-placeholder" class="mb-4"></div>
         <div class="card shadow-sm mb-5">
             <div class="card-body">
                 <div class="table-responsive">
@@ -137,132 +138,6 @@
             </div>
         </div>
     </main>
-    
-    <div class="modal fade" id="addUserModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header"><h5 class="modal-title">Tambah Pengguna Baru</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-                <div class="modal-body">
-                    <form id="add-user-form">
-                        <div class="mb-3"><label for="add-username" class="form-label">Username</label><input type="text" class="form-control" id="add-username" required></div>
-                        <div class="mb-3"><label for="add-email" class="form-label">Email</label><input type="email" class="form-control" id="add-email" required></div>
-                        <div class="mb-3"><label for="add-phone" class="form-label">No. WhatsApp</label><input type="tel" class="form-control" id="add-phone" required></div>
-                        <div class="mb-3"><label for="add-password" class="form-label">Password</label><input type="password" class="form-control" id="add-password" required></div>
-                        <div class="mb-3"><label for="add-role" class="form-label">Role</label><select class="form-select" id="add-role"><option value="user">User</option><option value="admin">Admin</option></select></div>
-                        <button type="submit" class="btn btn-primary w-100">Simpan</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="modal fade" id="editUserModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header"><h5 class="modal-title">Edit Pengguna</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-                <div class="modal-body">
-                    <form id="edit-user-form">
-                        <input type="hidden" id="edit-user-id">
-                        <div class="mb-3"><label for="edit-username" class="form-label">Username</label><input type="text" class="form-control" id="edit-username" required></div>
-                        <div class="mb-3"><label for="edit-email" class="form-label">Email</label><input type="email" class="form-control" id="edit-email" required></div>
-                        <div class="mb-3"><label for="edit-phone" class="form-label">No. WhatsApp</label><input type="tel" class="form-control" id="edit-phone" required></div>
-                        <div class="mb-3"><label for="edit-role" class="form-label">Role</label><select class="form-select" id="edit-role"><option value="user">User</option><option value="admin">Admin</option></select></div>
-                        <button type="submit" class="btn btn-primary w-100">Update</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade" id="viewBarcodeModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Kode Member untuk <span id="barcode-username"></span></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body text-center">
-                    <div id="barcode-wrapper">
-                        <div id="barcode-container"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade" id="setPackageModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header"><h5 class="modal-title">Atur Paket Member untuk <span id="package-username"></span></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-                <div class="modal-body">
-                    <form id="set-package-form">
-                        <input type="hidden" id="set-package-userid">
-                        <div class="mb-3">
-                            <label for="package-name" class="form-label">Pilih Paket</label>
-                            <select id="package-name" class="form-select" required>
-                                <option value="" selected disabled>-- Pilih Paket --</option>
-                                <option value="Body Wash" data-washes="12">Body Wash (12x)</option>
-                                <option value="Cuci Mobil Hidrolik" data-washes="10">Cuci Mobil Hidrolik (10x)</option>
-                                <option value="Cuci Motor Besar" data-washes="10">Cuci Motor Besar (10x)</option>
-                                <option value="Cuci Motor Kecil" data-washes="12">Cuci Motor Kecil (12x)</option>
-                                <option value="Paket Kombinasi" data-washes="12">Paket Kombinasi (12x)</option>
-                            </select>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">Simpan Paket</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="modal fade" id="editReviewModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header"><h5 class="modal-title">Edit Ulasan</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-                <div class="modal-body">
-                    <form id="edit-review-form">
-                        <input type="hidden" id="edit-review-id">
-                        <div class="mb-3">
-                            <label for="edit-rating" class="form-label">Rating</label>
-                            <select id="edit-rating" class="form-select" required>
-                                <option value="5">★★★★★</option>
-                                <option value="4">★★★★☆</option>
-                                <option value="3">★★★☆☆</option>
-                                <option value="2">★★☆☆☆</option>
-                                <option value="1">★☆☆☆☆</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="edit-comment" class="form-label">Ulasan</label>
-                            <textarea id="edit-comment" class="form-control" rows="4" required></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">Update Ulasan</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade" id="resetPasswordModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Reset Sandi untuk <span id="reset-password-username"></span></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="reset-password-form">
-                        <input type="hidden" id="reset-password-userid">
-                        <div class="mb-3">
-                            <label for="new-password-admin" class="form-label">Masukkan Sandi Baru</label>
-                            <input type="password" class="form-control" id="new-password-admin" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">Simpan Sandi Baru</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/davidshimjs-qrcodejs@0.0.2/qrcode.min.js"></script>
