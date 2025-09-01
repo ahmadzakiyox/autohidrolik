@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const setPackageModal = new bootstrap.Modal(document.getElementById('setPackageModal'));
     const editReviewModal = new bootstrap.Modal(document.getElementById('editReviewModal'));
     const resetPasswordModal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
+    const resetTransactionsButton = document.getElementById('reset-transactions-btn'); // Tambahkan ini
 
     let cachedUsers = []; // Variabel untuk menyimpan data pengguna sementara
 
@@ -209,6 +210,32 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- EVENT LISTENER UTAMA (EVENT DELEGATION) ---
+    // Listener untuk tombol Reset Transaksi (FITUR BARU)
+resetTransactionsButton.addEventListener('click', async () => {
+    // Tampilkan konfirmasi yang sangat jelas karena ini tindakan berbahaya
+    const confirmation = prompt('PERINGATAN: Tindakan ini akan menghapus SEMUA catatan transaksi secara permanen dan mengatur ulang total transaksi menjadi Rp 0. Ini tidak dapat diurungkan. Ketik "RESET" untuk melanjutkan.');
+
+    if (confirmation === 'RESET') {
+        try {
+            const response = await fetch('/api/transactions/reset', {
+                method: 'DELETE',
+                headers: getHeaders(false)
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.msg || 'Gagal mereset transaksi.');
+
+            // Jika berhasil, tampilkan notifikasi sukses dan refresh data dashboard
+            showAlert('Semua transaksi berhasil direset.', 'success');
+            fetchDashboardStats(); // Panggil fungsi ini untuk update tampilan menjadi Rp 0
+
+        } catch (error) {
+            showAlert(error.message);
+        }
+    } else {
+        showAlert('Reset dibatalkan.', 'info');
+    }
+});
+    
     document.body.addEventListener('click', (e) => {
         const button = e.target.closest('button');
         if (!button) return;
