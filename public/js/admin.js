@@ -391,4 +391,5 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initial data fetch
     fetchUsers();
     fetchReviews();
+    fetchDashboardStats();
 });
