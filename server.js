@@ -601,7 +601,7 @@ app.post('/api/use-wash', auth, adminAuth, async (req, res) => {
     }
 });*/
 
-// Rute untuk admin mengonfirmasi pembayaran (PENTING)
+// Rute untuk admin mengonfirmasi pembayaran
 app.post('/api/confirm-payment/:userId', auth, adminAuth, async (req, res) => {
     try {
         const user = await User.findById(req.params.userId);
@@ -612,7 +612,6 @@ app.post('/api/confirm-payment/:userId', auth, adminAuth, async (req, res) => {
         await user.save();
         res.json({ msg: `Pembayaran untuk ${user.username} telah dikonfirmasi.`, user });
     } catch (error) {
-        console.error("Error di /api/confirm-payment:", error.message);
         res.status(500).send('Server error');
     }
 });
