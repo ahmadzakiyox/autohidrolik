@@ -1,371 +1,271 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const API_URL = 'https://autohidrolik.com';
-    const token = localStorage.getItem('token');
-    
-    if (!token || localStorage.getItem('userRole') !== 'admin') {
-        alert('Akses ditolak. Silakan login sebagai admin.');
-        window.location.href = '/login.html';
-        return;
-    }
-
-// Initialize all modals
-    const addUserModal = new bootstrap.Modal(document.getElementById('addUserModal'));
-    const editUserModal = new bootstrap.Modal(document.getElementById('editUserModal'));
-    const viewBarcodeModal = new bootstrap.Modal(document.getElementById('viewBarcodeModal'));
-    const setPackageModal = new bootstrap.Modal(document.getElementById('setPackageModal'));
-    const editReviewModal = new bootstrap.Modal(document.getElementById('editReviewModal'));
-    const resetPasswordModal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
-
-    // Download Button Logic
-    const downloadButton = document.getElementById('download-data-btn');
-    downloadButton.addEventListener('click', async () => {
-        downloadButton.disabled = true;
-        downloadButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Mengunduh...';
-
-        try {
-            const response = await fetch(`${API_URL}/api/download-data`, {
-                method: 'GET',
-                headers: { 'x-auth-token': token }
-            });
-            if (!response.ok) throw new Error('Gagal mengunduh data.');
-
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.style.display = 'none';
-            a.href = url;
-            a.download = `data_autohidrolik_${new Date().toISOString().slice(0,10)}.xlsx`;
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            a.remove();
-        } catch (error) {
-            console.error('Error saat download:', error);
-            alert(error.message);
-        } finally {
-            downloadButton.disabled = false;
-            downloadButton.innerHTML = '<i class="bi bi-download"></i> Download Data';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - AUTOHIDROLIK</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f4f7f9;
+            --card-bg-color: #ffffff;
+            --border-color: #dee2e6;
+            --text-primary: #212529;
+            --text-secondary: #6c757d;
+            --purple-accent: #6f42c1;
         }
-    });
-    // --- USER MANAGEMENT FUNCTIONS ---
-    const userTableBody = document.getElementById('user-table-body');
-    const memberCountElement = document.getElementById('member-count');
-    
-    const fetchUsers = async () => {
-        try {
-            const response = await fetch(`${API_URL}/api/users`, { headers: { 'x-auth-token': token } });
-            if (!response.ok) throw new Error('Gagal mengambil data pengguna.');
-            const users = await response.json();
-            displayUsers(users);
-        } catch (error) {
-            console.error(error);
-            userTableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">Gagal memuat data pengguna.</td></tr>`;
+        body { 
+            background-color: var(--bg-color); 
+            color: var(--text-primary); 
+            font-family: 'Poppins', sans-serif;
         }
-    };
-
-    const displayUsers = (users) => {
-        userTableBody.innerHTML = '';
-        let memberCount = 0;
-        let userCounter = 1;
-
-        users.forEach(user => {
-            if (user.role === 'admin') return;
-
-            const row = document.createElement('tr');
-            let membershipStatus = '<span class="text-muted">Non-Member</span>';
-            let paymentStatus = '-';
-            let actionButtons = `
-                <button class="btn btn-sm btn-outline-secondary reset-password-btn" title="Reset Sandi"><i class="bi bi-key-fill"></i></button>
-                <button class="btn btn-sm btn-outline-success set-package-btn" title="Atur Paket"><i class="bi bi-gem"></i></button> 
-                <button class="btn btn-sm btn-outline-warning edit-user-btn" title="Edit"><i class="bi bi-pencil-square"></i></button> 
-                <button class="btn btn-sm btn-outline-danger delete-user-btn" title="Hapus"><i class="bi bi-trash3"></i></button>
-            `;
-            
-            if (user.membership) {
-                memberCount++;
-                membershipStatus = `${user.membership.packageName} (${user.membership.remainingWashes}x)`;
-                paymentStatus = user.membership.isPaid
-                    ? '<span class="badge bg-success">Lunas</span>'
-                    : '<span class="badge bg-warning text-dark">Belum Bayar</span>';
-                if (user.membership.isPaid) {
-                    actionButtons = `<button class="btn btn-sm btn-outline-info view-barcode-btn" title="QR Code"><i class="bi bi-qr-code"></i></button> ` + actionButtons;
-                } else {
-                    actionButtons = `<button class="btn btn-sm btn-info confirm-payment-btn" title="Konfirmasi Bayar"><i class="bi bi-check-circle"></i></button> ` + actionButtons;
-                }
-            }
-            
-            const formattedCounter = String(userCounter).padStart(3, '0');
-            row.innerHTML = `
-                <td>${formattedCounter}</td>
-                <td>${user.username}</td>
-                <td>${user.email}</td>
-                <td>${membershipStatus}</td>
-                <td>${paymentStatus}</td>
-                <td><div class="btn-group">${actionButtons}</div></td>
-            `;
-
-            row.querySelector('.edit-user-btn')?.addEventListener('click', () => openEditModal(user));
-            row.querySelector('.delete-user-btn')?.addEventListener('click', () => deleteUser(user._id));
-            row.querySelector('.view-barcode-btn')?.addEventListener('click', () => openBarcodeModal(user));
-            row.querySelector('.set-package-btn')?.addEventListener('click', () => openSetPackageModal(user));
-            row.querySelector('.confirm-payment-btn')?.addEventListener('click', () => handleConfirmPayment(user._id));
-            row.querySelector('.reset-password-btn')?.addEventListener('click', () => openResetPasswordModal(user));
-            userTableBody.appendChild(row);
-            
-            userCounter++;
-        });
-        memberCountElement.textContent = memberCount;
-    };
-    
-    const openEditModal = (user) => {
-        document.getElementById('edit-user-id').value = user._id;
-        document.getElementById('edit-username').value = user.username;
-        document.getElementById('edit-email').value = user.email;
-        document.getElementById('edit-phone').value = user.phone;
-        document.getElementById('edit-role').value = user.role;
-        editUserModal.show();
-    };
-
-    const openBarcodeModal = (user) => {
-        document.getElementById('barcode-username').textContent = user.username;
-        const qrCodeContainer = document.getElementById('barcode-container');
-        
-        qrCodeContainer.innerHTML = '';
-
-        if (user.memberId) {
-            new QRCode(qrCodeContainer, {
-                text: user.memberId,
-                width: 200,
-                height: 200,
-                colorDark: "#000000",
-                colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.H
-            });
-
-            const memberIdText = document.createElement('p');
-            memberIdText.className = 'mt-3 fw-bold';
-            memberIdText.textContent = user.memberId;
-            qrCodeContainer.appendChild(memberIdText);
-
-        } else {
-            qrCodeContainer.innerHTML = '<p class="text-danger">Member ID tidak ditemukan untuk pengguna ini.</p>';
+        .card { 
+            background-color: var(--card-bg-color); 
+            border: 1px solid var(--border-color); 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
-        
-        viewBarcodeModal.show();
-    };
-    
-    const openSetPackageModal = (user) => {
-        document.getElementById('package-username').textContent = user.username;
-        document.getElementById('set-package-userid').value = user._id;
-        document.getElementById('set-package-form').reset();
-        setPackageModal.show();
-    };
-    
-    const openResetPasswordModal = (user) => {
-        document.getElementById('reset-password-username').textContent = user.username;
-        document.getElementById('reset-password-userid').value = user._id;
-        document.getElementById('reset-password-form').reset();
-        resetPasswordModal.show();
-    };
-
-    document.getElementById('add-user-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const userData = {
-            username: document.getElementById('add-username').value,
-            email: document.getElementById('add-email').value,
-            phone: document.getElementById('add-phone').value,
-            password: document.getElementById('add-password').value,
-            role: document.getElementById('add-role').value,
-        };
-        try {
-            const response = await fetch(`${API_URL}/api/users`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
-                body: JSON.stringify(userData)
-            });
-            if (!response.ok) {
-                const errData = await response.json();
-                throw new Error(errData.msg || 'Gagal menambah user.');
-            }
-            addUserModal.hide();
-            fetchUsers();
-        } catch (error) { alert(error.message); }
-    });
-
-    document.getElementById('edit-user-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const userId = document.getElementById('edit-user-id').value;
-        const userData = {
-            username: document.getElementById('edit-username').value,
-            email: document.getElementById('edit-email').value,
-            phone: document.getElementById('edit-phone').value,
-            role: document.getElementById('edit-role').value,
-        };
-        try {
-            const response = await fetch(`${API_URL}/api/users/${userId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
-                body: JSON.stringify(userData)
-            });
-            if (!response.ok) throw new Error('Gagal mengupdate user.');
-            editUserModal.hide();
-            fetchUsers();
-        } catch (error) { alert(error.message); }
-    });
-
-    document.getElementById('reset-password-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const userId = document.getElementById('reset-password-userid').value;
-        const newPassword = document.getElementById('new-password-admin').value;
-
-        try {
-            const response = await fetch(`${API_URL}/api/users/${userId}/reset-password`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
-                body: JSON.stringify({ newPassword })
-            });
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.msg || 'Gagal reset sandi.');
-            
-            alert(result.msg);
-            resetPasswordModal.hide();
-        } catch (error) {
-            alert(`Error: ${error.message}`);
+        .table { color: var(--text-primary); }
+        thead.table-light th { 
+            background-color: #e9ecef; 
+            color: var(--text-primary); 
+            border-color: var(--border-color); 
         }
-    });
-
-    const deleteUser = async (userId) => {
-        if (confirm('Anda yakin ingin menghapus pengguna ini?')) {
-            try {
-                const response = await fetch(`${API_URL}/api/users/${userId}`, {
-                    method: 'DELETE',
-                    headers: { 'x-auth-token': token }
-                });
-                if (!response.ok) throw new Error('Gagal menghapus user.');
-                fetchUsers();
-            } catch (error) { alert(error.message); }
+        .modal-content { background-color: var(--card-bg-color); }
+        .form-control, .form-select { 
+            background-color: #fff; 
+            border-color: var(--border-color); 
+            color: var(--text-primary); 
         }
-    };
-
-    const handleConfirmPayment = async (userId) => {
-        if (confirm('Anda yakin ingin mengonfirmasi pembayaran untuk pengguna ini?')) {
-            try {
-                const response = await fetch(`${API_URL}/api/confirm-payment/${userId}`, {
-                    method: 'POST',
-                    headers: { 'x-auth-token': token }
-                });
-                if (!response.ok) throw new Error('Gagal konfirmasi.');
-                fetchUsers();
-            } catch (error) { alert(error.message); }
+        .form-control:focus, .form-select:focus { 
+            border-color: var(--purple-accent); 
+            box-shadow: 0 0 0 0.2rem rgba(111, 66, 193, 0.25); 
         }
-    };
-    
-    document.getElementById('set-package-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const userId = document.getElementById('set-package-userid').value;
-        const select = document.getElementById('package-name');
-        const selectedOption = select.options[select.selectedIndex];
-        const packageData = {
-            packageName: selectedOption.value,
-            totalWashes: parseInt(selectedOption.dataset.washes)
-        };
-        try {
-            const response = await fetch(`${API_URL}/api/purchase-membership-admin/${userId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
-                body: JSON.stringify(packageData)
-            });
-            if (!response.ok) throw new Error('Gagal mengatur paket.');
-            setPackageModal.hide();
-            fetchUsers();
-        } catch (error) { alert(error.message); }
-    });
-
-    // --- REVIEW MANAGEMENT FUNCTIONS ---
-    const reviewTableBody = document.getElementById('review-table-body');
-
-    const fetchReviews = async () => {
-        try {
-            const response = await fetch(`${API_URL}/api/reviews/all`, { headers: { 'x-auth-token': token } });
-            if (!response.ok) throw new Error('Gagal mengambil data ulasan.');
-            const reviews = await response.json();
-            displayReviews(reviews);
-        } catch (error) {
-            console.error(error);
-            reviewTableBody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Gagal memuat data ulasan.</td></tr>`;
+        .btn-primary {
+            background-color: var(--purple-accent);
+            border-color: var(--purple-accent);
         }
-    };
+        .btn-scanner {
+            background-color: #17a2b8;
+            border-color: #17a2b8;
+            color: white;
+        }
+        #barcode-wrapper { 
+            padding: 1rem; 
+            background: #fff; 
+            border-radius: 8px; 
+            display: inline-block;
+        }
+        .rating-stars { color: #ffc107; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">AUTOHIDROLIK ADMIN</a>
+            <div class="ms-auto d-flex align-items-center">
+                <a href="/scan" class="btn btn-scanner me-3"><i class="bi bi-qr-code-scan"></i> Buka Scanner</a>
+                <button id="logout-button" class="btn btn-outline-danger"><i class="bi bi-box-arrow-right"></i> Logout</button>
+            </div>
+        </div>
+    </nav>
 
-    const displayReviews = (reviews) => {
-        reviewTableBody.innerHTML = '';
-        reviews.forEach(review => {
-            const row = document.createElement('tr');
-            const ratingStars = '<span class="rating-stars">' + '★'.repeat(review.rating) + '☆'.repeat(5 - review.rating) + '</span>';
-            const username = review.user ? review.user.username : '<em class="text-muted">User Dihapus</em>';
-            row.innerHTML = `
-                <td>${username}</td>
-                <td>${ratingStars}</td>
-                <td>${review.comment}</td>
-                <td>
-                    <div class="btn-group">
-                        <button class="btn btn-sm btn-outline-warning edit-review-btn"><i class="bi bi-pencil-square"></i></button>
-                        <button class="btn btn-sm btn-outline-danger delete-review-btn"><i class="bi bi-trash3"></i></button>
+    <main class="container my-5">
+        <div class="row mb-5">
+            <div class="col-md-4">
+                <div class="card p-3">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-people-fill fs-1 me-3" style="color: var(--purple-accent);"></i>
+                        <div>
+                            <h6 class="text-muted">Total Member Aktif</h6>
+                            <h2 class="fw-bold" id="member-count">0</h2>
+                        </div>
                     </div>
-                </td>
-            `;
-            row.querySelector('.edit-review-btn').addEventListener('click', () => openEditReviewModal(review));
-            row.querySelector('.delete-review-btn').addEventListener('click', () => deleteReview(review._id));
-            reviewTableBody.appendChild(row);
-        });
-    };
+                </div>
+            </div>
+        </div>
 
-    const openEditReviewModal = (review) => {
-        document.getElementById('edit-review-id').value = review._id;
-        document.getElementById('edit-rating').value = review.rating;
-        document.getElementById('edit-comment').value = review.comment;
-        editReviewModal.show();
-    };
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Manajemen Pengguna</h1>
+            <div>
+                <button class="btn btn-success" id="download-data-btn">
+                    <i class="bi bi-download"></i> Download Data
+                </button>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                    <i class="bi bi-plus-circle"></i> Tambah User Baru
+                </button>
+            </div>
+        </div>
 
-    document.getElementById('edit-review-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const reviewId = document.getElementById('edit-review-id').value;
-        const reviewData = {
-            rating: document.getElementById('edit-rating').value,
-            comment: document.getElementById('edit-comment').value,
-        };
-        try {
-            const response = await fetch(`${API_URL}/api/reviews/${reviewId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
-                body: JSON.stringify(reviewData)
-            });
-            if (!response.ok) throw new Error('Gagal mengupdate ulasan.');
-            editReviewModal.hide();
-            fetchReviews();
-        } catch (error) { alert(error.message); }
-    });
-
-    const deleteReview = async (reviewId) => {
-        if (confirm('Anda yakin ingin menghapus ulasan ini?')) {
-            try {
-                const response = await fetch(`${API_URL}/api/reviews/${reviewId}`, {
-                    method: 'DELETE',
-                    headers: { 'x-auth-token': token }
-                });
-                if (!response.ok) throw new Error('Gagal menghapus ulasan.');
-                fetchReviews();
-            } catch (error) { alert(error.message); }
-        }
-    };
-
-    // --- LOGOUT ---
-    document.getElementById('logout-button').addEventListener('click', () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('userRole');
-        window.location.href = '/login.html';
-    });
+        <div class="card shadow-sm mb-5">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>No.</th>
+                                <th>Username</th>
+                                <th>Email</th>
+                                <th>Paket Member</th>
+                                <th>Status Pembayaran</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="user-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+         
+        <h1 class="mb-4">Manajemen Ulasan</h1>
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Username</th>
+                                <th>Rating</th>
+                                <th style="width: 50%;">Ulasan</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="review-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
     
-    // Initial data fetch
-    fetchUsers();
-    fetchReviews();
-});
+    <div class="modal fade" id="addUserModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">Tambah Pengguna Baru</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <form id="add-user-form">
+                        <div class="mb-3"><label for="add-username" class="form-label">Username</label><input type="text" class="form-control" id="add-username" required></div>
+                        <div class="mb-3"><label for="add-email" class="form-label">Email</label><input type="email" class="form-control" id="add-email" required></div>
+                        <div class="mb-3"><label for="add-phone" class="form-label">No. WhatsApp</label><input type="tel" class="form-control" id="add-phone" required></div>
+                        <div class="mb-3"><label for="add-password" class="form-label">Password</label><input type="password" class="form-control" id="add-password" required></div>
+                        <div class="mb-3"><label for="add-role" class="form-label">Role</label><select class="form-select" id="add-role"><option value="user">User</option><option value="admin">Admin</option></select></div>
+                        <button type="submit" class="btn btn-primary w-100">Simpan</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal fade" id="editUserModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">Edit Pengguna</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <form id="edit-user-form">
+                        <input type="hidden" id="edit-user-id">
+                        <div class="mb-3"><label for="edit-username" class="form-label">Username</label><input type="text" class="form-control" id="edit-username" required></div>
+                        <div class="mb-3"><label for="edit-email" class="form-label">Email</label><input type="email" class="form-control" id="edit-email" required></div>
+                        <div class="mb-3"><label for="edit-phone" class="form-label">No. WhatsApp</label><input type="tel" class="form-control" id="edit-phone" required></div>
+                        <div class="mb-3"><label for="edit-role" class="form-label">Role</label><select class="form-select" id="edit-role"><option value="user">User</option><option value="admin">Admin</option></select></div>
+                        <button type="submit" class="btn btn-primary w-100">Update</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="viewBarcodeModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Kode Member untuk <span id="barcode-username"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <div id="barcode-wrapper">
+                        <div id="barcode-container"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="setPackageModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">Atur Paket Member untuk <span id="package-username"></span></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <form id="set-package-form">
+                        <input type="hidden" id="set-package-userid">
+                        <div class="mb-3">
+                            <label for="package-name" class="form-label">Pilih Paket</label>
+                            <select id="package-name" class="form-select" required>
+                                <option value="" selected disabled>-- Pilih Paket --</option>
+                                <option value="Body Wash" data-washes="12">Body Wash (12x)</option>
+                                <option value="Cuci Mobil Hidrolik" data-washes="10">Cuci Mobil Hidrolik (10x)</option>
+                                <option value="Cuci Motor Besar" data-washes="10">Cuci Motor Besar (10x)</option>
+                                <option value="Cuci Motor Kecil" data-washes="12">Cuci Motor Kecil (12x)</option>
+                                <option value="Paket Kombinasi" data-washes="12">Paket Kombinasi (12x)</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Simpan Paket</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal fade" id="editReviewModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">Edit Ulasan</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <form id="edit-review-form">
+                        <input type="hidden" id="edit-review-id">
+                        <div class="mb-3">
+                            <label for="edit-rating" class="form-label">Rating</label>
+                            <select id="edit-rating" class="form-select" required>
+                                <option value="5">★★★★★</option>
+                                <option value="4">★★★★☆</option>
+                                <option value="3">★★★☆☆</option>
+                                <option value="2">★★☆☆☆</option>
+                                <option value="1">★☆☆☆☆</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-comment" class="form-label">Ulasan</label>
+                            <textarea id="edit-comment" class="form-control" rows="4" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Update Ulasan</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="resetPasswordModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Reset Sandi untuk <span id="reset-password-username"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="reset-password-form">
+                        <input type="hidden" id="reset-password-userid">
+                        <div class="mb-3">
+                            <label for="new-password-admin" class="form-label">Masukkan Sandi Baru</label>
+                            <input type="password" class="form-control" id="new-password-admin" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Simpan Sandi Baru</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/davidshimjs-qrcodejs@0.0.2/qrcode.min.js"></script>
+    <script src="/js/admin.js"></script>
+</body>
+</html>
