@@ -50,6 +50,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- USER MANAGEMENT FUNCTIONS ---
     const userTableBody = document.getElementById('user-table-body');
     const memberCountElement = document.getElementById('member-count');
+    const visitorCountElement = document.getElementById('visitor-count');
+    const transactionTotalElement = document.getElementById('transaction-total');
     
     const fetchUsers = async () => {
         try {
@@ -116,7 +118,28 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         memberCountElement.textContent = memberCount;
     };
-    
+
+      // --- PENAMBAHAN FUNGSI BARU UNTUK STATISTIK ---
+    const fetchDashboardStats = async () => {
+        try {
+            const response = await fetch(`${API_URL}/api/dashboard-stats`, { headers: getHeaders(false) });
+            if (!response.ok) throw new Error('Gagal mengambil data statistik.');
+            
+            const stats = await response.json();
+            
+            // Tampilkan data ke elemen HTML
+            if(memberCountElement) memberCountElement.textContent = stats.activeMembers;
+            if(visitorCountElement) visitorCountElement.textContent = stats.totalVisitors;
+            if(transactionTotalElement) {
+                // Format angka menjadi format Rupiah
+                transactionTotalElement.textContent = `Rp ${stats.totalTransactions.toLocaleString('id-ID')}`;
+            }
+
+        } catch (error) {
+            showAlert(error.message);
+        }
+    };
+
     const openEditModal = (user) => {
         document.getElementById('edit-user-id').value = user._id;
         document.getElementById('edit-username').value = user.username;
