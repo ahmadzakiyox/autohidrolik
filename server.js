@@ -567,6 +567,10 @@ app.post('/api/use-wash', auth, adminAuth, async (req, res) => {
         }
 
         user.membership.remainingWashes -= 1;
+
+        // --- TAMBAHKAN BARIS INI UNTUK MEMASTIKAN PERUBAHAN TERSIMPAN ---
+        user.markModified('membership');
+        
         await user.save();
         res.json({ 
             msg: `Berhasil menggunakan 1 jatah cuci untuk ${user.username}.`,
