@@ -45,7 +45,7 @@ const UserSchema = new Schema({
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
     
     // --- PENAMBAHAN WAJIB DI SINI ---
-    isVerified: { type: Boolean, default: false },
+    isVerified: { type: Boolean, default: true },
     otp: { type: String, default: null },
     otpExpires: { type: Date, default: null },
     // ------------------------------------
