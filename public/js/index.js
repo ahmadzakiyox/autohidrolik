@@ -2,7 +2,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // ======================================================
     // --- KONFIGURASI & VARIABEL GLOBAL ---
     // ======================================================
-    const API_URL = 'https://autohidrolik.com';
     const token = localStorage.getItem('token');
     const userRole = localStorage.getItem('userRole');
 
@@ -84,7 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!reviewList) return;
 
         try {
-            const response = await fetch(`${API_URL}/api/reviews`);
+            const response = await fetch(`/api/reviews`);
             if (!response.ok) throw new Error('Gagal memuat ulasan.');
             
             const reviews = await response.json();
@@ -138,7 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const comment = document.getElementById('comment').value;
 
             try {
-                const response = await fetch(`${API_URL}/api/reviews`, {
+                const response = await fetch(`/api/reviews`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
                     body: JSON.stringify({ rating, comment })
@@ -213,7 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 purchaseMessage.innerHTML = '';
 
                 try {
-                    const response = await fetch(`${API_URL}/api/purchase-membership`, {
+                    const response = await fetch(`/api/purchase-membership`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
                         body: JSON.stringify({ packageName, totalWashes })
