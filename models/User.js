@@ -43,18 +43,18 @@ const UserSchema = new Schema({
     password: { type: String, required: true },
     phone: { type: String, required: true, trim: true },
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
-    
-    // --- PENAMBAHAN WAJIB DI SINI ---
     isVerified: { type: Boolean, default: true },
-    otp: { type: String, default: null },
-    otpExpires: { type: Date, default: null },
-    // ------------------------------------
+    
+    // DIHAPUS: Field berikut tidak diperlukan lagi untuk verifikasi langsung
+    // otp: { type: String },
+    // otpExpires: { type: Date },
 
     membership: {
-        type: MembershipSchema,
-        default: null
+        type: Object, // Atau gunakan skema membership jika ada
+        default: null 
     },
     date: { type: Date, default: Date.now }
 });
+
 
 module.exports = mongoose.model('User', UserSchema);
