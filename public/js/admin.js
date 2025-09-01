@@ -1,14 +1,24 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const API_URL = 'https://autohidrolik.com';
+    // --- PERBAIKAN KUNCI: Gunakan path relatif agar URL terdeteksi otomatis ---
+    const API_URL = ''; 
     const token = localStorage.getItem('token');
     
+    // Periksa otorisasi di awal
     if (!token || localStorage.getItem('userRole') !== 'admin') {
-        alert('Akses ditolak. Silakan login sebagai admin.');
+        // Menggunakan notifikasi yang lebih baik daripada alert()
+        console.error('Akses ditolak. Pengguna bukan admin atau tidak login.');
         window.location.href = '/login.html';
         return;
     }
 
-// Initialize all modals
+    // Ambil semua elemen UI yang dibutuhkan
+    const userTableBody = document.getElementById('user-table-body');
+    const reviewTableBody = document.getElementById('review-table-body');
+    const memberCountElement = document.getElementById('member-count');
+    const alertPlaceholder = document.getElementById('alert-placeholder');
+    const downloadButton = document.getElementById('download-data-btn');
+
+    // Inisialisasi semua modal (jendela pop-up)
     const addUserModal = new bootstrap.Modal(document.getElementById('addUserModal'));
     const editUserModal = new bootstrap.Modal(document.getElementById('editUserModal'));
     const viewBarcodeModal = new bootstrap.Modal(document.getElementById('viewBarcodeModal'));
@@ -16,77 +26,70 @@ document.addEventListener('DOMContentLoaded', () => {
     const editReviewModal = new bootstrap.Modal(document.getElementById('editReviewModal'));
     const resetPasswordModal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
 
-    // Download Button Logic
-    const downloadButton = document.getElementById('download-data-btn');
-    downloadButton.addEventListener('click', async () => {
-        downloadButton.disabled = true;
-        downloadButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Mengunduh...';
+    let cachedUsers = []; // Variabel untuk menyimpan data pengguna sementara
 
-        try {
-            const response = await fetch(`${API_URL}/api/download-data`, {
-                method: 'GET',
-                headers: { 'x-auth-token': token }
-            });
-            if (!response.ok) throw new Error('Gagal mengunduh data.');
+    // --- FUNGSI HELPER ---
 
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.style.display = 'none';
-            a.href = url;
-            a.download = `data_autohidrolik_${new Date().toISOString().slice(0,10)}.xlsx`;
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            a.remove();
-        } catch (error) {
-            console.error('Error saat download:', error);
-            alert(error.message);
-        } finally {
-            downloadButton.disabled = false;
-            downloadButton.innerHTML = '<i class="bi bi-download"></i> Download Data';
+    /**
+     * Menampilkan notifikasi yang lebih modern di atas halaman.
+     * @param {string} message Pesan yang ingin ditampilkan.
+     * @param {string} type Tipe notifikasi ('success' atau 'danger').
+     */
+    const showAlert = (message, type = 'danger') => {
+        if (alertPlaceholder) {
+            alertPlaceholder.innerHTML = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>`;
+        } else {
+            console.error('Elemen #alert-placeholder tidak ditemukan di HTML.');
         }
-    });
-    // --- USER MANAGEMENT FUNCTIONS ---
-    const userTableBody = document.getElementById('user-table-body');
-    const memberCountElement = document.getElementById('member-count');
+    };
+
+    /**
+     * Membuat header otentikasi untuk setiap permintaan ke server.
+     */
+    const getHeaders = (includeContentType = true) => {
+        const headers = { 'x-auth-token': token };
+        if (includeContentType) headers['Content-Type'] = 'application/json';
+        return headers;
+    };
     
+    // --- MANAJEMEN PENGGUNA ---
+
     const fetchUsers = async () => {
         try {
-            const response = await fetch(`${API_URL}/api/users`, { headers: { 'x-auth-token': token } });
+            const response = await fetch(`${API_URL}/api/users`, { headers: getHeaders(false) });
             if (!response.ok) throw new Error('Gagal mengambil data pengguna.');
-            const users = await response.json();
-            displayUsers(users);
+            cachedUsers = await response.json();
+            displayUsers(cachedUsers);
         } catch (error) {
-            console.error(error);
-            userTableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">Gagal memuat data pengguna.</td></tr>`;
+            showAlert(error.message);
         }
     };
 
     const displayUsers = (users) => {
         userTableBody.innerHTML = '';
-        let memberCount = 0;
+        const memberCount = users.filter(u => u.membership && u.membership.isPaid).length;
         let userCounter = 1;
 
-        users.forEach(user => {
-            if (user.role === 'admin') return;
-
+        users.filter(u => u.role !== 'admin').forEach(user => {
             const row = document.createElement('tr');
+            // Simpan ID pengguna di baris tabel untuk akses mudah
+            row.dataset.userId = user._id; 
+            
             let membershipStatus = '<span class="text-muted">Non-Member</span>';
             let paymentStatus = '-';
             let actionButtons = `
                 <button class="btn btn-sm btn-outline-secondary reset-password-btn" title="Reset Sandi"><i class="bi bi-key-fill"></i></button>
                 <button class="btn btn-sm btn-outline-success set-package-btn" title="Atur Paket"><i class="bi bi-gem"></i></button> 
                 <button class="btn btn-sm btn-outline-warning edit-user-btn" title="Edit"><i class="bi bi-pencil-square"></i></button> 
-                <button class="btn btn-sm btn-outline-danger delete-user-btn" title="Hapus"><i class="bi bi-trash3"></i></button>
-            `;
+                <button class="btn btn-sm btn-outline-danger delete-user-btn" title="Hapus"><i class="bi bi-trash3"></i></button>`;
             
             if (user.membership) {
-                memberCount++;
                 membershipStatus = `${user.membership.packageName} (${user.membership.remainingWashes}x)`;
-                paymentStatus = user.membership.isPaid
-                    ? '<span class="badge bg-success">Lunas</span>'
-                    : '<span class="badge bg-warning text-dark">Belum Bayar</span>';
+                paymentStatus = user.membership.isPaid ? '<span class="badge bg-success">Lunas</span>' : '<span class="badge bg-warning text-dark">Belum Bayar</span>';
                 if (user.membership.isPaid) {
                     actionButtons = `<button class="btn btn-sm btn-outline-info view-barcode-btn" title="QR Code"><i class="bi bi-qr-code"></i></button> ` + actionButtons;
                 } else {
@@ -94,29 +97,89 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
             
-            const formattedCounter = String(userCounter).padStart(3, '0');
-            row.innerHTML = `
-                <td>${formattedCounter}</td>
-                <td>${user.username}</td>
-                <td>${user.email}</td>
-                <td>${membershipStatus}</td>
-                <td>${paymentStatus}</td>
-                <td><div class="btn-group">${actionButtons}</div></td>
-            `;
-
-            row.querySelector('.edit-user-btn')?.addEventListener('click', () => openEditModal(user));
-            row.querySelector('.delete-user-btn')?.addEventListener('click', () => deleteUser(user._id));
-            row.querySelector('.view-barcode-btn')?.addEventListener('click', () => openBarcodeModal(user));
-            row.querySelector('.set-package-btn')?.addEventListener('click', () => openSetPackageModal(user));
-            row.querySelector('.confirm-payment-btn')?.addEventListener('click', () => handleConfirmPayment(user._id));
-            row.querySelector('.reset-password-btn')?.addEventListener('click', () => openResetPasswordModal(user));
+            row.innerHTML = `<td>${userCounter++}</td><td>${user.username}</td><td>${user.email}</td><td>${membershipStatus}</td><td>${paymentStatus}</td><td><div class="btn-group">${actionButtons}</div></td>`;
             userTableBody.appendChild(row);
-            
-            userCounter++;
         });
         memberCountElement.textContent = memberCount;
     };
+
+    const handleConfirmPayment = async (userId) => {
+        if (!confirm('Anda yakin ingin mengonfirmasi pembayaran untuk pengguna ini?')) return;
+        try {
+            const response = await fetch(`${API_URL}/api/confirm-payment/${userId}`, { method: 'POST', headers: getHeaders(false) });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.msg || 'Gagal konfirmasi.');
+            showAlert(`Pembayaran untuk ${result.user.username} berhasil dikonfirmasi.`, 'success');
+            fetchUsers(); // Muat ulang data
+        } catch (error) { showAlert(error.message); }
+    };
+
+    const deleteUser = async (userId) => {
+        if (confirm('Anda yakin ingin menghapus pengguna ini? Tindakan ini tidak dapat dibatalkan.')) {
+            try {
+                const response = await fetch(`${API_URL}/api/users/${userId}`, {
+                    method: 'DELETE',
+                    headers: getHeaders(false)
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.msg || 'Gagal menghapus pengguna.');
+                showAlert('Pengguna berhasil dihapus.', 'success');
+                fetchUsers();
+            } catch (error) {
+                showAlert(error.message);
+            }
+        }
+    };
     
+    // --- MANAJEMEN ULASAN ---
+    const fetchReviews = async () => {
+        try {
+            const response = await fetch(`${API_URL}/api/reviews/all`, { headers: getHeaders(false) });
+            if (!response.ok) throw new Error('Gagal mengambil data ulasan.');
+            const reviews = await response.json();
+            displayReviews(reviews);
+        } catch (error) {
+            showAlert(error.message);
+        }
+    };
+
+    const displayReviews = (reviews) => {
+        reviewTableBody.innerHTML = '';
+        reviews.forEach(review => {
+            const row = document.createElement('tr');
+            row.dataset.reviewId = review._id;
+            const ratingStars = '<span class="rating-stars">' + '★'.repeat(review.rating) + '☆'.repeat(5 - review.rating) + '</span>';
+            const username = review.user ? review.user.username : '<em class="text-muted">Pengguna Dihapus</em>';
+            row.innerHTML = `
+                <td>${username}</td>
+                <td>${ratingStars}</td>
+                <td>${review.comment}</td>
+                <td>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-outline-warning edit-review-btn"><i class="bi bi-pencil-square"></i></button>
+                        <button class="btn btn-sm btn-outline-danger delete-review-btn"><i class="bi bi-trash3"></i></button>
+                    </div>
+                </td>
+            `;
+            reviewTableBody.appendChild(row);
+        });
+    };
+
+    const deleteReview = async (reviewId) => {
+        if (confirm('Anda yakin ingin menghapus ulasan ini?')) {
+            try {
+                const response = await fetch(`${API_URL}/api/reviews/${reviewId}`, {
+                    method: 'DELETE',
+                    headers: getHeaders(false)
+                });
+                if (!response.ok) throw new Error('Gagal menghapus ulasan.');
+                showAlert('Ulasan berhasil dihapus.', 'success');
+                fetchReviews();
+            } catch (error) { showAlert(error.message); }
+        }
+    };
+
+    // --- FUNGSI-FUNGSI MODAL ---
     const openEditModal = (user) => {
         document.getElementById('edit-user-id').value = user._id;
         document.getElementById('edit-username').value = user.username;
@@ -129,28 +192,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const openBarcodeModal = (user) => {
         document.getElementById('barcode-username').textContent = user.username;
         const qrCodeContainer = document.getElementById('barcode-container');
-        
         qrCodeContainer.innerHTML = '';
-
         if (user.memberId) {
-            new QRCode(qrCodeContainer, {
-                text: user.memberId,
-                width: 200,
-                height: 200,
-                colorDark: "#000000",
-                colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.H
-            });
-
+            new QRCode(qrCodeContainer, { text: user.memberId, width: 200, height: 200 });
             const memberIdText = document.createElement('p');
             memberIdText.className = 'mt-3 fw-bold';
             memberIdText.textContent = user.memberId;
             qrCodeContainer.appendChild(memberIdText);
-
         } else {
-            qrCodeContainer.innerHTML = '<p class="text-danger">Member ID tidak ditemukan untuk pengguna ini.</p>';
+            qrCodeContainer.innerHTML = '<p class="text-danger">Member ID tidak ditemukan.</p>';
         }
-        
         viewBarcodeModal.show();
     };
     
@@ -168,6 +219,44 @@ document.addEventListener('DOMContentLoaded', () => {
         resetPasswordModal.show();
     };
 
+    const openEditReviewModal = (review) => {
+        document.getElementById('edit-review-id').value = review._id;
+        document.getElementById('edit-rating').value = review.rating;
+        document.getElementById('edit-comment').value = review.comment;
+        editReviewModal.show();
+    };
+
+    // --- EVENT LISTENER UTAMA (MENGGUNAKAN EVENT DELEGATION) ---
+    document.body.addEventListener('click', (e) => {
+        const button = e.target.closest('button');
+        if (!button) return;
+
+        // Aksi untuk tabel pengguna
+        const userRow = button.closest('tr[data-user-id]');
+        if (userRow) {
+            const userId = userRow.dataset.userId;
+            const user = cachedUsers.find(u => u._id === userId);
+
+            if (button.classList.contains('confirm-payment-btn')) handleConfirmPayment(userId);
+            if (button.classList.contains('delete-user-btn')) deleteUser(userId);
+            if (user) {
+                if (button.classList.contains('edit-user-btn')) openEditModal(user);
+                if (button.classList.contains('view-barcode-btn')) openBarcodeModal(user);
+                if (button.classList.contains('set-package-btn')) openSetPackageModal(user);
+                if (button.classList.contains('reset-password-btn')) openResetPasswordModal(user);
+            }
+        }
+
+        // Aksi untuk tabel ulasan
+        const reviewRow = button.closest('tr[data-review-id]');
+        if (reviewRow) {
+            const reviewId = reviewRow.dataset.reviewId;
+            // if (button.classList.contains('edit-review-btn')) openEditReviewModal(review);
+            if (button.classList.contains('delete-review-btn')) deleteReview(reviewId);
+        }
+    });
+
+    // --- FORM SUBMISSIONS ---
     document.getElementById('add-user-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const userData = {
@@ -179,17 +268,14 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         try {
             const response = await fetch(`${API_URL}/api/users`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
-                body: JSON.stringify(userData)
+                method: 'POST', headers: getHeaders(), body: JSON.stringify(userData)
             });
-            if (!response.ok) {
-                const errData = await response.json();
-                throw new Error(errData.msg || 'Gagal menambah user.');
-            }
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.msg || 'Gagal menambah user.');
+            showAlert('Pengguna baru berhasil ditambahkan.', 'success');
             addUserModal.hide();
             fetchUsers();
-        } catch (error) { alert(error.message); }
+        } catch (error) { showAlert(error.message); }
     });
 
     document.getElementById('edit-user-form').addEventListener('submit', async (e) => {
@@ -203,62 +289,30 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         try {
             const response = await fetch(`${API_URL}/api/users/${userId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
-                body: JSON.stringify(userData)
+                method: 'PUT', headers: getHeaders(), body: JSON.stringify(userData)
             });
-            if (!response.ok) throw new Error('Gagal mengupdate user.');
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.msg || 'Gagal mengupdate user.');
+            showAlert('Data pengguna berhasil diperbarui.', 'success');
             editUserModal.hide();
             fetchUsers();
-        } catch (error) { alert(error.message); }
+        } catch (error) { showAlert(error.message); }
     });
 
     document.getElementById('reset-password-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const userId = document.getElementById('reset-password-userid').value;
         const newPassword = document.getElementById('new-password-admin').value;
-
         try {
             const response = await fetch(`${API_URL}/api/users/${userId}/reset-password`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
-                body: JSON.stringify({ newPassword })
+                method: 'POST', headers: getHeaders(), body: JSON.stringify({ newPassword })
             });
             const result = await response.json();
             if (!response.ok) throw new Error(result.msg || 'Gagal reset sandi.');
-            
-            alert(result.msg);
+            showAlert(result.msg, 'success');
             resetPasswordModal.hide();
-        } catch (error) {
-            alert(`Error: ${error.message}`);
-        }
+        } catch (error) { showAlert(error.message); }
     });
-
-    const deleteUser = async (userId) => {
-        if (confirm('Anda yakin ingin menghapus pengguna ini?')) {
-            try {
-                const response = await fetch(`${API_URL}/api/users/${userId}`, {
-                    method: 'DELETE',
-                    headers: { 'x-auth-token': token }
-                });
-                if (!response.ok) throw new Error('Gagal menghapus user.');
-                fetchUsers();
-            } catch (error) { alert(error.message); }
-        }
-    };
-
-    const handleConfirmPayment = async (userId) => {
-        if (confirm('Anda yakin ingin mengonfirmasi pembayaran untuk pengguna ini?')) {
-            try {
-                const response = await fetch(`${API_URL}/api/confirm-payment/${userId}`, {
-                    method: 'POST',
-                    headers: { 'x-auth-token': token }
-                });
-                if (!response.ok) throw new Error('Gagal konfirmasi.');
-                fetchUsers();
-            } catch (error) { alert(error.message); }
-        }
-    };
     
     document.getElementById('set-package-form').addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -271,60 +325,15 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         try {
             const response = await fetch(`${API_URL}/api/purchase-membership-admin/${userId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
-                body: JSON.stringify(packageData)
+                method: 'POST', headers: getHeaders(), body: JSON.stringify(packageData)
             });
-            if (!response.ok) throw new Error('Gagal mengatur paket.');
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.msg || 'Gagal mengatur paket.');
+            showAlert(result.msg, 'success');
             setPackageModal.hide();
             fetchUsers();
-        } catch (error) { alert(error.message); }
+        } catch (error) { showAlert(error.message); }
     });
-
-    // --- REVIEW MANAGEMENT FUNCTIONS ---
-    const reviewTableBody = document.getElementById('review-table-body');
-
-    const fetchReviews = async () => {
-        try {
-            const response = await fetch(`${API_URL}/api/reviews/all`, { headers: { 'x-auth-token': token } });
-            if (!response.ok) throw new Error('Gagal mengambil data ulasan.');
-            const reviews = await response.json();
-            displayReviews(reviews);
-        } catch (error) {
-            console.error(error);
-            reviewTableBody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Gagal memuat data ulasan.</td></tr>`;
-        }
-    };
-
-    const displayReviews = (reviews) => {
-        reviewTableBody.innerHTML = '';
-        reviews.forEach(review => {
-            const row = document.createElement('tr');
-            const ratingStars = '<span class="rating-stars">' + '★'.repeat(review.rating) + '☆'.repeat(5 - review.rating) + '</span>';
-            const username = review.user ? review.user.username : '<em class="text-muted">User Dihapus</em>';
-            row.innerHTML = `
-                <td>${username}</td>
-                <td>${ratingStars}</td>
-                <td>${review.comment}</td>
-                <td>
-                    <div class="btn-group">
-                        <button class="btn btn-sm btn-outline-warning edit-review-btn"><i class="bi bi-pencil-square"></i></button>
-                        <button class="btn btn-sm btn-outline-danger delete-review-btn"><i class="bi bi-trash3"></i></button>
-                    </div>
-                </td>
-            `;
-            row.querySelector('.edit-review-btn').addEventListener('click', () => openEditReviewModal(review));
-            row.querySelector('.delete-review-btn').addEventListener('click', () => deleteReview(review._id));
-            reviewTableBody.appendChild(row);
-        });
-    };
-
-    const openEditReviewModal = (review) => {
-        document.getElementById('edit-review-id').value = review._id;
-        document.getElementById('edit-rating').value = review.rating;
-        document.getElementById('edit-comment').value = review.comment;
-        editReviewModal.show();
-    };
 
     document.getElementById('edit-review-form').addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -335,28 +344,42 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         try {
             const response = await fetch(`${API_URL}/api/reviews/${reviewId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
-                body: JSON.stringify(reviewData)
+                method: 'PUT', headers: getHeaders(), body: JSON.stringify(reviewData)
             });
             if (!response.ok) throw new Error('Gagal mengupdate ulasan.');
+            showAlert('Ulasan berhasil diperbarui.', 'success');
             editReviewModal.hide();
             fetchReviews();
-        } catch (error) { alert(error.message); }
+        } catch (error) { showAlert(error.message); }
     });
 
-    const deleteReview = async (reviewId) => {
-        if (confirm('Anda yakin ingin menghapus ulasan ini?')) {
-            try {
-                const response = await fetch(`${API_URL}/api/reviews/${reviewId}`, {
-                    method: 'DELETE',
-                    headers: { 'x-auth-token': token }
-                });
-                if (!response.ok) throw new Error('Gagal menghapus ulasan.');
-                fetchReviews();
-            } catch (error) { alert(error.message); }
+    // --- Tombol Download ---
+    downloadButton.addEventListener('click', async () => {
+        downloadButton.disabled = true;
+        downloadButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Mengunduh...';
+        try {
+            const response = await fetch(`${API_URL}/api/download-data`, {
+                method: 'GET', headers: getHeaders(false)
+            });
+            if (!response.ok) throw new Error('Gagal mengunduh data.');
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `data_autohidrolik_${new Date().toISOString().slice(0,10)}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            a.remove();
+        } catch (error) {
+            showAlert(error.message);
+        } finally {
+            downloadButton.disabled = false;
+            downloadButton.innerHTML = '<i class="bi bi-download"></i> Download Data';
         }
-    };
+    });
 
     // --- LOGOUT ---
     document.getElementById('logout-button').addEventListener('click', () => {
@@ -365,7 +388,7 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.href = '/login.html';
     });
     
-    // Initial data fetch
+    // --- Inisialisasi Data ---
     fetchUsers();
     fetchReviews();
 });
