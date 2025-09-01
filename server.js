@@ -16,6 +16,7 @@ const app = express();
 const User = require('./models/User');
 const Review = require('./models/Review'); // Pastikan model Review diimpor
 const Visitor = require('./models/Visitor');
+const Transaction = require('./models/Transaction');
 
 // --- Middleware ---
 const whitelist = ['https://autohidrolik.com', 'www.autohidrolik.com'];
