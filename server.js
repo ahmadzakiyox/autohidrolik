@@ -118,10 +118,10 @@ app.post('/api/register', async (req, res) => {
             return res.status(400).json({ msg: 'Email sudah terdaftar.' });
         }
         const hashedPassword = await bcrypt.hash(password, 10);
-        const otp = generateOTP();
         
-        // --- PERBAIKAN UTAMA DI SINI ---
-        // Buat memberId SEBELUM menyimpan user
+        // DIHAPUS: Logika pembuatan OTP tidak diperlukan lagi
+        // const otp = generateOTP();
+
         const memberId = await generateUniqueMemberId();
 
         const newUser = new User({
@@ -129,29 +129,25 @@ app.post('/api/register', async (req, res) => {
             email,
             phone,
             password: hashedPassword,
-            isVerified: true,
-            otp: otp,
-            otpExpires: new Date(Date.now() + 10 * 60 * 1000),
-            memberId: memberId // Masukkan memberId ke dalam data user baru
+            isVerified: true, // Akun langsung diverifikasi
+            memberId: memberId
+            // DIHAPUS: Field otp dan otpExpires tidak disimpan lagi
         });
         
         const savedUser = await newUser.save();
         console.log(`[Registrasi] User ${savedUser.email} berhasil disimpan dengan Member ID: ${savedUser.memberId}`);
 
-        await transporter.sendMail({
-            from: `"AUTOHIDROLIK" <${process.env.GMAIL_USER}>`,
-            to: email,
-            subject: 'Kode Verifikasi Pendaftaran',
-            text: `Kode OTP Anda adalah: ${otp}. Kode ini berlaku selama 10 menit.`
-        });
+        // DIHAPUS: Logika pengiriman email OTP tidak diperlukan lagi
+        // await transporter.sendMail({ ... });
 
-        res.status(201).json({ msg: 'Registrasi berhasil! Silakan cek email Anda untuk kode OTP.' });
+        // DIUBAH: Pesan respons diubah untuk mengonfirmasi registrasi berhasil
+        res.status(201).json({ msg: 'Registrasi berhasil! Anda akan dialihkan ke halaman login.' });
+
     } catch (error) {
         console.error("Error di /api/register:", error);
         res.status(500).send('Server error');
     }
 });
-
 
 // Rute Verifikasi OTP dengan Logging
 app.post('/api/verify-otp', async (req, res) => {
