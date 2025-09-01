@@ -1,7 +1,6 @@
 // File: /public/js/reset-verify.js
 
 document.addEventListener('DOMContentLoaded', () => {
-    const API_URL = 'https://autohidrolik.com';
     const form = document.getElementById('reset-verify-form');
     const messageDiv = document.getElementById('message');
     const submitButton = document.getElementById('submit-button');
@@ -34,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            const response = await fetch(`${API_URL}/api/reset-password`, {
+            const response = await fetch(`/api/reset-password`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
