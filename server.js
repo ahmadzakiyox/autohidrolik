@@ -227,19 +227,23 @@ app.get('/api/dashboard-stats', auth, adminAuth, async (req, res) => {
         const paidUsers = await User.find({ 'membership.isPaid': true });
         
         // Daftar harga paket (Anda bisa menyimpannya di tempat lain jika perlu)
-        const packagePrices = {
-            'Body Wash': 500000,
-            'Cuci Mobil Hidrolik': 560000,
-            'Cuci Motor Besar': 200000,
-            'Cuci Motor Kecil': 200000,
-            'Paket Kombinasi': 600000,
-            'Add-On Vacuum Cleaner': 20000
-        };
+      const packagePrices = {
+    'Body Wash': 500000,
+    'Cuci Mobil Hidrolik': 560000,
+    'Cuci Motor Besar': 200000,
+    'Cuci Motor Kecil': 200000,
+    'Paket Kombinasi': 600000,
+    'Add-On Vacuum Cleaner': 20000
+};
 
-        const totalTransactions = paidUsers.reduce((total, user) => {
-            const price = packagePrices[user.membership.packageName] || 0;
-            return total + price;
-        }, 0);
+const totalTransactions = paidUsers.reduce((total, user) => {
+    // Pastikan user.membership dan packageName ada
+    if (user.membership && user.membership.packageName) {
+        const price = packagePrices[user.membership.packageName] || 0;
+        return total + price;
+    }
+    return total;
+}, 0);
 
         // Kirim semua data sebagai satu objek JSON
         res.json({
