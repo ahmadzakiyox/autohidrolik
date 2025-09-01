@@ -1,10 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Pastikan URL API ini sesuai dengan alamat backend Anda
-    const API_URL = 'https://autohidrolik.com';
+    // Gunakan path relatif agar konsisten dengan lokasi server
+    const API_URL = 'https://autohidrolik.com'; 
     const registerForm = document.getElementById('register-form');
     
     // Siapkan elemen untuk notifikasi
-    const formContainer = document.querySelector('.form-container');
     let messageDiv = document.getElementById('register-message');
     if (!messageDiv) {
         messageDiv = document.createElement('div');
@@ -42,15 +41,15 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) {
                 throw new Error(data.msg || 'Registrasi gagal!');
             }
-
+            
             // --- PERUBAHAN UTAMA DI SINI ---
-            // Tampilkan pesan sukses dan arahkan ke halaman verifikasi
-            messageDiv.innerHTML = `<div class="alert alert-success">${data.msg} Anda akan dialihkan...</div>`;
+            // Pesan diubah dan pengalihan dipastikan ke login.html
+            messageDiv.innerHTML = `<div class="alert alert-success">Registrasi berhasil! Anda akan dialihkan ke halaman login...</div>`;
 
             setTimeout(() => {
-                // Arahkan ke halaman verify.html sambil mengirim email sebagai parameter
-                window.location.href = `/verify.html?email=${encodeURIComponent(email)}`;
-            }, 3000);
+                // Mengarahkan langsung ke halaman login.html
+                window.location.href = '/login.html';
+            }, 2000);
 
         } catch (error) {
             messageDiv.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
