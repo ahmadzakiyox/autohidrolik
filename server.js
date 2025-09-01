@@ -126,6 +126,17 @@ app.get('/', async (req, res) => {
 // ======================================================
 // --- API ROUTES ---
 // ======================================================
+// --- PENAMBAHAN BARU: Rute untuk mereset semua transaksi ---
+app.delete('/api/transactions/reset', auth, adminAuth, async (req, res) => {
+    try {
+        // Menghapus semua dokumen dari koleksi Transaction
+        await Transaction.deleteMany({});
+        res.json({ msg: 'Semua data transaksi berhasil direset.' });
+    } catch (error) {
+        console.error("Error saat mereset transaksi:", error);
+        res.status(500).send('Server error');
+    }
+});
 
 app.post('/api/register', async (req, res) => {
     const { username, email, phone, password } = req.body;
