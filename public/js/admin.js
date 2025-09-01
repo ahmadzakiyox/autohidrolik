@@ -52,7 +52,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const memberCountElement = document.getElementById('member-count');
     const visitorCountElement = document.getElementById('visitor-count');
     const transactionTotalElement = document.getElementById('transaction-total');
-    
+
+    // Fungsi untuk menampilkan notifikasi
+    function showAlert(message, type = 'danger') {
+        if (alertPlaceholder) {
+            alertPlaceholder.innerHTML = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>`;
+        }
+    }
+
     const fetchUsers = async () => {
         try {
             const response = await fetch(`/api/users`, { headers: { 'x-auth-token': token } });
