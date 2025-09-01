@@ -110,44 +110,52 @@ function calculateExpiryDate() {
 // --- API ROUTES ---
 // ======================================================
 
-// --- RUTE REGISTRASI (DIPERBAIKI) ---
 app.post('/api/register', async (req, res) => {
     const { username, email, phone, password } = req.body;
-    try {
-        if (await User.findOne({ email })) {
-            return res.status(400).json({ msg: 'Email sudah terdaftar.' });
-        }
-        const hashedPassword = await bcrypt.hash(password, 10);
-        
-        // DIHAPUS: Logika pembuatan OTP tidak diperlukan lagi
-        // const otp = generateOTP();
 
+    // 1. Validasi input dasar
+    if (!username || !email || !phone || !password) {
+        return res.status(400).json({ msg: 'Mohon isi semua field yang diperlukan.' });
+    }
+
+    try {
+        // 2. Gunakan toLowerCase() untuk konsistensi pengecekan email
+        const existingUser = await User.findOne({ email: email.toLowerCase() });
+
+        if (existingUser) {
+            // Jika user ditemukan, langsung hentikan proses dan kirim error
+            return res.status(400).json({ msg: 'Email sudah terdaftar. Silakan gunakan email lain.' });
+        }
+
+        // 3. Jika email belum ada, lanjutkan proses
+        const hashedPassword = await bcrypt.hash(password, 10);
         const memberId = await generateUniqueMemberId();
 
         const newUser = new User({
             username,
-            email,
+            email: email.toLowerCase(), // Simpan email dalam format lowercase juga
             phone,
             password: hashedPassword,
-            isVerified: true, // Akun langsung diverifikasi
+            isVerified: true,
             memberId: memberId
-            // DIHAPUS: Field otp dan otpExpires tidak disimpan lagi
         });
         
         const savedUser = await newUser.save();
+        
         console.log(`[Registrasi] User ${savedUser.email} berhasil disimpan dengan Member ID: ${savedUser.memberId}`);
 
-        // DIHAPUS: Logika pengiriman email OTP tidak diperlukan lagi
-        // await transporter.sendMail({ ... });
-
-        // DIUBAH: Pesan respons diubah untuk mengonfirmasi registrasi berhasil
         res.status(201).json({ msg: 'Registrasi berhasil! Anda akan dialihkan ke halaman login.' });
 
     } catch (error) {
+        // Tangani kemungkinan error lain, termasuk jika ada race condition duplikasi
+        if (error.code === 11000) {
+            return res.status(400).json({ msg: 'Email ini baru saja didaftarkan. Coba lagi.' });
+        }
         console.error("Error di /api/register:", error);
-        res.status(500).send('Server error');
+        res.status(500).send('Terjadi kesalahan pada server');
     }
 });
+
 
 // Rute Verifikasi OTP dengan Logging
 app.post('/api/verify-otp', async (req, res) => {
