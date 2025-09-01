@@ -228,8 +228,8 @@ app.get('/api/dashboard-stats', auth, adminAuth, async (req, res) => {
         
         // Daftar harga paket (Anda bisa menyimpannya di tempat lain jika perlu)
       const packagePrices = {
-    'Body Wash': 500000,
-    'Cuci Mobil Hidrolik': 560000,
+    'Body Wash (12x)': 500000,
+    'Cuci Mobil Hidrolik (10x)': 560000,
     'Cuci Motor Besar': 200000,
     'Cuci Motor Kecil': 200000,
     'Paket Kombinasi': 600000,
