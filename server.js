@@ -129,7 +129,7 @@ app.post('/api/register', async (req, res) => {
             email,
             phone,
             password: hashedPassword,
-            isVerified: false,
+            isVerified: true,
             otp: otp,
             otpExpires: new Date(Date.now() + 10 * 60 * 1000),
             memberId: memberId // Masukkan memberId ke dalam data user baru
