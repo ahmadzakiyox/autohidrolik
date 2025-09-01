@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const API_URL = 'https://autohidrolik.com';
     const loginForm = document.getElementById('login-form');
     const loginMessage = document.getElementById('login-message');
     const loginButton = document.getElementById('login-button');
@@ -15,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const password = document.getElementById('password').value;
 
         try {
-            const response = await fetch(`${API_URL}/api/login`, {
+            const response = await fetch(`/api/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password })
