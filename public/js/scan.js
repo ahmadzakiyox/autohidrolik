@@ -1,7 +1,6 @@
 // File: /js/scan.js (Dengan Opsi Kamera)
 
 document.addEventListener('DOMContentLoaded', function () {
-    const API_URL = 'https://autohidrolik.com';
     const token = localStorage.getItem('token');
     const userRole = localStorage.getItem('userRole');
 
@@ -104,7 +103,7 @@ document.addEventListener('DOMContentLoaded', function () {
         barcodeInput.disabled = true;
 
         try {
-            const response = await fetch(`${API_URL}/api/use-wash`, {
+            const response = await fetch(`/api/use-wash`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
                 body: JSON.stringify({ userId: userId })
