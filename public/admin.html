@@ -32,16 +32,6 @@
             color: var(--text-primary); 
             border-color: var(--border-color); 
         }
-        .modal-content { background-color: var(--card-bg-color); }
-        .form-control, .form-select { 
-            background-color: #fff; 
-            border-color: var(--border-color); 
-            color: var(--text-primary); 
-        }
-        .form-control:focus, .form-select:focus { 
-            border-color: var(--purple-accent); 
-            box-shadow: 0 0 0 0.2rem rgba(111, 66, 193, 0.25); 
-        }
         .btn-primary {
             background-color: var(--purple-accent);
             border-color: var(--purple-accent);
@@ -51,13 +41,6 @@
             border-color: #17a2b8;
             color: white;
         }
-        #barcode-wrapper { 
-            padding: 1rem; 
-            background: #fff; 
-            border-radius: 8px; 
-            display: inline-block;
-        }
-        .rating-stars { color: #ffc107; }
     </style>
 </head>
 <body>
@@ -72,34 +55,17 @@
     </nav>
 
     <main class="container my-5">
-        <div class="row mb-5">
-            <div class="col-md-4">
-                <div class="card p-3">
-                    <div class="d-flex align-items-center">
-                        <i class="bi bi-people-fill fs-1 me-3" style="color: var(--purple-accent);"></i>
-                        <div>
-                            <h6 class="text-muted">Total Member Aktif</h6>
-                            <h2 class="fw-bold" id="member-count">0</h2>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1>Manajemen Pengguna</h1>
-            <div>
-                <button class="btn btn-success" id="download-data-btn">
-                    <i class="bi bi-download"></i> Download Data
-                </button>
-                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
-                    <i class="bi bi-plus-circle"></i> Tambah User Baru
-                </button>
-            </div>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                <i class="bi bi-plus-circle"></i> Tambah User Baru
+            </button>
         </div>
 
+        <!-- Tempat untuk menampilkan notifikasi (alert) -->
         <div id="alert-placeholder" class="mb-4"></div>
-        <div class="card shadow-sm mb-5">
+
+        <div class="card shadow-sm">
             <div class="card-body">
                 <div class="table-responsive">
                     <table class="table table-hover align-middle">
@@ -113,34 +79,33 @@
                                 <th>Aksi</th>
                             </tr>
                         </thead>
-                        <tbody id="user-table-body"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-         
-        <h1 class="mb-4">Manajemen Ulasan</h1>
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Username</th>
-                                <th>Rating</th>
-                                <th style="width: 50%;">Ulasan</th>
-                                <th>Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="review-table-body"></tbody>
+                        <tbody id="user-table-body">
+                            <!-- Data pengguna akan dimuat di sini oleh JavaScript -->
+                        </tbody>
                     </table>
                 </div>
             </div>
         </div>
     </main>
     
+    <!-- Modal untuk Tambah Pengguna (Contoh) -->
+    <div class="modal fade" id="addUserModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Tambah Pengguna Baru</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Form untuk menambah user bisa ditambahkan di sini -->
+                    <p>Formulir penambahan pengguna akan ada di sini.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/davidshimjs-qrcodejs@0.0.2/qrcode.min.js"></script>
     <script src="/js/admin.js"></script>
 </body>
 </html>
+
