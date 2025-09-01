@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const API_URL = 'https://autohidrolik.com'; 
     const token = localStorage.getItem('token');
 
     const profileLoading = document.getElementById('profile-loading');
@@ -18,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const fetchProfileData = async () => {
         try {
-            const response = await fetch(`${API_URL}/api/profile`, {
+            const response = await fetch(`/api/profile`, {
                 headers: { 'x-auth-token': token }
             });
             if (!response.ok) throw new Error('Sesi tidak valid.');
