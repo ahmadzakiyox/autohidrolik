@@ -15,6 +15,7 @@ const app = express();
 // Import Model
 const User = require('./models/User');
 const Review = require('./models/Review'); // Pastikan model Review diimpor
+const Visitor = require('./models/Visitor');
 
 // --- Middleware ---
 const whitelist = ['https://autohidrolik.com', 'www.autohidrolik.com'];
@@ -106,6 +107,21 @@ function calculateExpiryDate() {
     return expiryDate;
 }
 
+// MODIFIKASI: Tambahkan middleware untuk menghitung visitor di rute utama
+app.get('/', async (req, res) => {
+    try {
+        // Cari dokumen visitor, atau buat jika belum ada, lalu tingkatkan 'count' sebesar 1
+        await Visitor.findOneAndUpdate(
+            { identifier: 'global-visitor-count' },
+            { $inc: { count: 1 } },
+            { upsert: true, new: true } // 'upsert: true' akan membuat dokumen jika tidak ditemukan
+        );
+    } catch (error) {
+        console.error("Gagal menghitung visitor:", error);
+    }
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 // ======================================================
 // --- API ROUTES ---
 // ======================================================
@@ -195,7 +211,49 @@ app.post('/api/verify-otp', async (req, res) => {
     }
 });
 
-    
+// PENAMBAHAN BARU: Rute untuk statistik dashboard
+app.get('/api/dashboard-stats', auth, adminAuth, async (req, res) => {
+    try {
+        // 1. Hitung member aktif (yang sudah bayar)
+        const activeMembers = await User.countDocuments({
+            'membership.isPaid': true
+        });
+
+        // 2. Dapatkan total pengunjung
+        const visitorData = await Visitor.findOne({ identifier: 'global-visitor-count' });
+        const totalVisitors = visitorData ? visitorData.count : 0;
+
+        // 3. Hitung total transaksi dari paket yang sudah dibayar
+        const paidUsers = await User.find({ 'membership.isPaid': true });
+        
+        // Daftar harga paket (Anda bisa menyimpannya di tempat lain jika perlu)
+        const packagePrices = {
+            'Body Wash': 500000,
+            'Cuci Mobil Hidrolik': 560000,
+            'Cuci Motor Besar': 200000,
+            'Cuci Motor Kecil': 200000,
+            'Paket Kombinasi': 600000,
+            'Add-On Vacuum Cleaner': 20000
+        };
+
+        const totalTransactions = paidUsers.reduce((total, user) => {
+            const price = packagePrices[user.membership.packageName] || 0;
+            return total + price;
+        }, 0);
+
+        // Kirim semua data sebagai satu objek JSON
+        res.json({
+            activeMembers,
+            totalVisitors,
+            totalTransactions
+        });
+
+    } catch (error) {
+        console.error("Error mengambil statistik dashboard:", error);
+        res.status(500).send('Server error');
+    }
+});
+
 // Rute Login (Diperbaiki)
 // --- RUTE LOGIN (DIPERBAIKI) ---
 app.post('/api/login', async (req, res) => {
