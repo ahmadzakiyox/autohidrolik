@@ -601,7 +601,7 @@ app.post('/api/use-wash', auth, adminAuth, async (req, res) => {
     }
 });*/
 
-// Rute untuk admin mengonfirmasi pembayaran
+// Rute untuk admin mengonfirmasi pembayaran (PENTING)
 app.post('/api/confirm-payment/:userId', auth, adminAuth, async (req, res) => {
     try {
         const user = await User.findById(req.params.userId);
@@ -609,13 +609,17 @@ app.post('/api/confirm-payment/:userId', auth, adminAuth, async (req, res) => {
             return res.status(404).json({ msg: 'Data member tidak ditemukan.' });
         }
         user.membership.isPaid = true;
-        await user.save();
+        
+        // --- TAMBAHKAN BARIS INI ---
+        user.markModified('membership'); 
+        
+        await user.save(); // Sekarang perubahan akan tersimpan
         res.json({ msg: `Pembayaran untuk ${user.username} telah dikonfirmasi.`, user });
     } catch (error) {
+        console.error("Error di /api/confirm-payment:", error.message);
         res.status(500).send('Server error');
     }
 });
-
 // --- RUTE BARU: KIRIM ULANG OTP ---
 app.post('/api/resend-otp', async (req, res) => {
     const { email } = req.body;
