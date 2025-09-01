@@ -1,6 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Gunakan path relatif agar konsisten dengan lokasi server
-    const API_URL = 'https://autohidrolik.com'; 
     const registerForm = document.getElementById('register-form');
     
     // Siapkan elemen untuk notifikasi
@@ -28,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            const response = await fetch(`${API_URL}/api/register`, {
+            const response = await fetch(`/api/register`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
