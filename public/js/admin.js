@@ -102,17 +102,22 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         memberCountElement.textContent = memberCount;
     };
-
-    const handleConfirmPayment = async (userId) => {
+    
+ const handleConfirmPayment = async (userId) => {
         if (!confirm('Anda yakin ingin mengonfirmasi pembayaran untuk pengguna ini?')) return;
         try {
             const response = await fetch(`${API_URL}/api/confirm-payment/${userId}`, { method: 'POST', headers: getHeaders(false) });
             const result = await response.json();
             if (!response.ok) throw new Error(result.msg || 'Gagal konfirmasi.');
             showAlert(`Pembayaran untuk ${result.user.username} berhasil dikonfirmasi.`, 'success');
-            fetchUsers(); // Muat ulang data
+            
+            // --- PERBAIKAN DI SINI ---
+            // Baris ini akan memuat ulang data pengguna dari server dan memperbarui tabel.
+            fetchUsers(); 
+
         } catch (error) { showAlert(error.message); }
     };
+
 
     const deleteUser = async (userId) => {
         if (confirm('Anda yakin ingin menghapus pengguna ini? Tindakan ini tidak dapat dibatalkan.')) {
