@@ -30,6 +30,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- FUNGSI HELPER (PEMBANTU) ---
 
+    // --- PENAMBAHAN BARU: Fungsi untuk mengambil data dan membuat grafik ---
+    const fetchRevenueTrend = async () => {
+    try {
+        const response = await fetch('/api/revenue-trend', { headers: getHeaders(false) });
+        if (!response.ok) throw new Error('Gagal mengambil data grafik.');
+
+        const trendData = await response.json();
+        
+        const ctx = document.getElementById('revenueChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar', // Tipe grafik: 'bar' (batang) atau 'line' (garis)
+            data: {
+                labels: trendData.labels, // Label tanggal dari API
+                datasets: [{
+                    label: 'Pendapatan (Rp)',
+                    data: trendData.data, // Data pendapatan dari API
+                    backgroundColor: 'rgba(111, 66, 193, 0.6)', // Warna batang grafik
+                    borderColor: 'rgba(111, 66, 193, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+    } catch (error) {
+        showAlert(error.message);
+    }
+};
     // Didefinisikan sebagai 'function' agar bisa diakses dari mana saja (hoisting)
     function showAlert(message, type = 'danger') {
         if (alertPlaceholder) {
@@ -398,4 +432,5 @@ resetTransactionsButton.addEventListener('click', async () => {
     fetchDashboardStats();
     fetchUsers();
     fetchReviews();
+    fetchRevenueTrend(); 
 });
