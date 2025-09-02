@@ -133,13 +133,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- FUNGSI TAMPILAN (DISPLAY) ---
       // Ganti fungsi displayUsers yang lama dengan dua fungsi baru ini
+    // --- FUNGSI TAMPILAN (DISPLAY) ---
     const displayMembers = (members) => {
         memberTableBody.innerHTML = '';
         if (members.length === 0) {
             memberTableBody.innerHTML = `<tr><td colspan="7" class="text-center text-muted">Belum ada member.</td></tr>`;
             return;
         }
-        let counter = 1;
+        let counter = 1; // Menggunakan 'counter'
         members.forEach(user => {
             const row = document.createElement('tr');
             row.dataset.userId = user._id;
@@ -151,11 +152,11 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 actionButtons = `<button class="btn btn-sm btn-info confirm-payment-btn" title="Konfirmasi Bayar"><i class="bi bi-check-circle"></i></button> ` + actionButtons;
             }
-            row.innerHTML = `<td>${String(userCounter++).padStart(3, '0')}</td><td>${user.username}</td><td>${user.email}</td><td>${user.phone || '-'}</td><td>${membershipStatus}</td><td>${paymentStatus}</td><td><div class="btn-group">${actionButtons}</div></td>`;
+            row.innerHTML = `<td>${String(counter++).padStart(3, '0')}</td><td>${user.username}</td><td>${user.email}</td><td>${user.phone || '-'}</td><td>${membershipStatus}</td><td>${paymentStatus}</td><td><div class="btn-group">${actionButtons}</div></td>`;
             memberTableBody.appendChild(row);
         });
     };
-
+    
     const displayNonMembers = (nonMembers) => {
         nonMemberTableBody.innerHTML = '';
         if (nonMembers.length === 0) {
