@@ -333,22 +333,32 @@ resetTransactionsButton.addEventListener('click', async () => {
     });
 
     document.getElementById('edit-user-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const userId = document.getElementById('edit-user-id').value;
-        const userData = {
-            username: document.getElementById('edit-username').value,
-            email: document.getElementById('edit-email').value,
-            phone: document.getElementById('edit-phone').value,
-            role: document.getElementById('edit-role').value,
-        };
-        try {
-            const response = await fetch(`/api/users/${userId}`, { method: 'PUT', headers: getHeaders(), body: JSON.stringify(userData) });
-            if (!response.ok) throw new Error('Gagal mengupdate user.');
-            showAlert('Data pengguna berhasil diperbarui.', 'success');
-            editUserModal.hide();
-            fetchUsers();
-        } catch (error) { showAlert(error.message); }
-    });
+    e.preventDefault();
+    const userId = document.getElementById('edit-user-id').value;
+    const userData = {
+        username: document.getElementById('edit-username').value,
+        email: document.getElementById('edit-email').value,
+        phone: document.getElementById('edit-phone').value, // Pastikan 'phone' ada di sini
+        role: document.getElementById('edit-role').value,
+    };
+    try {
+        const response = await fetch(`/api/users/${userId}`, { 
+            method: 'PUT', 
+            headers: getHeaders(), 
+            body: JSON.stringify(userData) 
+        });
+        if (!response.ok) throw new Error('Gagal mengupdate user.');
+        
+        showAlert('Data pengguna berhasil diperbarui.', 'success');
+        editUserModal.hide();
+        
+        // Baris ini akan memuat ulang data tabel secara otomatis
+        fetchUsers(); 
+        
+    } catch (error) { 
+        showAlert(error.message); 
+    }
+});
 
     document.getElementById('reset-password-form').addEventListener('submit', async (e) => {
         e.preventDefault();
