@@ -65,15 +65,17 @@
         <div class="container">
             <a class="navbar-brand fw-bold" href="/">AUTOHIDROLIK ADMIN</a>
             <div class="ms-auto d-flex align-items-center">
-                <a href="/Scanner-QRCODE" class="btn btn-scanner me-3"><i class="bi bi-qr-code-scan"></i> Buka Scanner</a>
+                <!-- TAUTAN SCANNER DIPERBAIKI -->
+                <a href="/scan" class="btn btn-scanner me-3"><i class="bi bi-qr-code-scan"></i> Buka Scanner</a>
                 <button id="logout-button" class="btn btn-outline-danger"><i class="bi bi-box-arrow-right"></i> Logout</button>
             </div>
         </div>
     </nav>
 
     <main class="container my-5">
-        <div class="row mb-5">
-            <div class="col-md-4">
+        <!-- Kartu Statistik -->
+        <div class="row mb-4">
+            <div class="col-md-4 mb-3">
                 <div class="card p-3">
                     <div class="d-flex align-items-center">
                         <i class="bi bi-people-fill fs-1 me-3" style="color: var(--purple-accent);"></i>
@@ -84,40 +86,50 @@
                     </div>
                 </div>
             </div>
-
-            
-           <div class="col-md-4">
-            <div class="card p-3">
-                <div class="d-flex align-items-center">
-                    <i class="bi bi-eye-fill fs-1 me-3" style="color: #17a2b8;"></i>
-                    <div>
-                        <h6 class="text-muted">Total Pengunjung Website</h6>
-                        <h2 class="fw-bold" id="visitor-count">0</h2>
+            <div class="col-md-4 mb-3">
+                <div class="card p-3">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-eye-fill fs-1 me-3" style="color: #17a2b8;"></i>
+                        <div>
+                            <h6 class="text-muted">Total Pengunjung Website</h6>
+                            <h2 class="fw-bold" id="visitor-count">0</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card p-3">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-cash-coin fs-1 me-3" style="color: #28a745;"></i>
+                        <div>
+                            <h6 class="text-muted">Total Transaksi Member</h6>
+                            <h2 class="fw-bold" id="transaction-total">Rp 0</h2>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-md-4">
-            <div class="card p-3">
-                <div class="d-flex align-items-center">
-                    <i class="bi bi-cash-coin fs-1 me-3" style="color: #28a745;"></i>
-                    <div>
-                        <h6 class="text-muted">Total Transaksi Member</h6>
-                        <h2 class="fw-bold" id="transaction-total">Rp 0</h2>
+        <!-- GRAFIK PENDAPATAN DITAMBAHKAN KEMBALI -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">Tren Pendapatan (7 Hari Terakhir)</h5>
+                        <canvas id="revenueChart"></canvas>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-  <div id="alert-placeholder" class="mb-4"></div>
-</div>
         
+        <!-- DIV YANG SALAH PENEMPATANNYA SUDAH DIHAPUS -->
+        <div id="alert-placeholder" class="mb-4"></div>
+
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1>Manajemen Pengguna</h1>
             <div>
                 <button class="btn btn-danger" id="reset-transactions-btn">
-            <i class="bi bi-arrow-counterclockwise"></i> Reset Transaksi
+                    <i class="bi bi-arrow-counterclockwise"></i> Reset Transaksi
                 </button>
                 <button class="btn btn-success" id="download-data-btn">
                     <i class="bi bi-download"></i> Download Data
@@ -147,7 +159,7 @@
                 </div>
             </div>
         </div>
-         
+        
         <h1 class="mb-4">Manajemen Ulasan</h1>
         <div class="card shadow-sm">
             <div class="card-body">
