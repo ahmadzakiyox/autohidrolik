@@ -855,6 +855,30 @@ app.get('/api/revenue-trend', auth, adminAuth, async (req, res) => {
     }
 });
 
+// API BARU: Mengambil data member yang sudah lunas (aktif)
+app.get('/api/members/active', auth, adminAuth, async (req, res) => {
+    try {
+        const activeMembers = await User.find({ 
+            'membership.isPaid': true 
+        }).sort({ date: 1 });
+        res.json(activeMembers);
+    } catch (err) {
+        res.status(500).send('Server error');
+    }
+});
+
+// API BARU: Mengambil data member yang menunggu pembayaran
+app.get('/api/members/pending', auth, adminAuth, async (req, res) => {
+    try {
+        const pendingMembers = await User.find({
+            'membership.isPaid': false
+        }).sort({ 'membership.purchaseDate': 1 }); // Urutkan berdasarkan tanggal pembelian
+        res.json(pendingMembers);
+    } catch (err) {
+        res.status(500).send('Server error');
+    }
+});
+
 // ======================================================
 // --- Rute untuk Menyajikan Halaman HTML ---
 // ======================================================
