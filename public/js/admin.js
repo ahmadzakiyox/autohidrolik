@@ -16,6 +16,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const visitorCountElement = document.getElementById('visitor-count');
     const transactionTotalElement = document.getElementById('transaction-total');
     const downloadButton = document.getElementById('download-data-btn');
+    const memberTableBody = document.getElementById('member-table-body');
+    const nonMemberTableBody = document.getElementById('non-member-table-body');
 
     // Inisialisasi semua modal (pop-up)
     const addUserModal = new bootstrap.Modal(document.getElementById('addUserModal'));
@@ -100,14 +102,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const fetchUsers = async () => {
+ const fetchUsers = async () => {
         try {
             const response = await fetch('/api/users', { headers: getHeaders(false) });
             if (!response.ok) throw new Error('Gagal mengambil data pengguna.');
             cachedUsers = await response.json();
-            displayUsers(cachedUsers);
+            
+            const members = cachedUsers.filter(user => user.membership);
+            const nonMembers = cachedUsers.filter(user => !user.membership);
+
+            displayMembers(members);
+            displayNonMembers(nonMembers);
+
         } catch (error) {
-            userTableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">${error.message}</td></tr>`;
+            memberTableBody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">${error.message}</td></tr>`;
+            nonMemberTableBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">${error.message}</td></tr>`;
         }
     };
 
@@ -123,33 +132,45 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- FUNGSI TAMPILAN (DISPLAY) ---
-    const displayUsers = (users) => {
-        userTableBody.innerHTML = '';
-        let userCounter = 1;
-        users.filter(u => u.role !== 'admin').forEach(user => {
+      // Ganti fungsi displayUsers yang lama dengan dua fungsi baru ini
+    const displayMembers = (members) => {
+        memberTableBody.innerHTML = '';
+        if (members.length === 0) {
+            memberTableBody.innerHTML = `<tr><td colspan="7" class="text-center text-muted">Belum ada member.</td></tr>`;
+            return;
+        }
+        let counter = 1;
+        members.forEach(user => {
             const row = document.createElement('tr');
             row.dataset.userId = user._id;
-            let membershipStatus = '<span class="text-muted">Non-Member</span>';
-            let paymentStatus = '-';
-            let actionButtons = `
-                <button class="btn btn-sm btn-outline-secondary reset-password-btn" title="Reset Sandi"><i class="bi bi-key-fill"></i></button>
-                <button class="btn btn-sm btn-outline-success set-package-btn" title="Atur Paket"><i class="bi bi-gem"></i></button>
-                <button class="btn btn-sm btn-outline-warning edit-user-btn" title="Edit"><i class="bi bi-pencil-square"></i></button>
-                <button class="btn btn-sm btn-outline-danger delete-user-btn" title="Hapus"><i class="bi bi-trash3"></i></button>`;
-            if (user.membership) {
-                membershipStatus = `${user.membership.packageName} (${user.membership.remainingWashes}x)`;
-                paymentStatus = user.membership.isPaid ? '<span class="badge bg-success">Lunas</span>' : '<span class="badge bg-warning text-dark">Belum Bayar</span>';
-                if (user.membership.isPaid) {
-                    actionButtons = `<button class="btn btn-sm btn-outline-info view-barcode-btn" title="QR Code"><i class="bi bi-qr-code"></i></button> ` + actionButtons;
-                } else {
-                    actionButtons = `<button class="btn btn-sm btn-info confirm-payment-btn" title="Konfirmasi Bayar"><i class="bi bi-check-circle"></i></button> ` + actionButtons;
-                }
+            let membershipStatus = `${user.membership.packageName} (${user.membership.remainingWashes}x)`;
+            let paymentStatus = user.membership.isPaid ? '<span class="badge bg-success">Lunas</span>' : '<span class="badge bg-warning text-dark">Belum Bayar</span>';
+            let actionButtons = `<button class="btn btn-sm btn-outline-secondary reset-password-btn" title="Reset Sandi"><i class="bi bi-key-fill"></i></button><button class="btn btn-sm btn-outline-success set-package-btn" title="Atur Paket"><i class="bi bi-gem"></i></button><button class="btn btn-sm btn-outline-warning edit-user-btn" title="Edit"><i class="bi bi-pencil-square"></i></button><button class="btn btn-sm btn-outline-danger delete-user-btn" title="Hapus"><i class="bi bi-trash3"></i></button>`;
+            if (user.membership.isPaid) {
+                actionButtons = `<button class="btn btn-sm btn-outline-info view-barcode-btn" title="QR Code"><i class="bi bi-qr-code"></i></button> ` + actionButtons;
+            } else {
+                actionButtons = `<button class="btn btn-sm btn-info confirm-payment-btn" title="Konfirmasi Bayar"><i class="bi bi-check-circle"></i></button> ` + actionButtons;
             }
-            row.innerHTML = `<td>${String(userCounter++).padStart(3, '0')}</td><td>${user.username}</td><td>${user.email}</td><td>${user.phone || '-'}</td><td>${membershipStatus}</td><td>${paymentStatus}</td><td><div class="btn-group">${actionButtons}</div></td>`;
-            userTableBody.appendChild(row);
+            row.innerHTML = `<td>${String(counter++)}</td><td>${user.username}</td><td>${user.email}</td><td>${user.phone || '-'}</td><td>${membershipStatus}</td><td>${paymentStatus}</td><td><div class="btn-group">${actionButtons}</div></td>`;
+            memberTableBody.appendChild(row);
         });
     };
 
+    const displayNonMembers = (nonMembers) => {
+        nonMemberTableBody.innerHTML = '';
+        if (nonMembers.length === 0) {
+            nonMemberTableBody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Tidak ada pengguna non-member.</td></tr>`;
+            return;
+        }
+        let counter = 1;
+        nonMembers.forEach(user => {
+            const row = document.createElement('tr');
+            row.dataset.userId = user._id;
+            let actionButtons = `<button class="btn btn-sm btn-outline-success set-package-btn" title="Jadikan Member"><i class="bi bi-gem"></i></button><button class="btn btn-sm btn-outline-warning edit-user-btn" title="Edit"><i class="bi bi-pencil-square"></i></button><button class="btn btn-sm btn-outline-danger delete-user-btn" title="Hapus"><i class="bi bi-trash3"></i></button>`;
+            row.innerHTML = `<td>${String(counter++)}</td><td>${user.username}</td><td>${user.email}</td><td>${user.phone || '-'}</td><td><div class="btn-group">${actionButtons}</div></td>`;
+            nonMemberTableBody.appendChild(row);
+        });
+    };
     const displayReviews = (reviews) => {
         reviewTableBody.innerHTML = '';
         reviews.forEach(review => {
