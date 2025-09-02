@@ -819,29 +819,41 @@ app.get('/api/download-data', auth, adminAuth, async (req, res) => {
     }
 });
 
-
-// Rute untuk admin mengatur/mengubah paket member
-/*app.post('/api/purchase-membership-admin/:userId', auth, adminAuth, async (req, res) => {
-    const { packageName, totalWashes } = req.body;
-    if (!packageName || !totalWashes) {
-        return res.status(400).json({ msg: 'Detail paket tidak lengkap.' });
-    }
+// --- PENAMBAHAN BARU: Rute untuk data grafik tren pendapatan ---
+app.get('/api/revenue-trend', auth, adminAuth, async (req, res) => {
     try {
-        const user = await User.findById(req.params.userId);
-        if (!user) return res.status(404).json({ msg: 'Pengguna tidak ditemukan.' });
+        // Mengambil data transaksi 7 hari terakhir
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+        const revenueData = await Transaction.aggregate([
+            {
+                $match: {
+                    transactionDate: { $gte: sevenDaysAgo } // Filter data 7 hari terakhir
+                }
+            },
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$transactionDate" } }, // Kelompokkan berdasarkan hari
+                    totalAmount: { $sum: "$amount" } // Jumlahkan pendapatan per hari
+                }
+            },
+            {
+                $sort: { _id: 1 } // Urutkan berdasarkan tanggal dari yang terlama
+            }
+        ]);
         
-        user.membership = {
-            packageName: packageName,
-            totalWashes: totalWashes,
-            remainingWashes: totalWashes,
-            isPaid: false // Admin harus konfirmasi pembayaran secara manual setelah ini
-        };
-        await user.save();
-        res.json({ msg: `Paket untuk ${user.username} berhasil diatur.`, user });
+        // Format data agar mudah dibaca oleh Chart.js
+        const labels = revenueData.map(data => data._id);
+        const data = revenueData.map(data => data.totalAmount);
+
+        res.json({ labels, data });
+
     } catch (error) {
+        console.error("Error mengambil data tren pendapatan:", error);
         res.status(500).send('Server error');
     }
-});*/
+});
 
 // ======================================================
 // --- Rute untuk Menyajikan Halaman HTML ---
