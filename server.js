@@ -354,7 +354,7 @@ app.post('/api/users', auth, adminAuth, async (req, res) => {
 });
 
 app.put('/api/users/:id', auth, adminAuth, async (req, res) => {
-    const { username, email, role } = req.body;
+    const { username, email, phone, role } = req.body;
     try {
         let user = await User.findByIdAndUpdate(req.params.id, { $set: { username, email, role } }, { new: true }).select('-password');
         if (!user) return res.status(404).json({ msg: 'User tidak ditemukan' });
