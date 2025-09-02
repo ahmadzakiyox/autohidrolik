@@ -32,7 +32,7 @@ const corsOptions = {
 };
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+
 
 // --- Inisialisasi Layanan ---
 // Nodemailer (Email)
@@ -107,21 +107,6 @@ function calculateExpiryDate() {
     expiryDate.setMonth(expiryDate.getMonth() + 3); // Tambah 3 bulan dari sekarang
     return expiryDate;
 }
-
-// MODIFIKASI: Tambahkan middleware untuk menghitung visitor di rute utama
-app.get('/', async (req, res) => {
-    try {
-        // Cari dokumen visitor, atau buat jika belum ada, lalu tingkatkan 'count' sebesar 1
-        await Visitor.findOneAndUpdate(
-            { identifier: 'global-visitor-count' },
-            { $inc: { count: 1 } },
-            { upsert: true, new: true } // 'upsert: true' akan membuat dokumen jika tidak ditemukan
-        );
-    } catch (error) {
-        console.error("Gagal menghitung visitor:", error);
-    }
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
 
 // ======================================================
 // --- API ROUTES ---
@@ -861,6 +846,23 @@ app.get('/api/download-data', auth, adminAuth, async (req, res) => {
 // ======================================================
 // --- Rute untuk Menyajikan Halaman HTML ---
 // ======================================================
+
+// PERBAIKAN: Pindahkan rute '/' ke sebelum express.static
+app.get('/', async (req, res) => {
+    try {
+        await Visitor.findOneAndUpdate(
+            { identifier: 'global-visitor-count' }, 
+            { $inc: { count: 1 } }, 
+            { upsert: true }
+        );
+    } catch (error) {
+        console.error("Gagal menghitung visitor:", error);
+    }
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.use(express.static(path.join(__dirname, 'public')));
+
 app.get('/Login', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
