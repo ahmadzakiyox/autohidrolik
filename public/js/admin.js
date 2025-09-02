@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     actionButtons = `<button class="btn btn-sm btn-info confirm-payment-btn" title="Konfirmasi Bayar"><i class="bi bi-check-circle"></i></button> ` + actionButtons;
                 }
             }
-            row.innerHTML = `<td>${String(userCounter++).padStart(3, '0')}</td><td>${user.username}</td><td>${user.email}</td><td>${membershipStatus}</td><td>${paymentStatus}</td><td><div class="btn-group">${actionButtons}</div></td>`;
+            row.innerHTML = `<td>${String(userCounter++).padStart(3, '0')}</td><td>${user.username}</td><td>${user.email}</td><td>${user.phone || '-'}</td><td>${membershipStatus}</td><td>${paymentStatus}</td><td><div class="btn-group">${actionButtons}</div></td>`;
             userTableBody.appendChild(row);
         });
     };
