@@ -314,7 +314,7 @@ app.put('/api/profile', auth, async (req, res) => {
 // --- RUTE ADMIN: MANAJEMEN PENGGUNA ---
 app.get('/api/users', auth, adminAuth, async (req, res) => {
     try {
-        const users = await User.find().select('-password').sort({ date: -1 });
+        const users = await User.find().select('-password').sort({ date: 1 });
         res.json(users);
     } catch (err) {
         console.error(err.message);
