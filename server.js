@@ -357,10 +357,22 @@ app.post('/api/users', auth, adminAuth, async (req, res) => {
 });
 
 app.put('/api/users/:id', auth, adminAuth, async (req, res) => {
-    const { username, email, phone, role } = req.body;
+    // --- PERBAIKAN DI SINI ---
+    const { username, email, phone, role } = req.body; // Tambahkan 'phone'
     try {
-        let user = await User.findByIdAndUpdate(req.params.id, { $set: { username, email, role } }, { new: true }).select('-password');
-        if (!user) return res.status(404).json({ msg: 'User tidak ditemukan' });
+        // Buat objek field yang akan diupdate
+        const updateFields = { username, email, phone, role };
+
+        let user = await User.findByIdAndUpdate(
+            req.params.id,
+            { $set: updateFields }, // Gunakan objek yang baru
+            { new: true }
+        ).select('-password');
+        
+        if (!user) {
+            return res.status(404).json({ msg: 'User tidak ditemukan' });
+        }
+        
         res.json(user);
     } catch (err) {
         console.error(err.message);
