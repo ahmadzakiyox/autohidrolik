@@ -124,51 +124,79 @@ app.delete('/api/transactions/reset', auth, adminAuth, async (req, res) => {
 });
 
 app.post('/api/register', async (req, res) => {
+    // 1. Ambil data dari body request
     const { username, email, phone, password } = req.body;
 
-    // 1. Validasi input dasar
-    if (!username || !email || !phone || !password) {
-        return res.status(400).json({ msg: 'Mohon isi semua field yang diperlukan.' });
-    }
-
     try {
-        // 2. Gunakan toLowerCase() untuk konsistensi pengecekan email
-        const existingUser = await User.findOne({ email: email.toLowerCase() });
-
-        if (existingUser) {
-            // Jika user ditemukan, langsung hentikan proses dan kirim error
-            return res.status(400).json({ msg: 'Email sudah terdaftar. Silakan gunakan email lain.' });
+        // 2. Validasi Input Wajib (Email tidak termasuk)
+        if (!username || !phone || !password) {
+            return res.status(400).json({ msg: 'Username, Nomor WhatsApp, dan Password wajib diisi.' });
         }
 
-        // 3. Jika email belum ada, lanjutkan proses
+        // 3. (REVISI) Validasi Format Input
+        // Memeriksa panjang password
+        if (password.length < 6) {
+            return res.status(400).json({ msg: 'Password minimal harus 6 karakter.' });
+        }
+        // Memeriksa format email jika diisi
+        if (email && !/\S+@\S+\.\S+$/.test(email)) {
+            return res.status(400).json({ msg: 'Format email tidak valid.' });
+        }
+
+        // 4. (REVISI) Pengecekan Duplikasi yang Lebih Efisien
+        // Buat kondisi pencarian awal untuk field yang unik dan wajib
+        const queryConditions = [
+            { username: username },
+            { phone: phone }
+        ];
+
+        // Jika email diisi, tambahkan ke kondisi pencarian
+        if (email) {
+            queryConditions.push({ email: email.toLowerCase() });
+        }
+        
+        // Lakukan satu kali pencarian ke database
+        const existingUser = await User.findOne({ $or: queryConditions });
+
+        // Jika ada user yang ditemukan, berikan pesan error yang spesifik
+        if (existingUser) {
+            if (existingUser.username === username) {
+                return res.status(400).json({ msg: 'Username sudah terdaftar.' });
+            }
+            if (existingUser.phone === phone) {
+                return res.status(400).json({ msg: 'Nomor WhatsApp sudah terdaftar.' });
+            }
+            if (email && existingUser.email === email.toLowerCase()) {
+                return res.status(400).json({ msg: 'Email sudah terdaftar.' });
+            }
+        }
+
+        // 5. Jika semua pengecekan lolos, lanjutkan proses
         const hashedPassword = await bcrypt.hash(password, 10);
-        const memberId = await generateUniqueMemberId();
+        const memberId = await generateUniqueMemberId(); // Pastikan fungsi ini ada
 
         const newUser = new User({
             username,
-            email: email.toLowerCase(), // Simpan email dalam format lowercase juga
+            email: email ? email.toLowerCase() : null, // Simpan null jika email kosong
             phone,
             password: hashedPassword,
-            isVerified: true,
+            isVerified: true, // Sesuai skema
             memberId: memberId
         });
         
-        const savedUser = await newUser.save();
+        await newUser.save();
         
-        console.log(`[Registrasi] User ${savedUser.email} berhasil disimpan dengan Member ID: ${savedUser.memberId}`);
-
         res.status(201).json({ msg: 'Registrasi berhasil! Anda akan dialihkan ke halaman login.' });
 
     } catch (error) {
-        // Tangani kemungkinan error lain, termasuk jika ada race condition duplikasi
-        if (error.code === 11000) {
-            return res.status(400).json({ msg: 'Email ini baru saja didaftarkan. Coba lagi.' });
-        }
         console.error("Error di /api/register:", error);
+        // Penanganan error duplikasi jika terjadi race condition
+        if (error.code === 11000) {
+            return res.status(400).json({ msg: 'Username, email, atau nomor HP ini baru saja didaftarkan.' });
+        }
         res.status(500).send('Terjadi kesalahan pada server');
     }
 });
-
 
 // Rute Verifikasi OTP dengan Logging
 app.post('/api/verify-otp', async (req, res) => {
