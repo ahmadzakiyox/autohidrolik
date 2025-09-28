@@ -8,7 +8,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Elemen UI ---
-    // Pastikan semua elemen didefinisikan di sini, di bagian atas
     const alertPlaceholder = document.getElementById('alert-placeholder');
     const userTableBody = document.getElementById('user-table-body');
     const reviewTableBody = document.getElementById('review-table-body');
@@ -18,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const downloadButton = document.getElementById('download-data-btn');
     const memberTableBody = document.getElementById('member-table-body');
     const nonMemberTableBody = document.getElementById('non-member-table-body');
+    const resetTransactionsButton = document.getElementById('reset-transactions-btn');
 
     // Inisialisasi semua modal (pop-up)
     const addUserModal = new bootstrap.Modal(document.getElementById('addUserModal'));
@@ -26,60 +26,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const setPackageModal = new bootstrap.Modal(document.getElementById('setPackageModal'));
     const editReviewModal = new bootstrap.Modal(document.getElementById('editReviewModal'));
     const resetPasswordModal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
-    const resetTransactionsButton = document.getElementById('reset-transactions-btn'); // Tambahkan ini
 
-    let cachedUsers = []; // Variabel untuk menyimpan data pengguna sementara
+    let cachedUsers = [];
+    let cachedReviews = []; // Variabel yang hilang, sekarang ditambahkan
 
     // --- FUNGSI HELPER (PEMBANTU) ---
 
-    // --- PENAMBAHAN BARU: Fungsi untuk mengambil data dan membuat grafik ---
-    const fetchRevenueTrend = async () => {
-    try {
-        const response = await fetch('/api/revenue-trend', { headers: getHeaders(false) });
-        if (!response.ok) throw new Error('Gagal mengambil data grafik.');
-
-        const trendData = await response.json();
-        
-        const ctx = document.getElementById('revenueChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'bar', // Tipe grafik: 'bar' (batang) atau 'line' (garis)
-            data: {
-                labels: trendData.labels, // Label tanggal dari API
-                datasets: [{
-                    label: 'Pendapatan (Rp)',
-                    data: trendData.data, // Data pendapatan dari API
-                    backgroundColor: 'rgba(111, 66, 193, 0.6)', // Warna batang grafik
-                    borderColor: 'rgba(111, 66, 193, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-
-    } catch (error) {
-        showAlert(error.message);
-    }
-};
-    // Didefinisikan sebagai 'function' agar bisa diakses dari mana saja (hoisting)
     function showAlert(message, type = 'danger') {
         if (alertPlaceholder) {
-            alertPlaceholder.innerHTML = `
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = `
                 <div class="alert alert-${type} alert-dismissible fade show" role="alert">
                     ${message}
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>`;
+            alertPlaceholder.append(wrapper);
         } else {
             console.error('Elemen #alert-placeholder tidak ditemukan di HTML.');
         }
     }
 
-    // Fungsi untuk membuat header otentikasi
+    // Fungsi untuk membuat header otentikasi (SANGAT PENTING)
     const getHeaders = (includeContentType = true) => {
         const headers = { 'x-auth-token': token };
         if (includeContentType) headers['Content-Type'] = 'application/json';
@@ -87,13 +54,12 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- FUNGSI PENGAMBILAN DATA (FETCH) ---
+    
     const fetchDashboardStats = async () => {
         try {
             const response = await fetch('/api/dashboard-stats', { headers: getHeaders(false) });
             if (!response.ok) throw new Error('Gagal mengambil data statistik.');
-            
             const stats = await response.json();
-            
             memberCountElement.textContent = stats.activeMembers;
             visitorCountElement.textContent = stats.totalVisitors;
             transactionTotalElement.textContent = `Rp ${stats.totalTransactions.toLocaleString('id-ID')}`;
@@ -102,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
- const fetchUsers = async () => {
+    const fetchUsers = async () => {
         try {
             const response = await fetch('/api/users', { headers: getHeaders(false) });
             if (!response.ok) throw new Error('Gagal mengambil data pengguna.');
@@ -113,10 +79,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             displayMembers(members);
             displayNonMembers(nonMembers);
-
         } catch (error) {
-            memberTableBody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">${error.message}</td></tr>`;
-            nonMemberTableBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">${error.message}</td></tr>`;
+            showAlert(error.message);
         }
     };
 
@@ -124,15 +88,39 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const response = await fetch('/api/reviews/all', { headers: getHeaders(false) });
             if (!response.ok) throw new Error('Gagal mengambil data ulasan.');
-            const reviews = await response.json();
-            displayReviews(reviews);
+            cachedReviews = await response.json(); // Simpan ulasan ke cache
+            displayReviews(cachedReviews);
         } catch (error) {
-            reviewTableBody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">${error.message}</td></tr>`;
+            showAlert(error.message);
         }
     };
 
-    // --- FUNGSI TAMPILAN (DISPLAY) ---
-      // Ganti fungsi displayUsers yang lama dengan dua fungsi baru ini
+    const fetchRevenueTrend = async () => {
+        try {
+            const response = await fetch('/api/revenue-trend', { headers: getHeaders(false) });
+            if (!response.ok) throw new Error('Gagal mengambil data grafik.');
+            const trendData = await response.json();
+            
+            const ctx = document.getElementById('revenueChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: trendData.labels,
+                    datasets: [{
+                        label: 'Pendapatan (Rp)',
+                        data: trendData.data,
+                        backgroundColor: 'rgba(111, 66, 193, 0.6)',
+                        borderColor: 'rgba(111, 66, 193, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: { scales: { y: { beginAtZero: true } } }
+            });
+        } catch (error) {
+            showAlert(error.message);
+        }
+    };
+
     // --- FUNGSI TAMPILAN (DISPLAY) ---
     const displayMembers = (members) => {
         memberTableBody.innerHTML = '';
@@ -140,8 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
             memberTableBody.innerHTML = `<tr><td colspan="7" class="text-center text-muted">Belum ada member.</td></tr>`;
             return;
         }
-        let counter = 1; // Menggunakan 'counter'
-        members.forEach(user => {
+        members.forEach((user, index) => {
             const row = document.createElement('tr');
             row.dataset.userId = user._id;
             let membershipStatus = `${user.membership.packageName} (${user.membership.remainingWashes}x)`;
@@ -152,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 actionButtons = `<button class="btn btn-sm btn-info confirm-payment-btn" title="Konfirmasi Bayar"><i class="bi bi-check-circle"></i></button> ` + actionButtons;
             }
-            row.innerHTML = `<td>${String(counter++).padStart(3, '0')}</td><td>${user.username}</td><td>${user.email}</td><td>${user.phone || '-'}</td><td>${membershipStatus}</td><td>${paymentStatus}</td><td><div class="btn-group">${actionButtons}</div></td>`;
+            row.innerHTML = `<td>${String(index + 1).padStart(3, '0')}</td><td>${user.username}</td><td>${user.email || '-'}</td><td>${user.phone || '-'}</td><td>${membershipStatus}</td><td>${paymentStatus}</td><td><div class="btn-group">${actionButtons}</div></td>`;
             memberTableBody.appendChild(row);
         });
     };
@@ -163,15 +150,15 @@ document.addEventListener('DOMContentLoaded', () => {
             nonMemberTableBody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Tidak ada pengguna non-member.</td></tr>`;
             return;
         }
-        let counter = 1;
-        nonMembers.forEach(user => {
+        nonMembers.forEach((user, index) => {
             const row = document.createElement('tr');
             row.dataset.userId = user._id;
             let actionButtons = `<button class="btn btn-sm btn-outline-success set-package-btn" title="Jadikan Member"><i class="bi bi-gem"></i></button><button class="btn btn-sm btn-outline-warning edit-user-btn" title="Edit"><i class="bi bi-pencil-square"></i></button><button class="btn btn-sm btn-outline-danger delete-user-btn" title="Hapus"><i class="bi bi-trash3"></i></button>`;
-            row.innerHTML = `<td>${String(counter++)}</td><td>${user.username}</td><td>${user.email}</td><td>${user.phone || '-'}</td><td><div class="btn-group">${actionButtons}</div></td>`;
+            row.innerHTML = `<td>${index + 1}</td><td>${user.username}</td><td>${user.email || '-'}</td><td>${user.phone || '-'}</td><td><div class="btn-group">${actionButtons}</div></td>`;
             nonMemberTableBody.appendChild(row);
         });
     };
+
     const displayReviews = (reviews) => {
         reviewTableBody.innerHTML = '';
         reviews.forEach(review => {
@@ -186,40 +173,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div></td>`;
             reviewTableBody.appendChild(row);
         });
-    };
-
-    // --- FUNGSI-FUNGSI AKSI (OPERASI CRUD) ---
-    const handleConfirmPayment = async (userId) => {
-        if (!confirm('Anda yakin ingin mengonfirmasi pembayaran untuk pengguna ini?')) return;
-        try {
-            const response = await fetch(`/api/confirm-payment/${userId}`, { method: 'POST', headers: getHeaders(false) });
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.msg || 'Gagal konfirmasi.');
-            showAlert(`Pembayaran untuk ${result.user.username} berhasil dikonfirmasi.`, 'success');
-            fetchUsers();
-            fetchDashboardStats();
-        } catch (error) { showAlert(error.message); }
-    };
-
-    const deleteUser = async (userId) => {
-        if (!confirm('Anda yakin ingin menghapus pengguna ini? Tindakan ini tidak dapat dibatalkan.')) return;
-        try {
-            const response = await fetch(`/api/users/${userId}`, { method: 'DELETE', headers: getHeaders(false) });
-            if (!response.ok) throw new Error('Gagal menghapus pengguna.');
-            showAlert('Pengguna berhasil dihapus.', 'success');
-            fetchUsers();
-            fetchDashboardStats();
-        } catch (error) { showAlert(error.message); }
-    };
-
-    const deleteReview = async (reviewId) => {
-        if (!confirm('Anda yakin ingin menghapus ulasan ini?')) return;
-        try {
-            const response = await fetch(`/api/reviews/${reviewId}`, { method: 'DELETE', headers: getHeaders(false) });
-            if (!response.ok) throw new Error('Gagal menghapus ulasan.');
-            showAlert('Ulasan berhasil dihapus.', 'success');
-            fetchReviews();
-        } catch (error) { showAlert(error.message); }
     };
 
     // --- FUNGSI-FUNGSI MODAL (POP-UP) ---
@@ -266,33 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- EVENT LISTENER UTAMA (EVENT DELEGATION) ---
-    // Listener untuk tombol Reset Transaksi (FITUR BARU)
-resetTransactionsButton.addEventListener('click', async () => {
-    // Tampilkan konfirmasi yang sangat jelas karena ini tindakan berbahaya
-    const confirmation = prompt('PERINGATAN: Tindakan ini akan menghapus SEMUA catatan transaksi secara permanen dan mengatur ulang total transaksi menjadi Rp 0. Ini tidak dapat diurungkan. Ketik "RESET" untuk melanjutkan.');
-
-    if (confirmation === 'RESET') {
-        try {
-            const response = await fetch('/api/transactions/reset', {
-                method: 'DELETE',
-                headers: getHeaders(false)
-            });
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.msg || 'Gagal mereset transaksi.');
-
-            // Jika berhasil, tampilkan notifikasi sukses dan refresh data dashboard
-            showAlert('Semua transaksi berhasil direset.', 'success');
-            fetchDashboardStats(); // Panggil fungsi ini untuk update tampilan menjadi Rp 0
-
-        } catch (error) {
-            showAlert(error.message);
-        }
-    } else {
-        showAlert('Reset dibatalkan.', 'info');
-    }
-});
-    
-    document.body.addEventListener('click', (e) => {
+    document.body.addEventListener('click', async (e) => {
         const button = e.target.closest('button');
         if (!button) return;
 
@@ -300,38 +227,50 @@ resetTransactionsButton.addEventListener('click', async () => {
         if (userRow) {
             const userId = userRow.dataset.userId;
             const user = cachedUsers.find(u => u._id === userId);
-            if (button.classList.contains('confirm-payment-btn')) return handleConfirmPayment(userId);
-            if (button.classList.contains('delete-user-btn')) return deleteUser(userId);
+            
+            if (button.classList.contains('confirm-payment-btn')) {
+                if (!confirm('Anda yakin ingin mengonfirmasi pembayaran untuk pengguna ini?')) return;
+                try {
+                    const response = await fetch(`/api/confirm-payment/${userId}`, { method: 'POST', headers: getHeaders(false) });
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.msg || 'Gagal konfirmasi.');
+                    showAlert(`Pembayaran untuk ${result.user.username} berhasil dikonfirmasi.`, 'success');
+                    fetchUsers(); fetchDashboardStats();
+                } catch (error) { showAlert(error.message); }
+            }
+            if (button.classList.contains('delete-user-btn')) {
+                if (!confirm('Anda yakin ingin menghapus pengguna ini? Tindakan ini tidak dapat dibatalkan.')) return;
+                try {
+                    await fetch(`/api/users/${userId}`, { method: 'DELETE', headers: getHeaders(false) });
+                    showAlert('Pengguna berhasil dihapus.', 'success');
+                    fetchUsers(); fetchDashboardStats();
+                } catch (error) { showAlert(error.message); }
+            }
             if (user) {
-                if (button.classList.contains('edit-user-btn')) return openEditModal(user);
-                if (button.classList.contains('view-barcode-btn')) return openBarcodeModal(user);
-                if (button.classList.contains('set-package-btn')) return openSetPackageModal(user);
-                if (button.classList.contains('reset-password-btn')) return openResetPasswordModal(user);
+                if (button.classList.contains('edit-user-btn')) openEditModal(user);
+                if (button.classList.contains('view-barcode-btn')) openBarcodeModal(user);
+                if (button.classList.contains('set-package-btn')) openSetPackageModal(user);
+                if (button.classList.contains('reset-password-btn')) openResetPasswordModal(user);
             }
         }
 
-       // Aksi untuk tabel ulasan
-    const reviewRow = button.closest('tr[data-review-id]');
-    if (reviewRow) {
-        const reviewId = reviewRow.dataset.reviewId;
-
-        // Logika untuk tombol hapus ulasan
-        if (button.classList.contains('delete-review-btn')) {
-            return deleteReview(reviewId);
-        }
-        
-        // --- LANJUTAN KODE ANDA DI SINI ---
-        // Logika untuk tombol edit ulasan
-        if (button.classList.contains('edit-review-btn')) {
-            // Cari data ulasan lengkap dari cache berdasarkan ID
+        const reviewRow = button.closest('tr[data-review-id]');
+        if (reviewRow) {
+            const reviewId = reviewRow.dataset.reviewId;
             const review = cachedReviews.find(r => r._id === reviewId);
-            if (review) {
-                // Jika ditemukan, panggil fungsi untuk membuka modal edit
-                return openEditReviewModal(review);
+            if (button.classList.contains('delete-review-btn')) {
+                if (!confirm('Anda yakin ingin menghapus ulasan ini?')) return;
+                try {
+                    await fetch(`/api/reviews/${reviewId}`, { method: 'DELETE', headers: getHeaders(false) });
+                    showAlert('Ulasan berhasil dihapus.', 'success');
+                    fetchReviews();
+                } catch (error) { showAlert(error.message); }
+            }
+            if (button.classList.contains('edit-review-btn') && review) {
+                openEditReviewModal(review);
             }
         }
-    }
-});
+    });
 
     // --- EVENT LISTENER UNTUK FORM SUBMISSIONS ---
     document.getElementById('add-user-form').addEventListener('submit', async (e) => {
@@ -349,38 +288,27 @@ resetTransactionsButton.addEventListener('click', async () => {
             if (!response.ok) throw new Error(result.msg || 'Gagal menambah user.');
             showAlert('Pengguna baru berhasil ditambahkan.', 'success');
             addUserModal.hide();
-            fetchUsers();
-            fetchDashboardStats();
+            fetchUsers(); fetchDashboardStats();
         } catch (error) { showAlert(error.message); }
     });
 
     document.getElementById('edit-user-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const userId = document.getElementById('edit-user-id').value;
-    const userData = {
-        username: document.getElementById('edit-username').value,
-        email: document.getElementById('edit-email').value,
-        phone: document.getElementById('edit-phone').value, // Pastikan 'phone' ada di sini
-        role: document.getElementById('edit-role').value,
-    };
-    try {
-        const response = await fetch(`/api/users/${userId}`, { 
-            method: 'PUT', 
-            headers: getHeaders(), 
-            body: JSON.stringify(userData) 
-        });
-        if (!response.ok) throw new Error('Gagal mengupdate user.');
-        
-        showAlert('Data pengguna berhasil diperbarui.', 'success');
-        editUserModal.hide();
-        
-        // Baris ini akan memuat ulang data tabel secara otomatis
-        fetchUsers(); 
-        
-    } catch (error) { 
-        showAlert(error.message); 
-    }
-});
+        e.preventDefault();
+        const userId = document.getElementById('edit-user-id').value;
+        const userData = {
+            username: document.getElementById('edit-username').value,
+            email: document.getElementById('edit-email').value,
+            phone: document.getElementById('edit-phone').value,
+            role: document.getElementById('edit-role').value,
+        };
+        try {
+            const response = await fetch(`/api/users/${userId}`, { method: 'PUT', headers: getHeaders(), body: JSON.stringify(userData) });
+            if (!response.ok) throw new Error('Gagal mengupdate user.');
+            showAlert('Data pengguna berhasil diperbarui.', 'success');
+            editUserModal.hide();
+            fetchUsers();
+        } catch (error) { showAlert(error.message); }
+    });
 
     document.getElementById('reset-password-form').addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -430,6 +358,16 @@ resetTransactionsButton.addEventListener('click', async () => {
         } catch (error) { showAlert(error.message); }
     });
 
+    resetTransactionsButton.addEventListener('click', async () => {
+        if (prompt('PERINGATAN: Ketik "RESET" untuk menghapus semua transaksi.') === 'RESET') {
+            try {
+                await fetch('/api/transactions/reset', { method: 'DELETE', headers: getHeaders(false) });
+                showAlert('Semua transaksi berhasil direset.', 'success');
+                fetchDashboardStats();
+            } catch (error) { showAlert(error.message); }
+        } else { showAlert('Reset dibatalkan.', 'info'); }
+    });
+
     downloadButton.addEventListener('click', async () => {
         downloadButton.disabled = true;
         downloadButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Mengunduh...';
@@ -446,9 +384,8 @@ resetTransactionsButton.addEventListener('click', async () => {
             a.click();
             window.URL.revokeObjectURL(url);
             a.remove();
-        } catch (error) {
-            showAlert(error.message);
-        } finally {
+        } catch (error) { showAlert(error.message); } 
+        finally {
             downloadButton.disabled = false;
             downloadButton.innerHTML = '<i class="bi bi-download"></i> Download Data';
         }
@@ -464,5 +401,5 @@ resetTransactionsButton.addEventListener('click', async () => {
     fetchDashboardStats();
     fetchUsers();
     fetchReviews();
-    fetchRevenueTrend(); 
+    fetchRevenueTrend();
 });
