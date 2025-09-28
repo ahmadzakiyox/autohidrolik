@@ -40,8 +40,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Simpan token dan role pengguna ke Local Storage browser
             // Ini penting untuk autentikasi di halaman lain (seperti admin dashboard)
-            if (data.token) localStorage.setItem('token', data.token);
-            if (data.user && data.user.role) localStorage.setItem('userRole', data.user.role);
+            if (data.token) {
+                localStorage.setItem('token', data.token);
+            }
+            if (data.user && data.user.role) {
+                localStorage.setItem('userRole', data.user.role);
+            }
             
             // Beri jeda sejenak lalu arahkan pengguna ke halaman yang sesuai
             setTimeout(() => {
