@@ -56,22 +56,17 @@ mongoose.connect(process.env.MONGO_URI, {})
 // --- GANTI SELURUH BLOK INI ---
 const auth = (req, res, next) => {
     const token = req.header('x-auth-token');
-    if (!token) {
-        return res.status(401).json({ msg: 'Tidak ada token, otorisasi ditolak' });
-    }
+    if (!token) return res.status(401).json({ msg: 'Tidak ada token, otorisasi ditolak' });
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'rahasia-banget-jangan-disebar');
-        
-        // --- INI PERBAIKANNYA ---
-        // Simpan seluruh payload yang sudah di-decode, bukan decoded.user
-        req.user = decoded; 
-        // -------------------------
-
+        // Membaca dari environment variable yang diatur di hosting
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        req.user = decoded;
         next();
     } catch (e) {
         res.status(400).json({ msg: 'Token tidak valid' });
     }
 };
+
 const adminAuth = async (req, res, next) => {
     try {
         const user = await User.findById(req.user.id);
@@ -275,50 +270,62 @@ app.get('/api/dashboard-stats', auth, adminAuth, async (req, res) => {
 // --- RUTE LOGIN (DIPERBAIKI) ---
 app.post('/api/login', async (req, res) => {
     try {
+        // 1. Ambil 'identifier' (email/nomor hp) dan password dari body request
         const { identifier, password } = req.body;
 
+        // 2. Validasi input dasar
         if (!identifier || !password) {
             return res.status(400).json({ msg: 'Silakan isi semua kolom.' });
         }
 
+        // 3. Cari pengguna di database berdasarkan email ATAU nomor hp
         const user = await User.findOne({
             $or: [{ email: identifier }, { phone: identifier }]
         });
 
+        // 4. Jika pengguna tidak ditemukan, kirim pesan error yang sama
         if (!user) {
             return res.status(400).json({ msg: 'Email/Nomor WhatsApp atau password salah.' });
         }
 
-        // --- PERUBAHAN UTAMA DI SINI ---
-        // Gunakan bcrypt.compare untuk membandingkan password
+        // 5. Verifikasi password yang dienkripsi
+        // Bandingkan password yang dikirim pengguna dengan hash yang ada di database
         const isMatch = await bcrypt.compare(password, user.password);
 
+        // Jika password tidak cocok, kirim pesan error yang sama
         if (!isMatch) {
-            // Jika tidak cocok, kirim error
             return res.status(400).json({ msg: 'Email/Nomor WhatsApp atau password salah.' });
         }
-        // --- AKHIR PERUBAHAN ---
 
-        // Jika password cocok, lanjutkan membuat token
+        // 6. Jika semua verifikasi berhasil, buat payload untuk token
+        const payload = {
+            id: user._id,
+            role: user.role,
+            username: user.username
+        };
+        
+        // 7. Buat token JWT
         const token = jwt.sign(
-            { id: user._id, role: user.role, username: user.username },
-            'secretKey', // Ganti 'secretKey' dengan secret key Anda yang sebenarnya
-            { expiresIn: '1h' } // Token berlaku selama 1 jam
+            payload,
+            process.env.JWT_SECRET || 'your_super_secret_key', // Gunakan secret key dari .env
+            { expiresIn: '1h' } // Token akan kedaluwarsa dalam 1 jam
         );
         
+        // 8. Kirim respons sukses beserta token dan data pengguna
         res.json({
             msg: 'Login berhasil!',
-            token, // Kirim token ke client
+            token, // Token ini akan disimpan oleh frontend
             user: { 
                 id: user._id, 
                 username: user.username,
-                role: user.role
+                role: user.role // Kirim role agar frontend tahu harus mengarahkan ke mana
             }
         });
 
     } catch (error) {
+        // Tangani jika ada error tak terduga di server
         console.error("Error di /api/login:", error);
-        res.status(500).json({ msg: 'Server error.' });
+        res.status(500).json({ msg: 'Terjadi kesalahan pada server.' });
     }
 });
 
