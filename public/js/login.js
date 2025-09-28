@@ -1,4 +1,4 @@
-// File: /js/login.js (Direvisi)
+// File: /js/login.js (Tanpa API_URL)
 
 document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('login-form');
@@ -9,20 +9,19 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         
         loginButton.disabled = true;
-        loginButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
+        loginButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Loading...';
         loginMessage.innerHTML = '';
 
-        // PERUBAHAN DI SINI: Mengambil nilai dari input 'identifier'
         const identifier = document.getElementById('identifier').value;
         const password = document.getElementById('password').value;
 
         try {
-            const response = await fetch(`${API_URL}/api/login`, {
+            // PERUBAHAN DI SINI: Langsung menggunakan path relatif
+            const response = await fetch('/api/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                // PERUBAHAN DI SINI: Mengirim 'identifier' ke backend
                 body: JSON.stringify({ identifier, password })
             });
 
@@ -34,7 +33,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             loginMessage.innerHTML = `<div class="alert alert-success"><strong>Login Berhasil!</strong> Mengarahkan...</div>`;
 
-            // Simpan token dan role (jika ada) ke Local Storage
             if (data.token) localStorage.setItem('token', data.token);
             if (data.user && data.user.role) localStorage.setItem('userRole', data.user.role);
             
@@ -42,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (data.user && data.user.role === 'admin') {
                     window.location.href = '/admin.html';
                 } else {
-                    window.location.href = '/profile.html'; // atau halaman dashboard user
+                    window.location.href = '/profile.html';
                 }
             }, 1500);
 
