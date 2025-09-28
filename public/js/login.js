@@ -1,3 +1,5 @@
+// File: /js/login.js (Direvisi)
+
 document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('login-form');
     const loginMessage = document.getElementById('login-message');
@@ -10,75 +12,44 @@ document.addEventListener('DOMContentLoaded', () => {
         loginButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
         loginMessage.innerHTML = '';
 
-        const email = document.getElementById('email').value;
+        // PERUBAHAN DI SINI: Mengambil nilai dari input 'identifier'
+        const identifier = document.getElementById('identifier').value;
         const password = document.getElementById('password').value;
 
         try {
-            const response = await fetch(`/api/login`, {
+            const response = await fetch(`${API_URL}/api/login`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                // PERUBAHAN DI SINI: Mengirim 'identifier' ke backend
+                body: JSON.stringify({ identifier, password })
             });
 
             const data = await response.json();
 
             if (!response.ok) {
-                // Cek flag 'notVerified' dari server
-                if (data.notVerified) {
-                    alert(data.msg); // Beri tahu user bahwa akun belum aktif
-                    // Arahkan ke halaman verifikasi
-                    window.location.href = `/verify.html?email=${encodeURIComponent(data.email)}`;
-                } else {
-                    throw new Error(data.msg || 'Login gagal!');
-                }
-                // Hentikan proses lebih lanjut jika ada error
-                loginButton.disabled = false;
-                loginButton.innerHTML = 'Login';
-                return;
+                throw new Error(data.msg || 'Login gagal!');
             }
 
-            loginMessage.innerHTML = `
-                <div class="alert alert-success">
-                    <strong>Login Berhasil!</strong> Mengarahkan Anda ke halaman...
-                </div>
-            `;
+            loginMessage.innerHTML = `<div class="alert alert-success"><strong>Login Berhasil!</strong> Mengarahkan...</div>`;
 
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('userRole', data.user.role);
+            // Simpan token dan role (jika ada) ke Local Storage
+            if (data.token) localStorage.setItem('token', data.token);
+            if (data.user && data.user.role) localStorage.setItem('userRole', data.user.role);
             
             setTimeout(() => {
-                if (data.user.role === 'admin') {
+                if (data.user && data.user.role === 'admin') {
                     window.location.href = '/admin.html';
                 } else {
-                    window.location.href = '/profile.html';
+                    window.location.href = '/profile.html'; // atau halaman dashboard user
                 }
             }, 1500);
 
         } catch (error) {
-            loginMessage.innerHTML = `
-                <div class="alert alert-danger">
-                    <strong>Error!</strong> ${error.message}
-                </div>
-            `;
-            
+            loginMessage.innerHTML = `<div class="alert alert-danger"><strong>Error!</strong> ${error.message}</div>`;
             loginButton.disabled = false;
             loginButton.innerHTML = 'Login';
         }
     });
-
-    // --- LOGIKA UNTUK INTIP SANDI ---
-    const togglePassword = document.getElementById('toggle-password');
-    const passwordInput = document.getElementById('password');
-
-    if (togglePassword && passwordInput) {
-        togglePassword.addEventListener('click', function () {
-            // Toggle tipe input
-            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-            passwordInput.setAttribute('type', type);
-            
-            // Toggle ikon mata
-            this.classList.toggle('bi-eye-slash-fill');
-            this.classList.toggle('bi-eye-fill');
-        });
-    }
 });
