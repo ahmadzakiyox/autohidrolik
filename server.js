@@ -124,65 +124,58 @@ app.delete('/api/transactions/reset', auth, adminAuth, async (req, res) => {
 });
 
 app.post('/api/register', async (req, res) => {
-    // 1. Ambil data dari body request
-    const { username, email, phone, password } = req.body;
-
     try {
-        // 2. Validasi Input Wajib (Email tidak termasuk)
+        const { username, email, phone, password } = req.body;
+
+        // 1. Validasi Input Wajib
         if (!username || !phone || !password) {
             return res.status(400).json({ msg: 'Username, Nomor WhatsApp, dan Password wajib diisi.' });
         }
 
-        // 3. (REVISI) Validasi Format Input
-        // Memeriksa panjang password
+        // 2. Validasi Format
         if (password.length < 6) {
             return res.status(400).json({ msg: 'Password minimal harus 6 karakter.' });
         }
-        // Memeriksa format email jika diisi
         if (email && !/\S+@\S+\.\S+$/.test(email)) {
             return res.status(400).json({ msg: 'Format email tidak valid.' });
         }
 
-        // 4. (REVISI) Pengecekan Duplikasi yang Lebih Efisien
-        // Buat kondisi pencarian awal untuk field yang unik dan wajib
-        const queryConditions = [
-            { username: username },
-            { phone: phone }
-        ];
-
-        // Jika email diisi, tambahkan ke kondisi pencarian
+        // 3. Pengecekan Duplikasi
+        const queryConditions = [{ username }, { phone }];
         if (email) {
             queryConditions.push({ email: email.toLowerCase() });
         }
         
-        // Lakukan satu kali pencarian ke database
         const existingUser = await User.findOne({ $or: queryConditions });
 
-        // Jika ada user yang ditemukan, berikan pesan error yang spesifik
         if (existingUser) {
-            if (existingUser.username === username) {
-                return res.status(400).json({ msg: 'Username sudah terdaftar.' });
-            }
-            if (existingUser.phone === phone) {
-                return res.status(400).json({ msg: 'Nomor WhatsApp sudah terdaftar.' });
-            }
-            if (email && existingUser.email === email.toLowerCase()) {
-                return res.status(400).json({ msg: 'Email sudah terdaftar.' });
-            }
+            if (existingUser.username === username) return res.status(400).json({ msg: 'Username sudah terdaftar.' });
+            if (existingUser.phone === phone) return res.status(400).json({ msg: 'Nomor WhatsApp sudah terdaftar.' });
+            if (email && existingUser.email === email.toLowerCase()) return res.status(400).json({ msg: 'Email sudah terdaftar.' });
         }
 
-        // 5. Jika semua pengecekan lolos, lanjutkan proses
+        // 4. Proses Pembuatan User
         const hashedPassword = await bcrypt.hash(password, 10);
-        const memberId = await generateUniqueMemberId(); // Pastikan fungsi ini ada
+        const memberId = await generateUniqueMemberId();
 
-        const newUser = new User({
+        // --- PERUBAHAN UTAMA DI SINI ---
+        // Kita buat objek data user terlebih dahulu
+        const userData = {
             username,
-            email: email ? email.toLowerCase() : null, // Simpan null jika email kosong
             phone,
             password: hashedPassword,
-            isVerified: true, // Sesuai skema
+            isVerified: true,
             memberId: memberId
-        });
+        };
+
+        // Tambahkan email ke objek HANYA JIKA email diisi
+        if (email) {
+            userData.email = email.toLowerCase();
+        }
+
+        // Buat user baru dari objek data yang sudah disiapkan
+        const newUser = new User(userData);
+        // --- AKHIR PERUBAHAN ---
         
         await newUser.save();
         
@@ -190,7 +183,6 @@ app.post('/api/register', async (req, res) => {
 
     } catch (error) {
         console.error("Error di /api/register:", error);
-        // Penanganan error duplikasi jika terjadi race condition
         if (error.code === 11000) {
             return res.status(400).json({ msg: 'Username, email, atau nomor HP ini baru saja didaftarkan.' });
         }
