@@ -13,23 +13,23 @@ const MembershipSchema = new Schema({
 // Skema Utama Pengguna (Direvisi)
 const UserSchema = new Schema({
     memberId: { type: String, unique: true, sparse: true },
-    username: { type: String, required: true, trim: true },
+    username: { type: String, required: true, trim: true, unique: true },
     
-    // Email dibuat menjadi opsional
+    // Email dibuat menjadi opsional namun tetap unik jika diisi
     email: { 
         type: String, 
         unique: true, 
         lowercase: true, 
         trim: true,
-        // sparse:true penting agar validasi unique hanya berlaku jika email diisi
+        // sparse:true penting agar validasi unik hanya berlaku jika email diisi
         sparse: true 
     },
     
     // Nomor HP dibuat menjadi wajib dan unik
     phone: { 
         type: String, 
-        required: true, 
-        unique: true, // Nomor HP harus unik
+        required: [true, 'Nomor WhatsApp wajib diisi.'], 
+        unique: true, 
         trim: true 
     },
 
@@ -44,5 +44,9 @@ const UserSchema = new Schema({
     // Menggantikan field 'date' manual dengan timestamp otomatis
     timestamps: true 
 });
+
+// Anda bisa menambahkan enkripsi password di sini jika diperlukan
+// UserSchema.pre('save', ...);
+// UserSchema.methods.comparePassword = ...;
 
 module.exports = mongoose.model('User', UserSchema);
