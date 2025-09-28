@@ -1,60 +1,48 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-// Skema untuk Keanggotaan
+// Skema untuk Keanggotaan (Tidak Berubah)
 const MembershipSchema = new Schema({
-    packageName: {
-        type: String,
-        required: true
-    },
-    totalWashes: {
-        type: Number,
-        required: true
-    },
-    remainingWashes: {
-        type: Number,
-        required: true
-    },
-    purchaseDate: {
-        type: Date,
-        default: Date.now
-    },
-    isPaid: {
-        type: Boolean,
-        default: false 
-    },
-
-       // --- PENAMBAHAN BARU UNTUK MASA AKTIF ---
-    expiresAt: {
-        type: Date,
-        required: true
-    }   
+    packageName: { type: String, required: true },
+    totalWashes: { type: Number, required: true },
+    remainingWashes: { type: Number, required: true },
+    purchaseDate: { type: Date, default: Date.now },
+    isPaid: { type: Boolean, default: false }
 });
 
-// Skema Utama Pengguna
+// Skema Utama Pengguna (Direvisi)
 const UserSchema = new Schema({
-    memberId: { 
+    memberId: { type: String, unique: true, sparse: true },
+    username: { type: String, required: true, trim: true },
+    
+    // Email dibuat menjadi opsional
+    email: { 
         type: String, 
         unique: true, 
-        sparse: true
+        lowercase: true, 
+        trim: true,
+        // sparse:true penting agar validasi unique hanya berlaku jika email diisi
+        sparse: true 
     },
-    username: { type: String, required: true, trim: true },
-    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+    
+    // Nomor HP dibuat menjadi wajib dan unik
+    phone: { 
+        type: String, 
+        required: true, 
+        unique: true, // Nomor HP harus unik
+        trim: true 
+    },
+
     password: { type: String, required: true },
-    phone: { type: String, required: true, trim: true },
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
     isVerified: { type: Boolean, default: true },
-    
-    // DIHAPUS: Field berikut tidak diperlukan lagi untuk verifikasi langsung
-    // otp: { type: String },
-    // otpExpires: { type: Date },
-
     membership: {
-        type: Object, // Atau gunakan skema membership jika ada
-        default: null 
-    },
-    date: { type: Date, default: Date.now }
+        type: MembershipSchema,
+        default: null
+    }
+}, {
+    // Menggantikan field 'date' manual dengan timestamp otomatis
+    timestamps: true 
 });
-
 
 module.exports = mongoose.model('User', UserSchema);
