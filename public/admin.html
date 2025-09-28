@@ -44,7 +44,6 @@
         <div class="container">
             <a class="navbar-brand fw-bold" href="/">AUTOHIDROLIK ADMIN</a>
             <div class="ms-auto d-flex align-items-center">
-                <!-- TAUTAN SCANNER DIPERBAIKI -->
                 <a href="/Scanner-QRCODE" class="btn btn-scanner me-3"><i class="bi bi-qr-code-scan"></i> Buka Scanner</a>
                 <button id="logout-button" class="btn btn-outline-danger"><i class="bi bi-box-arrow-right"></i> Logout</button>
             </div>
@@ -52,7 +51,6 @@
     </nav>
 
     <main class="container my-5">
-        <!-- Kartu Statistik -->
         <div class="row mb-4">
             <div class="col-md-4 mb-3">
                 <div class="card p-3">
@@ -88,7 +86,7 @@
                 </div>
             </div>
         </div>
-  <!-- GRAFIK PENDAPATAN DITAMBAHKAN KEMBALI -->
+        
         <div class="row mb-5">
             <div class="col-12">
                 <div class="card shadow-sm">
@@ -100,8 +98,8 @@
             </div>
         </div>
         
-        <!-- DIV YANG SALAH PENEMPATANNYA SUDAH DIHAPUS -->
         <div id="alert-placeholder" class="mb-4"></div>
+
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1>Manajemen Pengguna</h1>
             <div>
@@ -117,7 +115,6 @@
             </div>
         </div>
 
-     <!-- Tabel Data Member -->
         <h3 class="mt-5 mb-3">Data Member</h3>
         <div class="card shadow-sm mb-5">
             <div class="card-body">
@@ -140,7 +137,6 @@
             </div>
         </div>
 
-        <!-- Tabel Data Non-Member -->
         <h3 class="mt-5 mb-3">Data Pengguna (Non-Member)</h3>
         <div class="card shadow-sm mb-5">
             <div class="card-body">
@@ -181,7 +177,6 @@
         </div>
     </main>
     
-    <!-- Semua Modal di sini tidak berubah -->
     <div class="modal fade" id="addUserModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -219,13 +214,8 @@
     <div class="modal fade" id="viewBarcodeModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Kode Member untuk <span id="barcode-username"></span></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body text-center">
-                    <div id="barcode-container"></div>
-                </div>
+                <div class="modal-header"><h5 class="modal-title">Kode Member untuk <span id="barcode-username"></span></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body text-center"><div id="barcode-container"></div></div>
             </div>
         </div>
     </div>
@@ -260,20 +250,8 @@
                 <div class="modal-body">
                     <form id="edit-review-form">
                         <input type="hidden" id="edit-review-id">
-                        <div class="mb-3">
-                            <label for="edit-rating" class="form-label">Rating</label>
-                            <select id="edit-rating" class="form-select" required>
-                                <option value="5">★★★★★</option>
-                                <option value="4">★★★★☆</option>
-                                <option value="3">★★★☆☆</option>
-                                <option value="2">★★☆☆☆</option>
-                                <option value="1">★☆☆☆☆</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="edit-comment" class="form-label">Ulasan</label>
-                            <textarea id="edit-comment" class="form-control" rows="4" required></textarea>
-                        </div>
+                        <div class="mb-3"><label for="edit-rating" class="form-label">Rating</label><select id="edit-rating" class="form-select" required><option value="5">★★★★★</option><option value="4">★★★★☆</option><option value="3">★★★☆☆</option><option value="2">★★☆☆☆</option><option value="1">★☆☆☆☆</option></select></div>
+                        <div class="mb-3"><label for="edit-comment" class="form-label">Ulasan</label><textarea id="edit-comment" class="form-control" rows="4" required></textarea></div>
                         <button type="submit" class="btn btn-primary w-100">Update Ulasan</button>
                     </form>
                 </div>
@@ -283,17 +261,11 @@
     <div class="modal fade" id="resetPasswordModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Reset Sandi untuk <span id="reset-password-username"></span></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
+                <div class="modal-header"><h5 class="modal-title">Reset Sandi untuk <span id="reset-password-username"></span></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
                 <div class="modal-body">
                     <form id="reset-password-form">
                         <input type="hidden" id="reset-password-userid">
-                        <div class="mb-3">
-                            <label for="new-password-admin" class="form-label">Masukkan Sandi Baru</label>
-                            <input type="password" class="form-control" id="new-password-admin" required>
-                        </div>
+                        <div class="mb-3"><label for="new-password-admin" class="form-label">Masukkan Sandi Baru</label><input type="password" class="form-control" id="new-password-admin" required></div>
                         <button type="submit" class="btn btn-primary w-100">Simpan Sandi Baru</button>
                     </form>
                 </div>
@@ -303,9 +275,7 @@
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/davidshimjs-qrcodejs@0.0.2/qrcode.min.js"></script>
-    <!-- SCRIPT CHART.JS DITAMBAHKAN KEMBALI -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="/js/admin.js"></script>
 </body>
 </html>
-
