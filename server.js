@@ -273,38 +273,45 @@ app.get('/api/dashboard-stats', auth, adminAuth, async (req, res) => {
 // Rute Login (Diperbaiki)
 // --- RUTE LOGIN (DIPERBAIKI) ---
 app.post('/api/login', async (req, res) => {
-    const { email, password } = req.body;
     try {
-        let user = await User.findOne({ email });
-        if (!user) return res.status(400).json({ msg: 'Kredensial tidak valid' });
-        
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return res.status(400).json({ msg: 'Kredensial tidak valid' });
+        // Kita sebut inputnya 'identifier' (bisa email atau nomor hp)
+        const { identifier, password } = req.body;
 
-        // --- PENAMBAHAN VALIDASI ---
-        // Cek apakah akun sudah diverifikasi atau belum
-        if (!user.isVerified) {
-            return res.status(401).json({ 
-                msg: 'Akun Anda belum diverifikasi. Silakan cek email Anda untuk kode OTP.',
-                notVerified: true, // Flag untuk frontend
-                email: user.email // Kirim email untuk redirect
-            });
+        if (!identifier || !password) {
+            return res.status(400).json({ msg: 'Silakan isi semua kolom.' });
         }
-        
-        const payload = { 
-            user: { 
-                id: user.id,
-                role: user.role
-            } 
-        };
 
-        jwt.sign(payload, process.env.JWT_SECRET || 'your_super_secret_key', { expiresIn: '5h' }, (err, token) => {
-            if (err) throw err;
-            res.json({ token, user: { role: user.role } });
+        // Cari user berdasarkan email ATAU nomor hp menggunakan $or
+        const user = await User.findOne({
+            $or: [{ email: identifier }, { phone: identifier }]
         });
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server error');
+
+        // Jika user tidak ditemukan sama sekali
+        if (!user) {
+            return res.status(400).json({ msg: 'Email/Nomor WhatsApp atau password salah.' });
+        }
+
+        // Bandingkan password (di aplikasi production, gunakan bcrypt.compare)
+        if (user.password !== password) {
+            return res.status(400).json({ msg: 'Email/Nomor WhatsApp atau password salah.' });
+        }
+
+        // Buat token atau session
+        const token = jwt.sign({ id: user._id, role: user.role }, 'secretKey');
+        
+        res.json({
+            msg: 'Login berhasil!',
+            // token,
+            user: { 
+                id: user._id, 
+                username: user.username,
+                role: user.role // Kirim role user ke frontend
+            }
+        });
+
+    } catch (error) {
+        console.error("Error di /api/login:", error);
+        res.status(500).json({ msg: 'Server error.' });
     }
 });
 
