@@ -51,18 +51,27 @@ mongoose.connect(process.env.MONGO_URI, {})
   .catch(err => console.log('Koneksi MongoDB gagal:', err));
 
 // --- Middleware Otentikasi ---
+// Di dalam file server.js
+
+// --- GANTI SELURUH BLOK INI ---
 const auth = (req, res, next) => {
     const token = req.header('x-auth-token');
-    if (!token) return res.status(401).json({ msg: 'Tidak ada token, otorisasi ditolak' });
+    if (!token) {
+        return res.status(401).json({ msg: 'Tidak ada token, otorisasi ditolak' });
+    }
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_super_secret_key');
-        req.user = decoded.user;
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'rahasia-banget-jangan-disebar');
+        
+        // --- INI PERBAIKANNYA ---
+        // Simpan seluruh payload yang sudah di-decode, bukan decoded.user
+        req.user = decoded; 
+        // -------------------------
+
         next();
     } catch (e) {
         res.status(400).json({ msg: 'Token tidak valid' });
     }
 };
-
 const adminAuth = async (req, res, next) => {
     try {
         const user = await User.findById(req.user.id);
