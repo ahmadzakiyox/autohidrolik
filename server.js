@@ -266,38 +266,44 @@ app.get('/api/dashboard-stats', auth, adminAuth, async (req, res) => {
 // --- RUTE LOGIN (DIPERBAIKI) ---
 app.post('/api/login', async (req, res) => {
     try {
-        // Kita sebut inputnya 'identifier' (bisa email atau nomor hp)
         const { identifier, password } = req.body;
 
         if (!identifier || !password) {
             return res.status(400).json({ msg: 'Silakan isi semua kolom.' });
         }
 
-        // Cari user berdasarkan email ATAU nomor hp menggunakan $or
         const user = await User.findOne({
             $or: [{ email: identifier }, { phone: identifier }]
         });
 
-        // Jika user tidak ditemukan sama sekali
         if (!user) {
             return res.status(400).json({ msg: 'Email/Nomor WhatsApp atau password salah.' });
         }
 
-        // Bandingkan password (di aplikasi production, gunakan bcrypt.compare)
-        if (user.password !== password) {
+        // --- PERUBAHAN UTAMA DI SINI ---
+        // Gunakan bcrypt.compare untuk membandingkan password
+        const isMatch = await bcrypt.compare(password, user.password);
+
+        if (!isMatch) {
+            // Jika tidak cocok, kirim error
             return res.status(400).json({ msg: 'Email/Nomor WhatsApp atau password salah.' });
         }
+        // --- AKHIR PERUBAHAN ---
 
-        // Buat token atau session
-        const token = jwt.sign({ id: user._id, role: user.role }, 'secretKey');
+        // Jika password cocok, lanjutkan membuat token
+        const token = jwt.sign(
+            { id: user._id, role: user.role, username: user.username },
+            'secretKey', // Ganti 'secretKey' dengan secret key Anda yang sebenarnya
+            { expiresIn: '1h' } // Token berlaku selama 1 jam
+        );
         
         res.json({
             msg: 'Login berhasil!',
-            // token,
+            token, // Kirim token ke client
             user: { 
                 id: user._id, 
                 username: user.username,
-                role: user.role // Kirim role user ke frontend
+                role: user.role
             }
         });
 
