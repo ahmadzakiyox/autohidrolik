@@ -1,101 +1,281 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - AUTOHIDROLIK</title>
-    <link rel="icon" type="image/png" href="/images/log.png">
+    <title>Admin Dashboard - AUTOHIDROLIK</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #0d1117;
-            --container-bg: #232f41;
-            --input-bg: #1c2128;
-            --border-color: #30363d;
-            --text-primary: #c9d1d9;
-            --text-secondary: #8b949e;
-            --purple-accent: #a27bff;
-            --purple-hover: #c4a7ff;
+            --bg-color: #f4f7f9;
+            --card-bg-color: #ffffff;
+            --border-color: #dee2e6;
+            --text-primary: #212529;
+            --purple-accent: #6f42c1;
         }
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-primary);
+        body { 
+            background-color: var(--bg-color); 
             font-family: 'Poppins', sans-serif;
         }
-        .login-container {
-            max-width: 450px;
-            margin: 5rem auto;
-            padding: 2.5rem;
-            background: var(--container-bg);
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
+        .card { 
+            background-color: var(--card-bg-color); 
+            border: 1px solid var(--border-color); 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
-        .form-control {
-            background-color: var(--input-bg);
-            border: 1px solid var(--border-color);
-            color: var(--text-primary);
-            padding-right: 40px; /* Beri ruang untuk ikon */
+        thead.table-light th { 
+            background-color: #e9ecef; 
         }
-        .form-control:focus {
-            background-color: var(--input-bg);
-            border-color: var(--purple-accent);
-            box-shadow: 0 0 0 0.25rem rgba(162, 123, 255, 0.25);
-            color: var(--text-primary);
-        }
-        .btn-custom {
+        .btn-primary {
             background-color: var(--purple-accent);
             border-color: var(--purple-accent);
-            color: #fff;
-            padding: 0.75rem;
-            font-weight: 500;
         }
-        a {
-            color: var(--purple-accent);
-            text-decoration: none;
-            font-weight: 500;
+        .btn-scanner {
+            background-color: #17a2b8;
+            border-color: #17a2b8;
+            color: white;
         }
-        /* CSS BARU UNTUK POSISI IKON */
-        .password-wrapper {
-            position: relative;
-        }
-        .toggle-password {
-            position: absolute;
-            top: 50%;
-            right: 15px;
-            transform: translateY(-50%);
-            cursor: pointer;
-            color: var(--text-secondary);
-        }
+        .rating-stars { color: #ffc107; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="login-container">
-            <h2 class="text-center mb-4">Selamat Datang Kembali</h2>
-            <form id="login-form">
-                <div class="mb-3">
-                    <label for="identifier" class="form-label">Email atau Nomor WhatsApp</label>
-                    <input type="text" class="form-control" id="identifier" required placeholder="Masukkan email atau nomor WA">
-                </div>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">AUTOHIDROLIK ADMIN</a>
+            <div class="ms-auto d-flex align-items-center">
+                <a href="/Scanner-QRCODE" class="btn btn-scanner me-3"><i class="bi bi-qr-code-scan"></i> Buka Scanner</a>
+                <button id="logout-button" class="btn btn-outline-danger"><i class="bi bi-box-arrow-right"></i> Logout</button>
+            </div>
+        </div>
+    </nav>
 
-                <div class="mb-3">
-                    <label for="password" class="form-label">Password</label>
-                    <div class="password-wrapper">
-                        <input type="password" class="form-control" id="password" required>
-                        <i class="bi bi-eye-slash toggle-password" id="togglePassword"></i>
+    <main class="container my-5">
+        <div class="row mb-4">
+            <div class="col-md-4 mb-3">
+                <div class="card p-3">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-people-fill fs-1 me-3" style="color: var(--purple-accent);"></i>
+                        <div>
+                            <h6 class="text-muted">Total Member Aktif</h6>
+                            <h2 class="fw-bold" id="member-count">0</h2>
+                        </div>
                     </div>
                 </div>
-                <div id="login-message" class="mb-3"></div>
-                <button type="submit" class="btn btn-custom w-100" id="login-button">Login</button>
-            </form>
-            <p class="mt-4 text-center">Belum punya akun? <a href="/register.html">Daftar di sini</a></p>
-            <p class="mt-3 text-center">
-                Lupa password? <a href="https://wa.me/6281234567890" target="_blank">Hubungi Admin</a>
-            </p>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card p-3">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-eye-fill fs-1 me-3" style="color: #17a2b8;"></i>
+                        <div>
+                            <h6 class="text-muted">Total Pengunjung Website</h6>
+                            <h2 class="fw-bold" id="visitor-count">0</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card p-3">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-cash-coin fs-1 me-3" style="color: #28a745;"></i>
+                        <div>
+                            <h6 class="text-muted">Total Transaksi Member</h6>
+                            <h2 class="fw-bold" id="transaction-total">Rp 0</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mb-5">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">Tren Pendapatan (7 Hari Terakhir)</h5>
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="alert-placeholder" class="mb-4"></div>
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Manajemen Pengguna</h1>
+            <div>
+                <button class="btn btn-danger" id="reset-transactions-btn">
+                    <i class="bi bi-arrow-counterclockwise"></i> Reset Transaksi
+                </button>
+                <button class="btn btn-success" id="download-data-btn">
+                    <i class="bi bi-download"></i> Download Data
+                </button>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                    <i class="bi bi-plus-circle"></i> Tambah User Baru
+                </button>
+            </div>
+        </div>
+
+        <h3 class="mt-5 mb-3">Data Member</h3>
+        <div class="card shadow-sm mb-5">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>No.</th>
+                                <th>Username</th>
+                                <th>Email</th>
+                                <th>No. WhatsApp</th>
+                                <th>Paket Member</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="member-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <h3 class="mt-5 mb-3">Data Pengguna (Non-Member)</h3>
+        <div class="card shadow-sm mb-5">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>No.</th>
+                                <th>Username</th>
+                                <th>Email</th>
+                                <th>No. WhatsApp</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="non-member-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <h1 class="mb-4">Manajemen Ulasan</h1>
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Username</th>
+                                <th>Rating</th>
+                                <th style="width: 50%;">Ulasan</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="review-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <div class="modal fade" id="addUserModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">Tambah Pengguna Baru</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <form id="add-user-form">
+                        <div class="mb-3"><label for="add-username" class="form-label">Username</label><input type="text" class="form-control" id="add-username" required></div>
+                        <div class="mb-3"><label for="add-email" class="form-label">Email</label><input type="email" class="form-control" id="add-email" required></div>
+                        <div class="mb-3"><label for="add-phone" class="form-label">No. WhatsApp</label><input type="tel" class="form-control" id="add-phone" required></div>
+                        <div class="mb-3"><label for="add-password" class="form-label">Password</label><input type="password" class="form-control" id="add-password" required></div>
+                        <div class="mb-3"><label for="add-role" class="form-label">Role</label><select class="form-select" id="add-role"><option value="user">User</option><option value="admin">Admin</option></select></div>
+                        <button type="submit" class="btn btn-primary w-100">Simpan</button>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
-    <script src="/js/login.js"></script>
+    <div class="modal fade" id="editUserModal" tabindex="-1">
+         <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">Edit Pengguna</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <form id="edit-user-form">
+                        <input type="hidden" id="edit-user-id">
+                        <div class="mb-3"><label for="edit-username" class="form-label">Username</label><input type="text" class="form-control" id="edit-username" required></div>
+                        <div class="mb-3"><label for="edit-email" class="form-label">Email</label><input type="email" class="form-control" id="edit-email" required></div>
+                        <div class="mb-3"><label for="edit-phone" class="form-label">No. WhatsApp</label><input type="tel" class="form-control" id="edit-phone" required></div>
+                        <div class="mb-3"><label for="edit-role" class="form-label">Role</label><select class="form-select" id="edit-role"><option value="user">User</option><option value="admin">Admin</option></select></div>
+                        <button type="submit" class="btn btn-primary w-100">Update</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="viewBarcodeModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">Kode Member untuk <span id="barcode-username"></span></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body text-center"><div id="barcode-container"></div></div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="setPackageModal" tabindex="-1">
+         <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">Atur Paket Member untuk <span id="package-username"></span></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <form id="set-package-form">
+                        <input type="hidden" id="set-package-userid">
+                        <div class="mb-3">
+                            <label for="package-name" class="form-label">Pilih Paket</label>
+                            <select id="package-name" class="form-select" required>
+                                <option value="" selected disabled>-- Pilih Paket --</option>
+                                <option value="Body Wash" data-washes="12">Body Wash (12x)</option>
+                                <option value="Cuci Mobil Hidrolik" data-washes="10">Cuci Mobil Hidrolik (10x)</option>
+                                <option value="Cuci Motor Besar" data-washes="10">Cuci Motor Besar (10x)</option>
+                                <option value="Cuci Motor Kecil" data-washes="12">Cuci Motor Kecil (12x)</option>
+                                <option value="Paket Kombinasi" data-washes="12">Paket Kombinasi (12x)</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Simpan Paket</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="editReviewModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">Edit Ulasan</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <form id="edit-review-form">
+                        <input type="hidden" id="edit-review-id">
+                        <div class="mb-3"><label for="edit-rating" class="form-label">Rating</label><select id="edit-rating" class="form-select" required><option value="5">★★★★★</option><option value="4">★★★★☆</option><option value="3">★★★☆☆</option><option value="2">★★☆☆☆</option><option value="1">★☆☆☆☆</option></select></div>
+                        <div class="mb-3"><label for="edit-comment" class="form-label">Ulasan</label><textarea id="edit-comment" class="form-control" rows="4" required></textarea></div>
+                        <button type="submit" class="btn btn-primary w-100">Update Ulasan</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="resetPasswordModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">Reset Sandi untuk <span id="reset-password-username"></span></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <form id="reset-password-form">
+                        <input type="hidden" id="reset-password-userid">
+                        <div class="mb-3"><label for="new-password-admin" class="form-label">Masukkan Sandi Baru</label><input type="password" class="form-control" id="new-password-admin" required></div>
+                        <button type="submit" class="btn btn-primary w-100">Simpan Sandi Baru</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/davidshimjs-qrcodejs@0.0.2/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/js/admin.js"></script>
 </body>
 </html>
