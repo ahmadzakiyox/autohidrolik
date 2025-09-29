@@ -329,6 +329,38 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
+// server.js
+
+// RUTE BARU: Admin mengupdate jatah cuci Paket Kombinasi
+app.put('/api/users/:id/update-combo-washes', auth, adminAuth, async (req, res) => {
+    const { bodywash, hidrolik } = req.body;
+
+    try {
+        const user = await User.findById(req.params.id);
+
+        // Validasi
+        if (!user) {
+            return res.status(404).json({ msg: 'User tidak ditemukan' });
+        }
+        if (!user.membership || user.membership.packageName !== 'Paket Kombinasi') {
+            return res.status(400).json({ msg: 'User ini tidak memiliki Paket Kombinasi aktif.' });
+        }
+
+        // Update jatah
+        user.membership.washes.bodywash = parseInt(bodywash, 10);
+        user.membership.washes.hidrolik = parseInt(hidrolik, 10);
+
+        user.markModified('membership'); // Penting untuk menyimpan sub-dokumen
+        await user.save();
+
+        res.json({ msg: `Jatah cuci untuk ${user.username} berhasil diperbarui.`, user });
+
+    } catch (error) {
+        console.error("Error di update-combo-washes:", error.message);
+        res.status(500).send('Server error');
+    }
+});
+
 // Rute Profil (GET)
 app.get('/api/profile', auth, async (req, res) => {
     try {
