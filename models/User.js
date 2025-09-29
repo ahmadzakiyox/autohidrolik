@@ -29,7 +29,12 @@ const MembershipSchema = new Schema({
     isPaid: {
         type: Boolean,
         default: false 
+    },
+        // --- TAMBAHKAN BARIS INI ---
+    expiresAt: {
+        type: Date
     }
+
 });
 
 // Skema Utama Pengguna
