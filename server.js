@@ -232,6 +232,42 @@ app.post('/api/verify-otp', async (req, res) => {
     }
 });
 
+app.post('/api/profile/change-password', auth, async (req, res) => {
+    const { currentPassword, newPassword } = req.body;
+    
+    try {
+        // 1. Validasi input
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ msg: 'Semua kolom wajib diisi.' });
+        }
+        if (newPassword.length < 6) {
+            return res.status(400).json({ msg: 'Password baru minimal harus 6 karakter.' });
+        }
+
+        // 2. Ambil data user dari database
+        const user = await User.findById(req.user.id);
+        if (!user) {
+            return res.status(404).json({ msg: 'User tidak ditemukan.' });
+        }
+
+        // 3. Verifikasi password saat ini
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ msg: 'Password saat ini salah.' });
+        }
+
+        // 4. Hash dan simpan password baru
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(newPassword, salt);
+        await user.save();
+
+        res.json({ msg: 'Password berhasil diperbarui.' });
+
+    } catch (error) {
+        console.error("Error di /api/profile/change-password:", error);
+        res.status(500).send('Server error');
+    }
+});
 
 // --- RUTE STATISTIK DASHBOARD (DIPERBARUI) ---
 app.get('/api/dashboard-stats', auth, adminAuth, async (req, res) => {
