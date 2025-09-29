@@ -114,5 +114,65 @@ document.addEventListener('DOMContentLoaded', () => {
         profileContent.classList.remove('d-none');
     };
 
+    // --- EVENT LISTENER BARU UNTUK FORM GANTI PASSWORD ---
+    const changePasswordForm = document.getElementById('change-password-form');
+    if (changePasswordForm) {
+        changePasswordForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const messageDiv = document.getElementById('password-message');
+            const submitButton = document.getElementById('change-password-button');
+            const currentPassword = document.getElementById('current-password').value;
+            const newPassword = document.getElementById('new-password').value;
+            const confirmNewPassword = document.getElementById('confirm-new-password').value;
+
+            // Reset pesan
+            messageDiv.innerHTML = '';
+            submitButton.disabled = true;
+            submitButton.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Menyimpan...`;
+
+            // Validasi di sisi klien
+            if (newPassword !== confirmNewPassword) {
+                messageDiv.innerHTML = `<div class="alert alert-danger">Konfirmasi password baru tidak cocok.</div>`;
+                submitButton.disabled = false;
+                submitButton.innerHTML = 'Simpan Perubahan';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/profile/change-password', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-auth-token': token
+                    },
+                    body: JSON.stringify({ currentPassword, newPassword })
+                });
+
+                const result = await response.json();
+                if (!response.ok) {
+                    throw new Error(result.msg || 'Gagal mengubah password.');
+                }
+
+                messageDiv.innerHTML = `<div class="alert alert-success">${result.msg}</div>`;
+                changePasswordForm.reset(); // Kosongkan form setelah berhasil
+
+                // Tutup modal setelah 2 detik
+                setTimeout(() => {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('changePasswordModal'));
+                    modal.hide();
+                    messageDiv.innerHTML = ''; // Bersihkan pesan lagi
+                }, 2000);
+
+
+            } catch (error) {
+                messageDiv.innerHTML = `<div class="alert alert-danger">${error.message}</div>`;
+            } finally {
+                submitButton.disabled = false;
+                submitButton.innerHTML = 'Simpan Perubahan';
+            }
+        });
+    }
+
     fetchProfileData();
 });
