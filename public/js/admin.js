@@ -439,6 +439,36 @@ const displayMembers = (members) => {
         }
     });
 
+    // Event listener untuk form koreksi transaksi
+document.getElementById('edit-transaction-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const amount = document.getElementById('transaction-amount').value;
+    const note = document.getElementById('transaction-note').value;
+
+    try {
+        const response = await fetch('/api/transactions/correction', {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ amount, note })
+        });
+
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.msg || 'Gagal menyimpan koreksi.');
+
+        showAlert('Transaksi koreksi berhasil disimpan.', 'success');
+        editTransactionModal.hide();
+        document.getElementById('edit-transaction-form').reset();
+
+        // Muat ulang statistik untuk menampilkan total yang baru
+        fetchDashboardStats();
+        // Muat ulang grafik pendapatan juga
+        fetchRevenueTrend();
+
+    } catch (error) {
+        showAlert(error.message);
+    }
+});
+
     document.getElementById('reset-password-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const userId = document.getElementById('reset-password-userid').value;
