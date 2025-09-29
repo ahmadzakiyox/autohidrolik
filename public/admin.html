@@ -199,6 +199,30 @@
             </div>
         </div>
     </div>
+    <div class="modal fade" id="editComboWashesModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Jatah Paket Kombinasi untuk <span id="edit-combo-username"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="edit-combo-washes-form">
+                    <input type="hidden" id="edit-combo-userid">
+                    <div class="mb-3">
+                        <label for="edit-bodywash-count" class="form-label">Jatah Body Wash</label>
+                        <input type="number" class="form-control" id="edit-bodywash-count" required min="0">
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-hidrolik-count" class="form-label">Jatah Hidrolik</label>
+                        <input type="number" class="form-control" id="edit-hidrolik-count" required min="0">
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Simpan Perubahan Jatah</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
     <div class="modal fade" id="editUserModal" tabindex="-1">
          <div class="modal-dialog">
             <div class="modal-content">
