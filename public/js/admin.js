@@ -168,8 +168,9 @@ const displayMembers = (members) => {
             <button class="btn btn-sm btn-outline-secondary reset-password-btn" title="Reset Sandi"><i class="bi bi-key-fill"></i></button>
             <button class="btn btn-sm btn-outline-success edit-user-btn" title="Edit"><i class="bi bi-pencil-square"></i></button>
             <button class="btn btn-sm btn-outline-danger delete-user-btn" title="Hapus"><i class="bi bi-trash3"></i></button>
-        `;
+            <button class="btn btn-sm btn-outline-info set-package-btn" title="Atur/Ganti Paket"><i class="bi bi-gem"></i></button>
 
+        `;
         // Tambahan untuk Paket Kombinasi
         if (user.membership.packageName === 'Paket Kombinasi') {
             actionButtons = `
