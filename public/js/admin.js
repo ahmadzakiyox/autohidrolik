@@ -50,7 +50,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return headers;
     };
 
-    // Fungsi fetch data yang sudah menyertakan token
     const fetchData = async (url) => {
         const response = await fetch(url, { headers: getHeaders(false) });
         if (!response.ok) {
@@ -67,7 +66,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- FUNGSI PENGAMBILAN & TAMPILAN DATA ---
     const loadAllData = async () => {
         try {
-            // Jalankan semua permintaan data secara paralel untuk efisiensi
             const [stats, users, reviews, trendData] = await Promise.all([
                 fetchData('/api/dashboard-stats'),
                 fetchData('/api/users'),
@@ -75,14 +73,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 fetchData('/api/revenue-trend')
             ]);
 
-            // Tampilkan Statistik
             if (stats) {
                 memberCountElement.textContent = stats.activeMembers;
                 visitorCountElement.textContent = stats.totalVisitors;
                 transactionTotalElement.textContent = `Rp ${stats.totalTransactions.toLocaleString('id-ID')}`;
             }
 
-            // Tampilkan Pengguna
             if (users) {
                 cachedUsers = users;
                 const members = users.filter(user => user.membership);
@@ -91,13 +87,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 displayTableData(nonMemberTableBody, nonMembers, renderNonMemberRow, 5, "Tidak ada pengguna non-member.");
             }
 
-            // Tampilkan Ulasan
             if (reviews) {
                 cachedReviews = reviews;
                 displayTableData(reviewTableBody, reviews, renderReviewRow, 4, "Belum ada ulasan.");
             }
 
-            // Tampilkan Grafik
             if (trendData && trendData.labels && trendData.data) {
                 const ctx = document.getElementById('revenueChart').getContext('2d');
                 new Chart(ctx, {
@@ -125,23 +119,28 @@ document.addEventListener('DOMContentLoaded', () => {
         const row = document.createElement('tr');
         row.dataset.userId = user._id;
         
-        // --- PERBAIKAN LOGIKA TAMPILAN JATAH CUCI ---
+        // =======================================================
+        // --- PERBAIKAN LOGIKA UTAMA ADA DI SINI ---
+        // =======================================================
         let membershipStatus = 'N/A';
-        if (user.membership && user.membership.washes) {
-            if (user.membership.packageName === 'Paket Kombinasi') {
-                // Tampilan khusus untuk Paket Kombinasi
-                membershipStatus = `Kombinasi (B:${user.membership.washes.bodywash}, H:${user.membership.washes.hidrolik})`;
-            } else {
-                // Tampilan untuk paket lain (menampilkan jatah yang ada)
-                const remaining = user.membership.washes.bodywash > 0 
-                    ? user.membership.washes.bodywash 
-                    : user.membership.washes.hidrolik;
-                membershipStatus = `${user.membership.packageName} (${remaining}x)`;
+        if (user.membership) {
+            // Cek apakah data menggunakan STRUKTUR BARU (objek washes)
+            if (user.membership.washes) {
+                if (user.membership.packageName === 'Paket Kombinasi') {
+                    membershipStatus = `Kombinasi (B:${user.membership.washes.bodywash}, H:${user.membership.washes.hidrolik})`;
+                } else {
+                    const remaining = user.membership.washes.bodywash > 0 ? user.membership.washes.bodywash : user.membership.washes.hidrolik;
+                    membershipStatus = `${user.membership.packageName} (${remaining}x)`;
+                }
+            } 
+            // Fallback: Jika data masih menggunakan STRUKTUR LAMA (remainingWashes)
+            else if (typeof user.membership.remainingWashes !== 'undefined') {
+                membershipStatus = `${user.membership.packageName} (${user.membership.remainingWashes}x)`;
             }
-        } else if (user.membership && typeof user.membership.remainingWashes !== 'undefined') {
-            // Fallback untuk data lama jika skrip migrasi belum dijalankan
-            membershipStatus = `${user.membership.packageName} (${user.membership.remainingWashes}x)`;
         }
+        // =======================================================
+        // --- AKHIR PERBAIKAN ---
+        // =======================================================
 
         const paymentStatus = user.membership?.isPaid ? '<span class="badge bg-success">Lunas</span>' : '<span class="badge bg-warning text-dark">Belum Bayar</span>';
         let actionButtons = `<button class="btn btn-sm btn-outline-secondary reset-password-btn" title="Reset Sandi"><i class="bi bi-key-fill"></i></button><button class="btn btn-sm btn-outline-success set-package-btn" title="Atur Paket"><i class="bi bi-gem"></i></button><button class="btn btn-sm btn-outline-warning edit-user-btn" title="Edit"><i class="bi bi-pencil-square"></i></button><button class="btn btn-sm btn-outline-danger delete-user-btn" title="Hapus"><i class="bi bi-trash3"></i></button>`;
@@ -160,11 +159,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const row = document.createElement('tr');
         row.dataset.userId = user._id;
         const actionButtons = `<button class="btn btn-sm btn-outline-success set-package-btn" title="Jadikan Member"><i class="bi bi-gem"></i></button><button class="btn btn-sm btn-outline-warning edit-user-btn" title="Edit"><i class="bi bi-pencil-square"></i></button><button class="btn btn-sm btn-outline-danger delete-user-btn" title="Hapus"><i class="bi bi-trash3"></i></button>`;
-        row.innerHTML = `<td>${index}</td><td>${user.username}</td><td>${user.email || '-'}</td><td>${user.phone || '-'}</td><td><div class="btn-group">${actionButtons}</div></td>`;
+        row.innerHTML = `<td>${index + 1}</td><td>${user.username}</td><td>${user.email || '-'}</td><td>${user.phone || '-'}</td><td><div class="btn-group">${actionButtons}</div></td>`;
         return row;
     };
 
-    const renderReviewRow = (review) => {
+    const renderReviewRow = (review, index) => {
         const row = document.createElement('tr');
         row.dataset.reviewId = review._id;
         const ratingStars = '<span class="rating-stars">' + '★'.repeat(review.rating) + '☆'.repeat(5 - review.rating) + '</span>';
