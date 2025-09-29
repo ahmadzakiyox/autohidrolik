@@ -723,7 +723,7 @@ app.post('/api/purchase-membership', auth, async (req, res) => {
             totalWashes: totalWashes,
             remainingWashes: totalWashes,
             isPaid: false,
-            expiresAt: calculateExpiryDate() // <-- Atur tanggal kedaluwarsa
+            expiresAt: calculateExpiryDate() // <-- TAMBAHKAN BARIS INI
         };
         await user.save();
         res.json({ msg: 'Pembelian paket berhasil! Menunggu konfirmasi pembayaran.', user });
