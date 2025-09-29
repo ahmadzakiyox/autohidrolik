@@ -636,56 +636,86 @@ app.post('/api/purchase-membership', auth, async (req, res) => {
     }
 });
 
-// Rute Pengaturan Paket oleh Admin (Diperbarui)
 app.post('/api/purchase-membership-admin/:userId', auth, adminAuth, async (req, res) => {
-    const { packageName, totalWashes } = req.body;
+    const { packageName } = req.body; // Sekarang hanya perlu packageName
     try {
         const user = await User.findById(req.params.userId);
         if (!user) return res.status(404).json({ msg: 'Pengguna tidak ditemukan.' });
         
+        // --- LOGIKA BARU UNTUK MENENTUKAN JATAH CUCI ---
+        let washes = { bodywash: 0, hidrolik: 0 };
+
+        if (packageName === 'Paket Kombinasi') {
+            washes.bodywash = 5;
+            washes.hidrolik = 5 + 2; // 5x + 2x Free Cuci Hidrolik
+        } else if (packageName === 'Body Wash') {
+            washes.bodywash = 10 + 2; // 10x + 2x Free
+        } else if (packageName === 'Cuci Mobil Hidrolik') {
+            washes.hidrolik = 8 + 2; // 8x + 2x Free
+        } else if (packageName === 'Cuci Motor Besar') {
+            washes.hidrolik = 8 + 2; // Asumsi cuci motor besar adalah hidrolik
+        } else if (packageName === 'Cuci Motor Kecil') {
+            washes.bodywash = 10 + 2; // Asumsi cuci motor kecil adalah body wash
+        }
+
         user.membership = {
             packageName: packageName,
-            totalWashes: totalWashes,
-            remainingWashes: totalWashes,
+            washes: washes,
             isPaid: false,
-            expiresAt: calculateExpiryDate() // <-- Atur tanggal kedaluwarsa
+            expiresAt: calculateExpiryDate() // Asumsi fungsi ini sudah ada
         };
+
         await user.save();
         res.json({ msg: `Paket untuk ${user.username} berhasil diatur.`, user });
     } catch (error) {
+        console.error("Error di purchase-membership-admin:", error);
         res.status(500).send('Server error');
     }
 });
 
-// Rute Penggunaan Jatah Cuci / Scanner (Diperbarui)
+// Rute Penggunaan Jatah Cuci / Scanner (DIREVISI TOTAL)
 app.post('/api/use-wash', auth, adminAuth, async (req, res) => {
-    const { userId } = req.body;
+    const { userId, washType } = req.body; // Sekarang menerima 'userId' (Member ID) dan 'washType'
+
+    if (!washType || !['bodywash', 'hidrolik'].includes(washType)) {
+        return res.status(400).json({ msg: 'Jenis cucian tidak valid.' });
+    }
+
     try {
         const user = await User.findOne({ memberId: userId });
         if (!user || !user.membership) return res.status(404).json({ msg: 'Data member tidak ditemukan.' });
         
-        // --- PENGECEKAN MASA AKTIF BARU ---
         if (new Date() > new Date(user.membership.expiresAt)) {
-            return res.status(400).json({ msg: 'Paket member Anda sudah kedaluwarsa dan jatah cuci hangus.' });
+            return res.status(400).json({ msg: 'Paket member sudah kedaluwarsa.' });
         }
-
         if (!user.membership.isPaid) {
-            return res.status(400).json({ msg: 'Paket member pengguna ini belum lunas.' });
-        }
-        if (user.membership.remainingWashes <= 0) {
-            return res.status(400).json({ msg: 'Jatah cuci pengguna ini sudah habis.' });
+            return res.status(400).json({ msg: 'Paket member belum lunas.' });
         }
 
-        user.membership.remainingWashes -= 1;
+        if (user.membership.washes[washType] <= 0) {
+            return res.status(400).json({ msg: `Jatah cuci untuk tipe '${washType}' sudah habis.` });
+        }
 
-        // --- TAMBAHKAN BARIS INI UNTUK MEMASTIKAN PERUBAHAN TERSIMPAN ---
-        user.markModified('membership');
-        
+        user.membership.washes[washType] -= 1;
+        user.markModified('membership'); 
         await user.save();
+        
         res.json({ 
-            msg: `Berhasil menggunakan 1 jatah cuci untuk ${user.username}.`,
-            remaining: user.membership.remainingWashes 
+            msg: `Berhasil menggunakan 1 jatah ${washType} untuk ${user.username}.`,
+            remaining: user.membership.washes // Kirim sisa jatah lengkap
         }); 
+    } catch (error) {
+        console.error("Error di use-wash:", error);
+        res.status(500).send('Server error');
+    }
+});
+
+// RUTE API BARU: Untuk mengambil detail user via scanner
+app.get('/api/user-by-memberid/:memberId', auth, adminAuth, async (req, res) => {
+    try {
+        const user = await User.findOne({ memberId: req.params.memberId }).select('-password');
+        if (!user) return res.status(404).json({ msg: 'Member dengan ID tersebut tidak ditemukan.' });
+        res.json(user);
     } catch (error) {
         res.status(500).send('Server error');
     }
