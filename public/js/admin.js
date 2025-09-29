@@ -122,28 +122,45 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- FUNGSI TAMPILAN (DISPLAY) ---
-    const displayMembers = (members) => {
-        memberTableBody.innerHTML = '';
-        if (members.length === 0) {
-            memberTableBody.innerHTML = `<tr><td colspan="7" class="text-center text-muted">Belum ada member.</td></tr>`;
-            return;
-        }
-        members.forEach((user, index) => {
-            const row = document.createElement('tr');
-            row.dataset.userId = user._id;
-            let membershipStatus = `${user.membership.packageName} (${user.membership.remainingWashes}x)`;
-            let paymentStatus = user.membership.isPaid ? '<span class="badge bg-success">Lunas</span>' : '<span class="badge bg-warning text-dark">Belum Bayar</span>';
-            let actionButtons = `<button class="btn btn-sm btn-outline-secondary reset-password-btn" title="Reset Sandi"><i class="bi bi-key-fill"></i></button><button class="btn btn-sm btn-outline-success set-package-btn" title="Atur Paket"><i class="bi bi-gem"></i></button><button class="btn btn-sm btn-outline-warning edit-user-btn" title="Edit"><i class="bi bi-pencil-square"></i></button><button class="btn btn-sm btn-outline-danger delete-user-btn" title="Hapus"><i class="bi bi-trash3"></i></button>`;
-            if (user.membership.isPaid) {
-                actionButtons = `<button class="btn btn-sm btn-outline-info view-barcode-btn" title="QR Code"><i class="bi bi-qr-code"></i></button> ` + actionButtons;
+// Di dalam file /public/js/admin.js
+
+const displayMembers = (members) => {
+    memberTableBody.innerHTML = '';
+    if (members.length === 0) {
+        memberTableBody.innerHTML = `<tr><td colspan="7" class="text-center text-muted">Belum ada member.</td></tr>`;
+        return;
+    }
+    members.forEach((user, index) => {
+        const row = document.createElement('tr');
+        row.dataset.userId = user._id;
+
+        // --- PERUBAHAN LOGIKA TAMPILAN JATAH CUCI ---
+        let membershipStatus;
+        if (user.membership && user.membership.washes) {
+            if (user.membership.packageName === 'Paket Kombinasi') {
+                membershipStatus = `Kombinasi (B:${user.membership.washes.bodywash}, H:${user.membership.washes.hidrolik})`;
             } else {
-                actionButtons = `<button class="btn btn-sm btn-info confirm-payment-btn" title="Konfirmasi Bayar"><i class="bi bi-check-circle"></i></button> ` + actionButtons;
+                // Menampilkan jatah yang relevan untuk paket non-kombinasi
+                const remaining = user.membership.washes.bodywash > 0 ? user.membership.washes.bodywash : user.membership.washes.hidrolik;
+                membershipStatus = `${user.membership.packageName} (${remaining}x)`;
             }
-            row.innerHTML = `<td>${String(index + 1).padStart(3, '0')}</td><td>${user.username}</td><td>${user.email || '-'}</td><td>${user.phone || '-'}</td><td>${membershipStatus}</td><td>${paymentStatus}</td><td><div class="btn-group">${actionButtons}</div></td>`;
-            memberTableBody.appendChild(row);
-        });
-    };
-    
+        } else {
+            membershipStatus = 'N/A';
+        }
+        // --- AKHIR PERUBAHAN ---
+
+        let paymentStatus = user.membership.isPaid ? '<span class="badge bg-success">Lunas</span>' : '<span class="badge bg-warning text-dark">Belum Bayar</span>';
+        let actionButtons = `<button class="btn btn-sm btn-outline-secondary reset-password-btn" title="Reset Sandi"><i class="bi bi-key-fill"></i></button><button class="btn btn-sm btn-outline-success set-package-btn" title="Atur Paket"><i class="bi bi-gem"></i></button><button class="btn btn-sm btn-outline-warning edit-user-btn" title="Edit"><i class="bi bi-pencil-square"></i></button><button class="btn btn-sm btn-outline-danger delete-user-btn" title="Hapus"><i class="bi bi-trash3"></i></button>`;
+        if (user.membership.isPaid) {
+            actionButtons = `<button class="btn btn-sm btn-outline-info view-barcode-btn" title="QR Code"><i class="bi bi-qr-code"></i></button> ` + actionButtons;
+        } else {
+            actionButtons = `<button class="btn btn-sm btn-info confirm-payment-btn" title="Konfirmasi Bayar"><i class="bi bi-check-circle"></i></button> ` + actionButtons;
+        }
+        row.innerHTML = `<td>${String(index + 1).padStart(3, '0')}</td><td>${user.username}</td><td>${user.email || '-'}</td><td>${user.phone || '-'}</td><td>${membershipStatus}</td><td>${paymentStatus}</td><td><div class="btn-group">${actionButtons}</div></td>`;
+        memberTableBody.appendChild(row);
+    });
+};
+
     const displayNonMembers = (nonMembers) => {
         nonMemberTableBody.innerHTML = '';
         if (nonMembers.length === 0) {
