@@ -24,6 +24,7 @@
             color: var(--text-primary);
             font-family: 'Poppins', sans-serif;
         }
+        .text-white { color: var(--text-primary)}
         .login-container {
             max-width: 450px;
             margin: 5rem auto;
@@ -77,13 +78,13 @@
             <form id="login-form">
                 <div class="mb-3">
                     <label for="identifier" class="form-label">Email atau Nomor WhatsApp</label>
-                    <input type="text" class="form-control" id="identifier" required placeholder="Masukkan email atau nomor WA">
+                    <input type="text" class="form-control text-white" id="identifier" required placeholder="Masukkan email atau nomor WA">
                 </div>
 
                 <div class="mb-3">
                     <label for="password" class="form-label">Password</label>
                     <div class="password-wrapper">
-                        <input type="password" class="form-control" id="password" required>
+                        <input type="password" class="form-control text-white" id="Masukan password" required>
                         <i class="bi bi-eye-slash toggle-password" id="togglePassword"></i>
                     </div>
                 </div>
