@@ -138,9 +138,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- FUNGSI TAMPILAN (DISPLAY) ---
     // public/js/admin.js
 const displayMembers = (members) => {
+    // Perbarui colspan jika tidak ada member
     memberTableBody.innerHTML = '';
     if (members.length === 0) {
-        memberTableBody.innerHTML = `<tr><td colspan="7" class="text-center text-muted">Belum ada member.</td></tr>`;
+        memberTableBody.innerHTML = `<tr><td colspan="8" class="text-center text-muted">Belum ada member.</td></tr>`; // Ubah 7 -> 8
         return;
     }
     let counter = 1;
@@ -164,15 +165,36 @@ const displayMembers = (members) => {
         let paymentStatus = user.membership.isPaid
             ? '<span class="badge bg-success">Lunas</span>'
             : '<span class="badge bg-warning text-dark">Belum Bayar</span>';
+            
+        // ======================= LOGIKA BARU UNTUK TANGGAL =======================
+        let expiryDateHtml = '-';
+        if (user.membership.expiresAt) {
+            const expiryDate = new Date(user.membership.expiresAt);
+            const today = new Date();
+            const isExpired = expiryDate < today;
 
+            // Format tanggal menjadi "29 September 2025"
+            const formattedDate = expiryDate.toLocaleDateString('id-ID', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            });
+
+            // Beri warna merah jika sudah kedaluwarsa
+            expiryDateHtml = isExpired 
+                ? `<span class="text-danger fw-bold">${formattedDate}</span>` 
+                : formattedDate;
+        }
+        // ===================== AKHIR DARI LOGIKA TANGGAL =====================
+
+        // Logika tombol aksi Anda (tidak diubah, hanya disalin)
         let actionButtons = `
             <button class="btn btn-sm btn-outline-secondary reset-password-btn" title="Reset Sandi"><i class="bi bi-key-fill"></i></button>
             <button class="btn btn-sm btn-outline-success edit-user-btn" title="Edit"><i class="bi bi-pencil-square"></i></button>
             <button class="btn btn-sm btn-outline-danger delete-user-btn" title="Hapus"><i class="bi bi-trash3"></i></button>
             <button class="btn btn-sm btn-outline-info set-package-btn" title="Atur/Ganti Paket"><i class="bi bi-gem"></i></button>
-
         `;
-        // Tambahan untuk Paket Kombinasi
+        
         if (user.membership.packageName === 'Paket Kombinasi') {
             actionButtons = `
                 <button class="btn btn-sm btn-outline-primary edit-combo-btn" title="Edit Jatah Kombinasi"><i class="bi bi-sliders"></i></button>
@@ -189,6 +211,7 @@ const displayMembers = (members) => {
                 ` + actionButtons;
         }
 
+        // Susun ulang baris tabel dengan kolom baru
         row.innerHTML = `
             <td>${String(counter++).padStart(3, '0')}</td>
             <td>${user.username}</td>
@@ -196,7 +219,7 @@ const displayMembers = (members) => {
             <td>${user.phone || '-'}</td>
             <td>${membershipStatus}</td>
             <td>${paymentStatus}</td>
-            <td><div class="btn-group">${actionButtons}</div></td>
+            <td>${expiryDateHtml}</td> <td><div class="btn-group">${actionButtons}</div></td>
         `;
         memberTableBody.appendChild(row);
     });
