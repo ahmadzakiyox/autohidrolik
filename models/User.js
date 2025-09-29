@@ -15,6 +15,11 @@ const MembershipSchema = new Schema({
         type: Number,
         required: true
     },
+    // KHUSUS untuk Paket Kombinasi
+    washes: {
+        bodywash: { type: Number, default: 0 },
+        hidrolik: { type: Number, default: 0 }
+    },
     purchaseDate: {
         type: Date,
         default: Date.now
