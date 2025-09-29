@@ -136,51 +136,70 @@ document.addEventListener('DOMContentLoaded', () => {
     // Ganti fungsi displayUsers yang lama dengan dua fungsi baru ini
     // --- FUNGSI TAMPILAN (DISPLAY) ---
     // public/js/admin.js
-    const displayMembers = (members) => {
-        memberTableBody.innerHTML = '';
-        if (members.length === 0) {
-            memberTableBody.innerHTML = `<tr><td colspan="7" class="text-center text-muted">Belum ada member.</td></tr>`;
-            return;
+const displayMembers = (members) => {
+    memberTableBody.innerHTML = '';
+    if (members.length === 0) {
+        memberTableBody.innerHTML = `<tr><td colspan="7" class="text-center text-muted">Belum ada member.</td></tr>`;
+        return;
+    }
+    let counter = 1;
+    members.forEach(user => {
+        const row = document.createElement('tr');
+        row.dataset.userId = user._id;
+
+        let membershipStatus = '';
+        if (user.membership.packageName === 'Paket Kombinasi') {
+            membershipStatus = `
+                <div>Paket Kombinasi</div>
+                <small class="text-muted">
+                    Bodywash: <strong>${user.membership.washes.bodywash}x</strong>, 
+                    Hidrolik: <strong>${user.membership.washes.hidrolik}x</strong>
+                </small>
+            `;
+        } else {
+            membershipStatus = `${user.membership.packageName} (${user.membership.remainingWashes}x)`;
         }
-        let counter = 1; // Menggunakan 'counter'
-        members.forEach(user => {
-            const row = document.createElement('tr');
-            row.dataset.userId = user._id;
 
-            // --- PERUBAHAN UTAMA DI SINI ---
-            let membershipStatus = '';
-            if (user.membership.packageName === 'Paket Kombinasi') {
-                // Tampilkan 2 jatah terpisah untuk Paket Kombinasi
-                membershipStatus = `
-                    <div>Paket Kombinasi</div>
-                    <small class="text-muted">
-                        Bodywash: <strong>${user.membership.washes.bodywash}x</strong>, 
-                        Hidrolik: <strong>${user.membership.washes.hidrolik}x</strong>
-                    </small>
-                `;
-            } else {
-                // Tampilkan format biasa untuk paket lainnya
-                membershipStatus = `${user.membership.packageName} (${user.membership.remainingWashes}x)`;
-            }
-            // --- AKHIR PERUBAHAN ---
+        let paymentStatus = user.membership.isPaid
+            ? '<span class="badge bg-success">Lunas</span>'
+            : '<span class="badge bg-warning text-dark">Belum Bayar</span>';
 
-            let paymentStatus = user.membership.isPaid ? '<span class="badge bg-success">Lunas</span>' : '<span class="badge bg-warning text-dark">Belum Bayar</span>';
-            let actionButtons = `<button class="btn btn-sm btn-outline-secondary reset-password-btn" title="Reset Sandi"><i class="bi bi-key-fill"></i></button><button class="btn btn-sm btn-outline-su[...]`;
-            // --- PERUBAHAN DI SINI ---
-            if (user.membership.packageName === 'Paket Kombinasi') {
-                const editComboBtn = `<button class="btn btn-sm btn-outline-primary edit-combo-btn" title="Edit Jatah Kombinasi"><i class="bi bi-sliders"></i></button>`;
-                actionButtons = editComboBtn + actionButtons;
-            }
+        let actionButtons = `
+            <button class="btn btn-sm btn-outline-secondary reset-password-btn" title="Reset Sandi"><i class="bi bi-key-fill"></i></button>
+            <button class="btn btn-sm btn-outline-success edit-user-btn" title="Edit"><i class="bi bi-pencil-square"></i></button>
+            <button class="btn btn-sm btn-outline-danger delete-user-btn" title="Hapus"><i class="bi bi-trash3"></i></button>
+        `;
 
-            if (user.membership.isPaid) {
-                actionButtons = `<button class="btn btn-sm btn-outline-info view-barcode-btn" title="QR Code"><i class="bi bi-qr-code"></i></button> ` + actionButtons;
-            } else {
-                actionButtons = `<button class="btn btn-sm btn-info confirm-payment-btn" title="Konfirmasi Bayar"><i class="bi bi-check-circle"></i></button> ` + actionButtons;
-            }
-            row.innerHTML = `<td>${String(counter++).padStart(3, '0')}</td><td>${user.username}</td><td>${user.email}</td><td>${user.phone || '-'}</td><td>${membershipStatus}</td><td>${paymentStatus}<[...]`;
-            memberTableBody.appendChild(row);
-        });
-    };
+        // Tambahan untuk Paket Kombinasi
+        if (user.membership.packageName === 'Paket Kombinasi') {
+            actionButtons = `
+                <button class="btn btn-sm btn-outline-primary edit-combo-btn" title="Edit Jatah Kombinasi"><i class="bi bi-sliders"></i></button>
+                ` + actionButtons;
+        }
+
+        if (user.membership.isPaid) {
+            actionButtons = `
+                <button class="btn btn-sm btn-outline-info view-barcode-btn" title="QR Code"><i class="bi bi-qr-code"></i></button>
+                ` + actionButtons;
+        } else {
+            actionButtons = `
+                <button class="btn btn-sm btn-info confirm-payment-btn" title="Konfirmasi Bayar"><i class="bi bi-check-circle"></i></button>
+                ` + actionButtons;
+        }
+
+        row.innerHTML = `
+            <td>${String(counter++).padStart(3, '0')}</td>
+            <td>${user.username}</td>
+            <td>${user.email}</td>
+            <td>${user.phone || '-'}</td>
+            <td>${membershipStatus}</td>
+            <td>${paymentStatus}</td>
+            <td><div class="btn-group">${actionButtons}</div></td>
+        `;
+        memberTableBody.appendChild(row);
+    });
+};
+
 
     const displayNonMembers = (nonMembers) => {
         nonMemberTableBody.innerHTML = '';
