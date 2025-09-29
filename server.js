@@ -361,6 +361,34 @@ app.put('/api/users/:id/update-combo-washes', auth, adminAuth, async (req, res) 
     }
 });
 
+// RUTE BARU: Admin membuat transaksi koreksi manual
+app.post('/api/transactions/correction', auth, adminAuth, async (req, res) => {
+    const { amount, note } = req.body;
+
+    // Validasi input
+    if (!amount || !note || isNaN(parseInt(amount))) {
+        return res.status(400).json({ msg: 'Jumlah dan catatan wajib diisi dengan benar.' });
+    }
+
+    try {
+        const adminUser = await User.findById(req.user.id);
+
+        const newTransaction = new Transaction({
+            user: req.user.id,
+            username: adminUser.username, // atau bisa juga 'ADMIN'
+            packageName: note, // Gunakan field ini untuk menyimpan catatan koreksi
+            amount: parseInt(amount)
+        });
+
+        await newTransaction.save();
+        res.status(201).json({ msg: 'Transaksi koreksi berhasil ditambahkan.' });
+
+    } catch (error) {
+        console.error("Error saat membuat transaksi koreksi:", error);
+        res.status(500).send('Server error');
+    }
+});
+
 // Rute Profil (GET)
 app.get('/api/profile', auth, async (req, res) => {
     try {
