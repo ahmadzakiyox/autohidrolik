@@ -38,8 +38,8 @@ const UserSchema = new Schema({
         unique: true, 
         sparse: true // Hanya terapkan unique jika field ini ada
     },
-    username: { type: String, required: true, trim: true },
-    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+        username: { type: String, required: true, trim: true },
+    email: { type: String, required: false, unique: true, sparse: true, lowercase: true, trim: true },
     password: { type: String, required: true },
     phone: { type: String, required: true, trim: true },
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
