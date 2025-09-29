@@ -18,7 +18,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const downloadButton = document.getElementById('download-data-btn');
     const memberTableBody = document.getElementById('member-table-body');
     const nonMemberTableBody = document.getElementById('non-member-table-body');
-
+    const expiredMemberTableBody = document.getElementById('expired-member-table-body');
+    
     // Inisialisasi semua modal (pop-up)
     const addUserModal = new bootstrap.Modal(document.getElementById('addUserModal'));
     const editUserModal = new bootstrap.Modal(document.getElementById('editUserModal'));
@@ -104,24 +105,40 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const fetchUsers = async () => {
-        try {
-            const response = await fetch('/api/users', { headers: getHeaders(false) });
-            if (!response.ok) throw new Error('Gagal mengambil data pengguna.');
-            cachedUsers = await response.json();
+const fetchUsers = async () => {
+    try {
+        const response = await fetch('/api/users', { headers: getHeaders(false) });
+        if (!response.ok) throw new Error('Gagal mengambil data pengguna.');
+        cachedUsers = await response.json();
 
-            const members = cachedUsers.filter(user => user.membership);
-            const nonMembers = cachedUsers.filter(user => !user.membership);
+        const today = new Date();
 
-            displayMembers(members);
-            displayNonMembers(nonMembers);
+        // Filter 1: Member Aktif (punya membership & belum kedaluwarsa)
+        const activeMembers = cachedUsers.filter(user => 
+            user.membership && user.membership.expiresAt && new Date(user.membership.expiresAt) >= today
+        );
 
-        } catch (error) {
-            memberTableBody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">${error.message}</td></tr>`;
-            nonMemberTableBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">${error.message}</td></tr>`;
-        }
-    };
+        // Filter 2: Member Kedaluwarsa (punya membership & sudah kedaluwarsa)
+        const expiredMembers = cachedUsers.filter(user => 
+            user.membership && user.membership.expiresAt && new Date(user.membership.expiresAt) < today
+        );
 
+        // Filter 3: Non-Member (tidak punya membership sama sekali)
+        const nonMembers = cachedUsers.filter(user => !user.membership);
+
+        displayMembers(activeMembers);
+        displayExpiredMembers(expiredMembers); // Panggil fungsi baru
+        displayNonMembers(nonMembers);
+
+    } catch (error) {
+        // Tampilkan error di semua tabel jika fetch gagal
+        const errorMsg = `<tr><td colspan="8" class="text-center text-danger">${error.message}</td></tr>`;
+        memberTableBody.innerHTML = errorMsg;
+        expiredMemberTableBody.innerHTML = errorMsg;
+        nonMemberTableBody.innerHTML = errorMsg;
+    }
+};
+    
     const fetchReviews = async () => {
         try {
             const response = await fetch('/api/reviews/all', { headers: getHeaders(false) });
@@ -225,7 +242,45 @@ const displayMembers = (members) => {
     });
 };
 
+// --- FUNGSI BARU UNTUK MENAMPILKAN MEMBER KEDALUWARSA ---
+const displayExpiredMembers = (members) => {
+    expiredMemberTableBody.innerHTML = '';
+    if (members.length === 0) {
+        expiredMemberTableBody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">Tidak ada member yang kedaluwarsa.</td></tr>`;
+        return;
+    }
+    let counter = 1;
+    members.forEach(user => {
+        const row = document.createElement('tr');
+        row.dataset.userId = user._id;
 
+        const lastPackage = `${user.membership.packageName}`;
+
+        // Format tanggal kedaluwarsa
+        const expiryDate = new Date(user.membership.expiresAt);
+        const formattedDate = expiryDate.toLocaleString('id-ID', {
+            day: 'numeric', month: 'long', year: 'numeric'
+        });
+
+        // Tombol aksi hanya untuk memperbarui paket
+        const actionButtons = `
+            <button class="btn btn-sm btn-success set-package-btn" title="Perbarui Paket Member">
+                <i class="bi bi-arrow-clockwise"></i> Perbarui Paket
+            </button>
+        `;
+
+        row.innerHTML = `
+            <td>${String(counter++)}</td>
+            <td>${user.username}</td>
+            <td>${user.email || '-'}</td>
+            <td>${lastPackage}</td>
+            <td><span class="text-danger fw-bold">${formattedDate}</span></td>
+            <td><div class="btn-group">${actionButtons}</div></td>
+        `;
+        expiredMemberTableBody.appendChild(row);
+    });
+};
+    
     const displayNonMembers = (nonMembers) => {
         nonMemberTableBody.innerHTML = '';
         if (nonMembers.length === 0) {
