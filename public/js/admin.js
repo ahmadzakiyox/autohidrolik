@@ -166,6 +166,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             let paymentStatus = user.membership.isPaid ? '<span class="badge bg-success">Lunas</span>' : '<span class="badge bg-warning text-dark">Belum Bayar</span>';
             let actionButtons = `<button class="btn btn-sm btn-outline-secondary reset-password-btn" title="Reset Sandi"><i class="bi bi-key-fill"></i></button><button class="btn btn-sm btn-outline-success set-package-btn" title="Atur Paket"><i class="bi bi-gem"></i></button><button class="btn btn-sm btn-outline-warning edit-user-btn" title="Edit"><i class="bi bi-pencil-square"></i></button><button class="btn btn-sm btn-outline-danger delete-user-btn" title="Hapus"><i class="bi bi-trash3"></i></button>`;
+            // --- PERUBAHAN DI SINI ---
+            if (user.membership.packageName === 'Paket Kombinasi') {
+            const editComboBtn = `<button class="btn btn-sm btn-outline-primary edit-combo-btn" title="Edit Jatah Kombinasi"><i class="bi bi-sliders"></i></button>`;
+            actionButtons = editComboBtn + actionButtons;
+            }
+
             if (user.membership.isPaid) {
                 actionButtons = `<button class="btn btn-sm btn-outline-info view-barcode-btn" title="QR Code"><i class="bi bi-qr-code"></i></button> ` + actionButtons;
             } else {
@@ -284,6 +290,15 @@ document.addEventListener('DOMContentLoaded', () => {
         editReviewModal.show();
     };
 
+    const openEditComboWashesModal = (user) => {
+    document.getElementById('edit-combo-userid').value = user._id;
+    document.getElementById('edit-combo-username').textContent = user.username;
+    document.getElementById('edit-bodywash-count').value = user.membership.washes.bodywash;
+    document.getElementById('edit-hidrolik-count').value = user.membership.washes.hidrolik;
+    editComboWashesModal.show();
+};
+
+
     // --- EVENT LISTENER UTAMA (EVENT DELEGATION) ---
     // Listener untuk tombol Reset Transaksi (FITUR BARU)
 resetTransactionsButton.addEventListener('click', async () => {
@@ -326,6 +341,8 @@ resetTransactionsButton.addEventListener('click', async () => {
                 if (button.classList.contains('view-barcode-btn')) return openBarcodeModal(user);
                 if (button.classList.contains('set-package-btn')) return openSetPackageModal(user);
                 if (button.classList.contains('reset-password-btn')) return openResetPasswordModal(user);
+                if (button.classList.contains('edit-combo-btn')) return openEditComboWashesModal(user); // <-- TAMBAHKAN INI
+
             }
         }
 
@@ -449,6 +466,33 @@ resetTransactionsButton.addEventListener('click', async () => {
         } catch (error) { showAlert(error.message); }
     });
 
+    // public/js/admin.js (bisa diletakkan setelah event listener 'edit-review-form')
+
+document.getElementById('edit-combo-washes-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const userId = document.getElementById('edit-combo-userid').value;
+    const comboData = {
+        bodywash: document.getElementById('edit-bodywash-count').value,
+        hidrolik: document.getElementById('edit-hidrolik-count').value,
+    };
+    try {
+        const response = await fetch(`/api/users/${userId}/update-combo-washes`, { 
+            method: 'PUT', 
+            headers: getHeaders(), 
+            body: JSON.stringify(comboData) 
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.msg || 'Gagal mengupdate jatah cuci.');
+
+        showAlert(result.msg, 'success');
+        editComboWashesModal.hide();
+        fetchUsers(); // Muat ulang data tabel untuk menampilkan hasil terbaru
+
+    } catch (error) { 
+        showAlert(error.message); 
+    }
+});
+    
     downloadButton.addEventListener('click', async () => {
         downloadButton.disabled = true;
         downloadButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Mengunduh...';
