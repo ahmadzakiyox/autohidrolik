@@ -991,6 +991,7 @@ app.post('/api/reset-password', async (req, res) => {
 });
 
 // --- New Route for Excel Data Download ---
+// --- New Route for Excel Data Download (Diperbarui dengan Tanggal Kedaluwarsa) ---
 app.get('/api/download-data', auth, adminAuth, async (req, res) => {
     try {
         const users = await User.find({ role: 'user' }).sort({ date: 1 });
@@ -1002,13 +1003,18 @@ app.get('/api/download-data', auth, adminAuth, async (req, res) => {
         const memberSheet = workbook.addWorksheet('Data Member');
         const nonMemberSheet = workbook.addWorksheet('Data Non-Member');
 
+        // ======================= PERUBAHAN DI SINI =======================
+        // Tambahkan kolom baru untuk Tanggal Kedaluwarsa
         memberSheet.columns = [
-            { header: 'Tanggal Bergabung', key: 'date', width: 20 },
+            { header: 'Tanggal Bergabung', key: 'date', width: 20, style: { numFmt: 'dd/mm/yyyy' } },
             { header: 'Nama', key: 'username', width: 30 },
-            { header: 'Nama Paket Pembelian', key: 'packageName', width: 30 }
+            { header: 'Nama Paket Pembelian', key: 'packageName', width: 30 },
+            { header: 'Tanggal Kedaluwarsa', key: 'expiresAt', width: 20, style: { numFmt: 'dd/mm/yyyy' } }
         ];
+        // ===================== AKHIR DARI PERUBAHAN =====================
+
         nonMemberSheet.columns = [
-            { header: 'Tanggal Gabung', key: 'date', width: 20 },
+            { header: 'Tanggal Gabung', key: 'date', width: 20, style: { numFmt: 'dd/mm/yyyy' } },
             { header: 'Nama', key: 'username', width: 30 }
         ];
 
@@ -1017,11 +1023,15 @@ app.get('/api/download-data', auth, adminAuth, async (req, res) => {
 
         users.forEach(user => {
             if (user.membership && user.membership.isPaid) {
+                // ======================= PERUBAHAN DI SINI =======================
+                // Tambahkan data 'expiresAt' saat membuat baris baru
                 memberSheet.addRow({
                     date: user.date,
                     username: user.username,
-                    packageName: user.membership.packageName
+                    packageName: user.membership.packageName,
+                    expiresAt: user.membership.expiresAt ? new Date(user.membership.expiresAt) : '-'
                 });
+                // ===================== AKHIR DARI PERUBAHAN =====================
             } else {
                 nonMemberSheet.addRow({
                     date: user.date,
