@@ -3,11 +3,27 @@ const Schema = mongoose.Schema;
 
 // Skema untuk Keanggotaan (Tidak Berubah)
 const MembershipSchema = new Schema({
-    packageName: { type: String, required: true },
-    totalWashes: { type: Number, required: true },
-    remainingWashes: { type: Number, required: true },
-    purchaseDate: { type: Date, default: Date.now },
-    isPaid: { type: Boolean, default: false }
+    packageName: {
+        type: String,
+        required: true
+    },
+    // PERUBAHAN UTAMA: 'remainingWashes' & 'totalWashes' diganti menjadi objek 'washes'
+    washes: {
+        bodywash: { type: Number, default: 0 },
+        hidrolik: { type: Number, default: 0 }
+    },
+    purchaseDate: {
+        type: Date,
+        default: Date.now
+    },
+    isPaid: {
+        type: Boolean,
+        default: false
+    },
+    expiresAt: { // Pastikan field ini ada dari revisi sebelumnya
+        type: Date,
+        required: true
+    }
 });
 
 // Skema Utama Pengguna (Direvisi)
