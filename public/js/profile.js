@@ -92,21 +92,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     memberCodeSection.innerHTML = '<p class="text-danger">Member ID tidak ditemukan.</p>';
                 }
             } else if (!user.membership.isPaid) {
-                memberCodeSection.innerHTML = `<p class="text-center text-muted p-4">QR code akan muncul setelah pembayaran dikonfirmasi.</p>`;
+                memberCodeSection.innerHTML = `<p class="text-center text-white p-4">QR code akan muncul setelah pembayaran dikonfirmasi.</p>`;
             } else if (isExpired) {
                 memberCodeSection.innerHTML = `<p class="text-center text-danger p-4 fw-bold">Paket telah hangus.</p>`;
             } else {
-                memberCodeSection.innerHTML = `<p class="text-center text-muted p-4">Jatah cuci Anda sudah habis.</p>`;
+                memberCodeSection.innerHTML = `<p class="text-center text-white p-4">Jatah cuci Anda sudah habis.</p>`;
             }
 
         } else {
             // Display for non-members (no change)
             membershipStatus.innerHTML = `
-                <p class="text-muted">Anda saat ini bukan member aktif.</p>
+                <p class="text-white">Anda saat ini bukan member aktif.</p>
                 <a href="/" class="btn btn-primary">Lihat Paket Member</a>
             `;
             memberCodeSection.innerHTML = `
-                <p class="text-center text-muted p-4">Beli paket member untuk mendapatkan kode Anda.</p>
+                <p class="text-center text-white p-4">Beli paket member untuk mendapatkan kode Anda.</p>
             `;
         }
 
