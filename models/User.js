@@ -2,16 +2,17 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 // Skema untuk Keanggotaan
+// models/User.js
 const MembershipSchema = new Schema({
     packageName: {
         type: String,
         required: true
     },
-    totalWashes: {
+    totalWashes: { // Tetap digunakan untuk paket biasa
         type: Number,
         required: true
     },
-    remainingWashes: {
+    remainingWashes: { // Tetap digunakan untuk paket biasa
         type: Number,
         required: true
     },
