@@ -23,6 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const addUserModal = new bootstrap.Modal(document.getElementById('addUserModal'));
     const editUserModal = new bootstrap.Modal(document.getElementById('editUserModal'));
     const editComboWashesModal = new bootstrap.Modal(document.getElementById('editComboWashesModal')); // <-- TAMBAHKAN INI
+    const editTransactionModal = new bootstrap.Modal(document.getElementById('editTransactionModal')); // <-- TAMBAHKAN INI
     const viewBarcodeModal = new bootstrap.Modal(document.getElementById('viewBarcodeModal'));
     const setPackageModal = new bootstrap.Modal(document.getElementById('setPackageModal'));
     const editReviewModal = new bootstrap.Modal(document.getElementById('editReviewModal'));
