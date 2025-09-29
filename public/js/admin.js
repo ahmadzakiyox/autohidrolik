@@ -23,7 +23,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const addUserModal = new bootstrap.Modal(document.getElementById('addUserModal'));
     const editUserModal = new bootstrap.Modal(document.getElementById('editUserModal'));
     const editComboWashesModal = new bootstrap.Modal(document.getElementById('editComboWashesModal')); // <-- TAMBAHKAN INI
-    const editTransactionModal = new bootstrap.Modal(document.getElementById('editTransactionModal')); // <-- TAMBAHKAN INI
     const viewBarcodeModal = new bootstrap.Modal(document.getElementById('viewBarcodeModal'));
     const setPackageModal = new bootstrap.Modal(document.getElementById('setPackageModal'));
     const editReviewModal = new bootstrap.Modal(document.getElementById('editReviewModal'));
@@ -36,38 +35,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- PENAMBAHAN BARU: Fungsi untuk mengambil data dan membuat grafik ---
     const fetchRevenueTrend = async () => {
-    try {
-        const response = await fetch('/api/revenue-trend', { headers: getHeaders(false) });
-        if (!response.ok) throw new Error('Gagal mengambil data grafik.');
+        try {
+            const response = await fetch('/api/revenue-trend', { headers: getHeaders(false) });
+            if (!response.ok) throw new Error('Gagal mengambil data grafik.');
 
-        const trendData = await response.json();
-        
-        const ctx = document.getElementById('revenueChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'bar', // Tipe grafik: 'bar' (batang) atau 'line' (garis)
-            data: {
-                labels: trendData.labels, // Label tanggal dari API
-                datasets: [{
-                    label: 'Pendapatan (Rp)',
-                    data: trendData.data, // Data pendapatan dari API
-                    backgroundColor: 'rgba(111, 66, 193, 0.6)', // Warna batang grafik
-                    borderColor: 'rgba(111, 66, 193, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true
+            const trendData = await response.json();
+
+            const ctx = document.getElementById('revenueChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar', // Tipe grafik: 'bar' (batang) atau 'line' (garis)
+                data: {
+                    labels: trendData.labels, // Label tanggal dari API
+                    datasets: [{
+                        label: 'Pendapatan (Rp)',
+                        data: trendData.data, // Data pendapatan dari API
+                        backgroundColor: 'rgba(111, 66, 193, 0.6)', // Warna batang grafik
+                        borderColor: 'rgba(111, 66, 193, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
                     }
                 }
-            }
-        });
+            });
 
-    } catch (error) {
-        showAlert(error.message);
-    }
-};
+        } catch (error) {
+            showAlert(error.message);
+        }
+    };
     // Didefinisikan sebagai 'function' agar bisa diakses dari mana saja (hoisting)
     function showAlert(message, type = 'danger') {
         if (alertPlaceholder) {
@@ -93,9 +92,9 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const response = await fetch('/api/dashboard-stats', { headers: getHeaders(false) });
             if (!response.ok) throw new Error('Gagal mengambil data statistik.');
-            
+
             const stats = await response.json();
-            
+
             memberCountElement.textContent = stats.activeMembers;
             visitorCountElement.textContent = stats.totalVisitors;
             transactionTotalElement.textContent = `Rp ${stats.totalTransactions.toLocaleString('id-ID')}`;
@@ -104,12 +103,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
- const fetchUsers = async () => {
+    const fetchUsers = async () => {
         try {
             const response = await fetch('/api/users', { headers: getHeaders(false) });
             if (!response.ok) throw new Error('Gagal mengambil data pengguna.');
             cachedUsers = await response.json();
-            
+
             const members = cachedUsers.filter(user => user.membership);
             const nonMembers = cachedUsers.filter(user => !user.membership);
 
@@ -134,9 +133,9 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- FUNGSI TAMPILAN (DISPLAY) ---
-      // Ganti fungsi displayUsers yang lama dengan dua fungsi baru ini
+    // Ganti fungsi displayUsers yang lama dengan dua fungsi baru ini
     // --- FUNGSI TAMPILAN (DISPLAY) ---
-// public/js/admin.js
+    // public/js/admin.js
     const displayMembers = (members) => {
         memberTableBody.innerHTML = '';
         if (members.length === 0) {
@@ -166,11 +165,11 @@ document.addEventListener('DOMContentLoaded', () => {
             // --- AKHIR PERUBAHAN ---
 
             let paymentStatus = user.membership.isPaid ? '<span class="badge bg-success">Lunas</span>' : '<span class="badge bg-warning text-dark">Belum Bayar</span>';
-            let actionButtons = `<button class="btn btn-sm btn-outline-secondary reset-password-btn" title="Reset Sandi"><i class="bi bi-key-fill"></i></button><button class="btn btn-sm btn-outline-success edit-user-btn" title="Edit"><i class="bi bi-pencil-square"></i></button><button class="btn btn-sm btn-outline-danger delete-user-btn" title="Hapus"><i class="bi bi-trash"></i></button>`;
+            let actionButtons = `<button class="btn btn-sm btn-outline-secondary reset-password-btn" title="Reset Sandi"><i class="bi bi-key-fill"></i></button><button class="btn btn-sm btn-outline-su[...]`;
             // --- PERUBAHAN DI SINI ---
             if (user.membership.packageName === 'Paket Kombinasi') {
-            const editComboBtn = `<button class="btn btn-sm btn-outline-primary edit-combo-btn" title="Edit Jatah Kombinasi"><i class="bi bi-sliders"></i></button>`;
-            actionButtons = editComboBtn + actionButtons;
+                const editComboBtn = `<button class="btn btn-sm btn-outline-primary edit-combo-btn" title="Edit Jatah Kombinasi"><i class="bi bi-sliders"></i></button>`;
+                actionButtons = editComboBtn + actionButtons;
             }
 
             if (user.membership.isPaid) {
@@ -178,11 +177,11 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 actionButtons = `<button class="btn btn-sm btn-info confirm-payment-btn" title="Konfirmasi Bayar"><i class="bi bi-check-circle"></i></button> ` + actionButtons;
             }
-            row.innerHTML = `<td>${String(counter++).padStart(3, '0')}</td><td>${user.username}</td><td>${user.email}</td><td>${user.phone || '-'}</td><td>${membershipStatus}</td><td>${paymentStatus}</td><td><div class="btn-group">${actionButtons}</div></td>`;
+            row.innerHTML = `<td>${String(counter++).padStart(3, '0')}</td><td>${user.username}</td><td>${user.email}</td><td>${user.phone || '-'}</td><td>${membershipStatus}</td><td>${paymentStatus}<[...]`;
             memberTableBody.appendChild(row);
         });
     };
-    
+
     const displayNonMembers = (nonMembers) => {
         nonMemberTableBody.innerHTML = '';
         if (nonMembers.length === 0) {
@@ -193,7 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
         nonMembers.forEach(user => {
             const row = document.createElement('tr');
             row.dataset.userId = user._id;
-            let actionButtons = `<button class="btn btn-sm btn-outline-success set-package-btn" title="Jadikan Member"><i class="bi bi-gem"></i></button><button class="btn btn-sm btn-outline-warning edit-user-btn" title="Edit"><i class="bi bi-pencil-square"></i></button><button class="btn btn-sm btn-outline-danger delete-user-btn" title="Hapus"><i class="bi bi-trash"></i></button>`;
+            let actionButtons = `<button class="btn btn-sm btn-outline-success set-package-btn" title="Jadikan Member"><i class="bi bi-gem"></i></button><button class="btn btn-sm btn-outline-warning e[...]`;
             row.innerHTML = `<td>${String(counter++)}</td><td>${user.username}</td><td>${user.email}</td><td>${user.phone || '-'}</td><td><div class="btn-group">${actionButtons}</div></td>`;
             nonMemberTableBody.appendChild(row);
         });
@@ -292,41 +291,41 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const openEditComboWashesModal = (user) => {
-    document.getElementById('edit-combo-userid').value = user._id;
-    document.getElementById('edit-combo-username').textContent = user.username;
-    document.getElementById('edit-bodywash-count').value = user.membership.washes.bodywash;
-    document.getElementById('edit-hidrolik-count').value = user.membership.washes.hidrolik;
-    editComboWashesModal.show();
-};
+        document.getElementById('edit-combo-userid').value = user._id;
+        document.getElementById('edit-combo-username').textContent = user.username;
+        document.getElementById('edit-bodywash-count').value = user.membership.washes.bodywash;
+        document.getElementById('edit-hidrolik-count').value = user.membership.washes.hidrolik;
+        editComboWashesModal.show();
+    };
 
 
     // --- EVENT LISTENER UTAMA (EVENT DELEGATION) ---
     // Listener untuk tombol Reset Transaksi (FITUR BARU)
-resetTransactionsButton.addEventListener('click', async () => {
-    // Tampilkan konfirmasi yang sangat jelas karena ini tindakan berbahaya
-    const confirmation = prompt('PERINGATAN: Tindakan ini akan menghapus SEMUA catatan transaksi secara permanen dan mengatur ulang total transaksi menjadi Rp 0. Ini tidak dapat diurungkan. Ketik "RESET" untuk melanjutkan.');
+    resetTransactionsButton.addEventListener('click', async () => {
+        // Tampilkan konfirmasi yang sangat jelas karena ini tindakan berbahaya
+        const confirmation = prompt('PERINGATAN: Tindakan ini akan menghapus SEMUA catatan transaksi secara permanen dan mengatur ulang total transaksi menjadi Rp 0. Ini tidak dapat diurungkan. Ketik "RES[...]');
 
-    if (confirmation === 'RESET') {
-        try {
-            const response = await fetch('/api/transactions/reset', {
-                method: 'DELETE',
-                headers: getHeaders(false)
-            });
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.msg || 'Gagal mereset transaksi.');
+        if (confirmation === 'RESET') {
+            try {
+                const response = await fetch('/api/transactions/reset', {
+                    method: 'DELETE',
+                    headers: getHeaders(false)
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.msg || 'Gagal mereset transaksi.');
 
-            // Jika berhasil, tampilkan notifikasi sukses dan refresh data dashboard
-            showAlert('Semua transaksi berhasil direset.', 'success');
-            fetchDashboardStats(); // Panggil fungsi ini untuk update tampilan menjadi Rp 0
+                // Jika berhasil, tampilkan notifikasi sukses dan refresh data dashboard
+                showAlert('Semua transaksi berhasil direset.', 'success');
+                fetchDashboardStats(); // Panggil fungsi ini untuk update tampilan menjadi Rp 0
 
-        } catch (error) {
-            showAlert(error.message);
+            } catch (error) {
+                showAlert(error.message);
+            }
+        } else {
+            showAlert('Reset dibatalkan.', 'info');
         }
-    } else {
-        showAlert('Reset dibatalkan.', 'info');
-    }
-});
-    
+    });
+
     document.body.addEventListener('click', (e) => {
         const button = e.target.closest('button');
         if (!button) return;
@@ -347,36 +346,28 @@ resetTransactionsButton.addEventListener('click', async () => {
             }
         }
 
-       // Aksi untuk tabel ulasan
-    const reviewRow = button.closest('tr[data-review-id]');
-    if (reviewRow) {
-        const reviewId = reviewRow.dataset.reviewId;
+        // Aksi untuk tabel ulasan
+        const reviewRow = button.closest('tr[data-review-id]');
+        if (reviewRow) {
+            const reviewId = reviewRow.dataset.reviewId;
 
-        // Logika untuk tombol hapus ulasan
-        if (button.classList.contains('delete-review-btn')) {
-            return deleteReview(reviewId);
-        }
-        
-        // --- LANJUTAN KODE ANDA DI SINI ---
-        // Logika untuk tombol edit ulasan
-        if (button.classList.contains('edit-review-btn')) {
-            // Cari data ulasan lengkap dari cache berdasarkan ID
-            const review = cachedReviews.find(r => r._id === reviewId);
-            if (review) {
-                // Jika ditemukan, panggil fungsi untuk membuka modal edit
-                return openEditReviewModal(review);
+            // Logika untuk tombol hapus ulasan
+            if (button.classList.contains('delete-review-btn')) {
+                return deleteReview(reviewId);
+            }
+
+            // --- LANJUTAN KODE ANDA DI SINI ---
+            // Logika untuk tombol edit ulasan
+            if (button.classList.contains('edit-review-btn')) {
+                // Cari data ulasan lengkap dari cache berdasarkan ID
+                const review = cachedReviews.find(r => r._id === reviewId);
+                if (review) {
+                    // Jika ditemukan, panggil fungsi untuk membuka modal edit
+                    return openEditReviewModal(review);
+                }
             }
         }
-    }
-});
-
-        // <-- TAMBAHKAN DI SINI: Listener untuk Tombol Edit Transaksi -->
-    document.getElementById('edit-transaction-btn').addEventListener('click', (e) => {
-        e.preventDefault();
-        document.getElementById('edit-transaction-form').reset(); // Kosongkan form setiap kali dibuka
-        editTransactionModal.show();
     });
-
 
     // --- EVENT LISTENER UNTUK FORM SUBMISSIONS ---
     document.getElementById('add-user-form').addEventListener('submit', async (e) => {
@@ -399,60 +390,33 @@ resetTransactionsButton.addEventListener('click', async () => {
         } catch (error) { showAlert(error.message); }
     });
 
-    document.getElementById('edit-transaction-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const transactionData = {
-        amount: document.getElementById('transaction-amount').value,
-        note: document.getElementById('transaction-note').value
-    };
-
-    try {
-        const response = await fetch('/api/transactions/correction', {
-            method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify(transactionData)
-        });
-        const result = await response.json();
-        if (!response.ok) throw new Error(result.msg || 'Gagal menyimpan koreksi.');
-
-        showAlert('Koreksi transaksi berhasil disimpan.', 'success');
-        editTransactionModal.hide();
-        fetchDashboardStats(); // Panggil fungsi ini untuk me-refresh total pemasukan
-        fetchRevenueTrend(); // Panggil fungsi ini untuk update grafik
-
-    } catch (error) {
-        showAlert(error.message);
-    }
-});
-
-
     document.getElementById('edit-user-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const userId = document.getElementById('edit-user-id').value;
-    const userData = {
-        username: document.getElementById('edit-username').value,
-        email: document.getElementById('edit-email').value,
-        phone: document.getElementById('edit-phone').value, // Pastikan 'phone' ada di sini
-        role: document.getElementById('edit-role').value,
-    };
-    try {
-        const response = await fetch(`/api/users/${userId}`, { 
-            method: 'PUT', 
-            headers: getHeaders(), 
-            body: JSON.stringify(userData) 
-        });
-        if (!response.ok) throw new Error('Gagal mengupdate user.');
-        
-        showAlert('Data pengguna berhasil diperbarui.', 'success');
-        editUserModal.hide();
-        
-        // Baris ini akan memuat ulang data tabel secara otomatis
-        fetchUsers(); 
-        
-    } catch (error) { 
-        showAlert(error.message); 
-    }
-});
+        e.preventDefault();
+        const userId = document.getElementById('edit-user-id').value;
+        const userData = {
+            username: document.getElementById('edit-username').value,
+            email: document.getElementById('edit-email').value,
+            phone: document.getElementById('edit-phone').value, // Pastikan 'phone' ada di sini
+            role: document.getElementById('edit-role').value,
+        };
+        try {
+            const response = await fetch(`/api/users/${userId}`, {
+                method: 'PUT',
+                headers: getHeaders(),
+                body: JSON.stringify(userData)
+            });
+            if (!response.ok) throw new Error('Gagal mengupdate user.');
+
+            showAlert('Data pengguna berhasil diperbarui.', 'success');
+            editUserModal.hide();
+
+            // Baris ini akan memuat ulang data tabel secara otomatis
+            fetchUsers();
+
+        } catch (error) {
+            showAlert(error.message);
+        }
+    });
 
     document.getElementById('reset-password-form').addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -466,7 +430,7 @@ resetTransactionsButton.addEventListener('click', async () => {
             resetPasswordModal.hide();
         } catch (error) { showAlert(error.message); }
     });
-    
+
     document.getElementById('set-package-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const userId = document.getElementById('set-package-userid').value;
@@ -504,31 +468,31 @@ resetTransactionsButton.addEventListener('click', async () => {
 
     // public/js/admin.js (bisa diletakkan setelah event listener 'edit-review-form')
 
-document.getElementById('edit-combo-washes-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const userId = document.getElementById('edit-combo-userid').value;
-    const comboData = {
-        bodywash: document.getElementById('edit-bodywash-count').value,
-        hidrolik: document.getElementById('edit-hidrolik-count').value,
-    };
-    try {
-        const response = await fetch(`/api/users/${userId}/update-combo-washes`, { 
-            method: 'PUT', 
-            headers: getHeaders(), 
-            body: JSON.stringify(comboData) 
-        });
-        const result = await response.json();
-        if (!response.ok) throw new Error(result.msg || 'Gagal mengupdate jatah cuci.');
+    document.getElementById('edit-combo-washes-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const userId = document.getElementById('edit-combo-userid').value;
+        const comboData = {
+            bodywash: document.getElementById('edit-bodywash-count').value,
+            hidrolik: document.getElementById('edit-hidrolik-count').value,
+        };
+        try {
+            const response = await fetch(`/api/users/${userId}/update-combo-washes`, {
+                method: 'PUT',
+                headers: getHeaders(),
+                body: JSON.stringify(comboData)
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.msg || 'Gagal mengupdate jatah cuci.');
 
-        showAlert(result.msg, 'success');
-        editComboWashesModal.hide();
-        fetchUsers(); // Muat ulang data tabel untuk menampilkan hasil terbaru
+            showAlert(result.msg, 'success');
+            editComboWashesModal.hide();
+            fetchUsers(); // Muat ulang data tabel untuk menampilkan hasil terbaru
 
-    } catch (error) { 
-        showAlert(error.message); 
-    }
-});
-    
+        } catch (error) {
+            showAlert(error.message);
+        }
+    });
+
     downloadButton.addEventListener('click', async () => {
         downloadButton.disabled = true;
         downloadButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Mengunduh...';
@@ -558,10 +522,10 @@ document.getElementById('edit-combo-washes-form').addEventListener('submit', asy
         localStorage.removeItem('userRole');
         window.location.href = '/login.html';
     });
-    
+
     // --- INISIALISASI SAAT HALAMAN DIMUAT ---
     fetchDashboardStats();
     fetchUsers();
     fetchReviews();
-    fetchRevenueTrend(); 
+    fetchRevenueTrend();
 });
