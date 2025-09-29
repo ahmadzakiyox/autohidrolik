@@ -134,6 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- FUNGSI TAMPILAN (DISPLAY) ---
       // Ganti fungsi displayUsers yang lama dengan dua fungsi baru ini
     // --- FUNGSI TAMPILAN (DISPLAY) ---
+// public/js/admin.js
     const displayMembers = (members) => {
         memberTableBody.innerHTML = '';
         if (members.length === 0) {
@@ -144,7 +145,24 @@ document.addEventListener('DOMContentLoaded', () => {
         members.forEach(user => {
             const row = document.createElement('tr');
             row.dataset.userId = user._id;
-            let membershipStatus = `${user.membership.packageName} (${user.membership.remainingWashes}x)`;
+
+            // --- PERUBAHAN UTAMA DI SINI ---
+            let membershipStatus = '';
+            if (user.membership.packageName === 'Paket Kombinasi') {
+                // Tampilkan 2 jatah terpisah untuk Paket Kombinasi
+                membershipStatus = `
+                    <div>Paket Kombinasi</div>
+                    <small class="text-muted">
+                        Bodywash: <strong>${user.membership.washes.bodywash}x</strong>, 
+                        Hidrolik: <strong>${user.membership.washes.hidrolik}x</strong>
+                    </small>
+                `;
+            } else {
+                // Tampilkan format biasa untuk paket lainnya
+                membershipStatus = `${user.membership.packageName} (${user.membership.remainingWashes}x)`;
+            }
+            // --- AKHIR PERUBAHAN ---
+
             let paymentStatus = user.membership.isPaid ? '<span class="badge bg-success">Lunas</span>' : '<span class="badge bg-warning text-dark">Belum Bayar</span>';
             let actionButtons = `<button class="btn btn-sm btn-outline-secondary reset-password-btn" title="Reset Sandi"><i class="bi bi-key-fill"></i></button><button class="btn btn-sm btn-outline-success set-package-btn" title="Atur Paket"><i class="bi bi-gem"></i></button><button class="btn btn-sm btn-outline-warning edit-user-btn" title="Edit"><i class="bi bi-pencil-square"></i></button><button class="btn btn-sm btn-outline-danger delete-user-btn" title="Hapus"><i class="bi bi-trash3"></i></button>`;
             if (user.membership.isPaid) {
