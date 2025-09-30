@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const memberTableBody = document.getElementById('member-table-body');
     const nonMemberTableBody = document.getElementById('non-member-table-body');
     const expiredMemberTableBody = document.getElementById('expired-member-table-body');
-
+    
     // Inisialisasi semua modal (pop-up)
     const addUserModal = new bootstrap.Modal(document.getElementById('addUserModal'));
     const editUserModal = new bootstrap.Modal(document.getElementById('editUserModal'));
@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const resetTransactionsButton = document.getElementById('reset-transactions-btn');
 
     let cachedUsers = [];
-    let cachedReviews = []; // Tambahkan ini untuk menyimpan cache review
+    let cachedReviews = [];
 
     // --- FUNGSI HELPER (PEMBANTU) ---
     function showAlert(message, type = 'danger') {
@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const response = await fetch('/api/reviews/all', { headers: getHeaders(false) });
             if (!response.ok) throw new Error('Gagal mengambil data ulasan.');
-            cachedReviews = await response.json(); // Simpan ke cache
+            cachedReviews = await response.json();
             displayReviews(cachedReviews);
         } catch (error) {
             reviewTableBody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">${error.message}</td></tr>`;
@@ -303,14 +303,18 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const openEditExpiryModal = (user) => {
-        document.getElementById('edit-expiry-userid').value = user._id;
-        document.getElementById('edit-expiry-username').textContent = user.username;
+        const userIdInput = document.getElementById('edit-expiry-userid');
+        const usernameSpan = document.getElementById('edit-expiry-username');
+        const dateInput = document.getElementById('edit-expiry-date');
+        if (!userIdInput || !usernameSpan || !dateInput) return;
+        userIdInput.value = user._id;
+        usernameSpan.textContent = user.username;
         if (user.membership.expiresAt) {
             const currentDate = new Date(user.membership.expiresAt);
             const year = currentDate.getFullYear();
             const month = String(currentDate.getMonth() + 1).padStart(2, '0');
             const day = String(currentDate.getDate()).padStart(2, '0');
-            document.getElementById('edit-expiry-date').value = `${year}-${month}-${day}`;
+            dateInput.value = `${year}-${month}-${day}`;
         }
         editExpiryModal.show();
     };
@@ -332,7 +336,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- EVENT LISTENER UTAMA ---
     resetTransactionsButton.addEventListener('click', async () => {
-        const confirmation = prompt('PERINGATAN: Tindakan ini akan menghapus SEMUA catatan transaksi secara permanen. Ketik "RESET" untuk melanjutkan.');
+        const confirmation = prompt('PERINGATAN: Tindakan ini akan menghapus SEMUA catatan transaksi. Ketik "RESET" untuk melanjutkan.');
         if (confirmation === 'RESET') {
             try {
                 const response = await fetch('/api/transactions/reset', { method: 'DELETE', headers: getHeaders(false) });
