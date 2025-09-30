@@ -994,7 +994,24 @@ app.post('/api/confirm-payment/:userId', auth, adminAuth, async (req, res) => {
         }
 
         user.membership.isPaid = true;
+        // ======================= LOGIKA BARU UNTUK KARTU NANO =======================
+        // Cek apakah paket yang dibeli adalah Nano Coating
+        if (user.membership.packageName.includes('Nano Coating')) {
+            const coatingDate = new Date();
+            const expiryDate = new Date(coatingDate);
+            expiryDate.setFullYear(expiryDate.getFullYear() + 1); // Berlaku 1 tahun
+
+            user.nanoCoatingCard = {
+                cardNumber: `NC-${Date.now()}`, // Nomor kartu unik sederhana
+                coatingDate: coatingDate,
+                expiresAt: expiryDate,
+                isActive: true
+            };
+        }
+        // ===================== AKHIR DARI LOGIKA BARU =====================
+
         user.markModified('membership');
+        user.markModified('nanoCoatingCard'); // Tandai nanoCoatingCard untuk disimpan
         await user.save();
 
         // --- LOGIKA BARU: CATAT TRANSAKSI ---
@@ -1023,6 +1040,28 @@ app.post('/api/confirm-payment/:userId', auth, adminAuth, async (req, res) => {
 
     } catch (error) {
         console.error("Error di /api/confirm-payment:", error.message);
+        res.status(500).send('Server error');
+    }
+});
+
+// --- RUTE BARU: ADMIN MENGEDIT KARTU MAINTENANCE NANO ---
+app.put('/api/users/:id/update-nanocard', auth, adminAuth, async (req, res) => {
+    const { plateNumber } = req.body;
+
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user || !user.nanoCoatingCard) {
+            return res.status(404).json({ msg: 'Kartu maintenance untuk user ini tidak ditemukan.' });
+        }
+
+        user.nanoCoatingCard.plateNumber = plateNumber;
+        user.markModified('nanoCoatingCard');
+        await user.save();
+
+        res.json({ msg: `Data kartu untuk ${user.username} berhasil diperbarui.` });
+
+    } catch (error) {
+        console.error("Error di update-nanocard:", error);
         res.status(500).send('Server error');
     }
 });
