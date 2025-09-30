@@ -232,6 +232,43 @@ app.post('/api/verify-otp', async (req, res) => {
     }
 });
 
+// ### PENAMBAHAN BARU: Rute untuk memperpanjang masa aktif member ###
+app.post('/api/users/:id/extend', auth, adminAuth, async (req, res) => {
+    const { months } = req.body;
+    const userId = req.params.id;
+
+    // Validasi input
+    const duration = parseInt(months);
+    if (!duration || ![1, 3, 6].includes(duration)) {
+        return res.status(400).json({ msg: 'Durasi perpanjangan tidak valid. Harap pilih 1, 3, atau 6 bulan.' });
+    }
+
+    try {
+        const user = await User.findById(userId);
+        if (!user || !user.membership) {
+            return res.status(404).json({ msg: 'Member tidak ditemukan atau tidak memiliki paket.' });
+        }
+
+        const today = new Date();
+        // Tentukan tanggal dasar: tanggal kedaluwarsa saat ini jika masih aktif, atau hari ini jika sudah lewat.
+        const baseDate = (user.membership.expiresAt && new Date(user.membership.expiresAt) > today)
+            ? new Date(user.membership.expiresAt)
+            : new Date();
+
+        // Tambahkan bulan sesuai durasi
+        baseDate.setMonth(baseDate.getMonth() + duration);
+        user.membership.expiresAt = baseDate;
+
+        await user.save();
+        
+        res.json({ msg: `Masa aktif untuk ${user.username} berhasil diperpanjang selama ${duration} bulan.` });
+
+    } catch (error) {
+        console.error("Error saat memperpanjang masa aktif:", error);
+        res.status(500).send('Server error');
+    }
+});
+
 app.post('/api/profile/change-password', auth, async (req, res) => {
     const { currentPassword, newPassword } = req.body;
     
