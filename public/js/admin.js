@@ -1,14 +1,14 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // ======================= PERBAIKAN DI SINI =======================
+    // ======================= PERBAIKAN UTAMA DI SINI =======================
     // "Penjaga" untuk memastikan kode ini hanya berjalan di halaman admin.
     // Kita gunakan 'member-table-body' sebagai penanda unik halaman admin.
     const adminPageMarker = document.getElementById('member-table-body');
     if (!adminPageMarker) {
-        return; // Jika bukan di halaman admin, hentikan eksekusi script ini.
+        return; // Jika bukan di halaman admin, hentikan eksekusi seluruh script ini.
     }
     // ===================== AKHIR DARI PERBAIKAN =====================
 
-    // --- KONFIGURASI & INISIALISASI ---
+    // --- KONFIGURASI & INISIALISASI (Hanya berjalan jika di halaman admin) ---
     const token = localStorage.getItem('token');
     if (!token || localStorage.getItem('userRole') !== 'admin') {
         alert('Akses ditolak. Silakan login sebagai admin.');
@@ -303,18 +303,14 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const openEditExpiryModal = (user) => {
-        const userIdInput = document.getElementById('edit-expiry-userid');
-        const usernameSpan = document.getElementById('edit-expiry-username');
-        const dateInput = document.getElementById('edit-expiry-date');
-        if (!userIdInput || !usernameSpan || !dateInput) return;
-        userIdInput.value = user._id;
-        usernameSpan.textContent = user.username;
+        document.getElementById('edit-expiry-userid').value = user._id;
+        document.getElementById('edit-expiry-username').textContent = user.username;
         if (user.membership.expiresAt) {
             const currentDate = new Date(user.membership.expiresAt);
             const year = currentDate.getFullYear();
             const month = String(currentDate.getMonth() + 1).padStart(2, '0');
             const day = String(currentDate.getDate()).padStart(2, '0');
-            dateInput.value = `${year}-${month}-${day}`;
+            document.getElementById('edit-expiry-date').value = `${year}-${month}-${day}`;
         }
         editExpiryModal.show();
     };
@@ -330,6 +326,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const openEditNanoCardModal = (user) => {
         document.getElementById('edit-nanocard-userid').value = user._id;
         document.getElementById('edit-nanocard-username').textContent = user.username;
+        document.getElementById('edit-nanocard-owner').value = user.nanoCoatingCard.ownerName || '';
         document.getElementById('edit-nanocard-plate').value = user.nanoCoatingCard.plateNumber || '';
         editNanoCardModal.show();
     };
@@ -548,12 +545,13 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('edit-nanocard-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const userId = document.getElementById('edit-nanocard-userid').value;
+        const ownerName = document.getElementById('edit-nanocard-owner').value;
         const plateNumber = document.getElementById('edit-nanocard-plate').value;
         try {
             const response = await fetch(`/api/users/${userId}/update-nanocard`, {
                 method: 'PUT',
                 headers: getHeaders(),
-                body: JSON.stringify({ plateNumber })
+                body: JSON.stringify({ ownerName, plateNumber })
             });
             const result = await response.json();
             if (!response.ok) throw new Error(result.msg);
