@@ -110,6 +110,18 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
         }
 
+    const nanoCardSection = document.getElementById('nano-card-section');
+    if (user.nanoCoatingCard && user.nanoCoatingCard.isActive) {
+        const formatDate = (dateString) => new Date(dateString).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+
+        document.getElementById('nano-card-number').textContent = user.nanoCoatingCard.cardNumber;
+        document.getElementById('nano-plate-number').textContent = user.nanoCoatingCard.plateNumber || 'Belum diisi Admin';
+        document.getElementById('nano-coating-date').textContent = formatDate(user.nanoCoatingCard.coatingDate);
+        document.getElementById('nano-expires-at').textContent = formatDate(user.nanoCoatingCard.expiresAt);
+
+        nanoCardSection.classList.remove('d-none'); // Tampilkan kartu
+    }
+
         profileLoading.classList.add('d-none');
         profileContent.classList.remove('d-none');
     };
