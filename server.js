@@ -1045,36 +1045,10 @@ app.post('/api/confirm-payment/:userId', auth, adminAuth, async (req, res) => {
     }
 });
 
-// --- RUTE BARU: PENGGUNA MENGUPDATE DETAIL KARTU NANO MEREKA ---
-app.put('/api/profile/update-nanocard', auth, async (req, res) => {
-    const { ownerName, plateNumber } = req.body;
-
-    if (!ownerName || !plateNumber) {
-        return res.status(400).json({ msg: 'Nama Pemilik dan No. Polisi wajib diisi.' });
-    }
-
-    try {
-        const user = await User.findById(req.user.id);
-        if (!user || !user.nanoCoatingCard || !user.nanoCoatingCard.isActive) {
-            return res.status(404).json({ msg: 'Kartu maintenance tidak ditemukan atau belum aktif.' });
-        }
-
-        user.nanoCoatingCard.ownerName = ownerName;
-        user.nanoCoatingCard.plateNumber = plateNumber;
-        user.markModified('nanoCoatingCard');
-        await user.save();
-
-        res.json({ msg: 'Detail kartu maintenance berhasil disimpan.' });
-
-    } catch (error) {
-        console.error("Error di /api/profile/update-nanocard:", error);
-        res.status(500).send('Server error');
-    }
-});
-
-// --- RUTE BARU: ADMIN MENGEDIT KARTU MAINTENANCE NANO ---
+// --- RUTE ADMIN MENGEDIT KARTU MAINTENANCE NANO (DIPERBARUI) ---
 app.put('/api/users/:id/update-nanocard', auth, adminAuth, async (req, res) => {
-    const { plateNumber } = req.body;
+    // Ambil kedua data dari body
+    const { ownerName, plateNumber } = req.body;
 
     try {
         const user = await User.findById(req.params.id);
@@ -1082,6 +1056,8 @@ app.put('/api/users/:id/update-nanocard', auth, adminAuth, async (req, res) => {
             return res.status(404).json({ msg: 'Kartu maintenance untuk user ini tidak ditemukan.' });
         }
 
+        // Simpan kedua data
+        user.nanoCoatingCard.ownerName = ownerName;
         user.nanoCoatingCard.plateNumber = plateNumber;
         user.markModified('nanoCoatingCard');
         await user.save();
