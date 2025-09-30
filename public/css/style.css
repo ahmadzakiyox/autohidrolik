@@ -92,3 +92,49 @@ body {
 .admin-dashboard table {
     box-shadow: 0 5px 15px rgba(0,0,0,0.05);
 }
+
+.bundling-offer {
+    border-left: 3px solid var(--accent-color);
+    padding-left: 15px;
+}
+
+.hemat-badge {
+    background-color: #28a745; /* Warna hijau */
+    color: white;
+    padding: 3px 8px;
+    border-radius: 5px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    display: inline-block;
+    animation: pop-in 0.5s ease-out forwards;
+}
+
+/* Animasi sederhana untuk badge */
+@keyframes pop-in {
+    0% {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.modal-content {
+    background-color: #161b22;
+    border: 1px solid #30363d;
+}
+
+.modal-header, .modal-body {
+    color: #f0f6fc;
+}
+.list-group-item {
+    background-color: transparent !important;
+    border-color: #30363d !important;
+    color: #c9d1d9 !important;
+}
+
+.btn-close-white {
+    filter: invert(1);
+}
