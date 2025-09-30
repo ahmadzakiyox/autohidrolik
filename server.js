@@ -306,6 +306,34 @@ app.post('/api/profile/change-password', auth, async (req, res) => {
     }
 });
 
+// --- RUTE BARU: ADMIN MENGUPDATE TANGGAL KEDALUWARSA MEMBER ---
+app.put('/api/users/:id/update-expiry', auth, adminAuth, async (req, res) => {
+    const { newExpiryDate } = req.body;
+
+    // Validasi input
+    if (!newExpiryDate) {
+        return res.status(400).json({ msg: 'Tanggal kedaluwarsa baru wajib diisi.' });
+    }
+
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user || !user.membership) {
+            return res.status(404).json({ msg: 'Data member tidak ditemukan.' });
+        }
+
+        // Update tanggal kedaluwarsa
+        user.membership.expiresAt = new Date(newExpiryDate);
+        user.markModified('membership'); // Penting saat mengubah sub-dokumen
+        await user.save();
+
+        res.json({ msg: `Tanggal kedaluwarsa untuk ${user.username} berhasil diperbarui.` });
+
+    } catch (error) {
+        console.error("Error di /api/users/:id/update-expiry:", error);
+        res.status(500).send('Server error');
+    }
+});
+
 // --- RUTE STATISTIK DASHBOARD (DIPERBARUI) ---
 app.get('/api/dashboard-stats', auth, adminAuth, async (req, res) => {
     try {
