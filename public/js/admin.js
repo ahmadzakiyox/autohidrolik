@@ -451,7 +451,7 @@ const openExtendMembershipModal = (user) => {
           }
       });
   
-      document.body.addEventListener('click', (e) => {
+      document.body.addEventListener('click', async (e) => {
           const button = e.target.closest('button');
           if (!button) return;
 
