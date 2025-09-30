@@ -217,7 +217,27 @@ const setupPurchaseModal = () => {
         confirmButton.disabled = false;
         confirmButton.innerHTML = 'Yakin';
 
-        purchaseModal.show();
+            // ======================= LOGIKA BARU DI SINI =======================
+        const parentModalElement = button.closest('.modal');
+
+        // Jika tombol diklik dari dalam modal pilihan paket (Body Poles/Nano Coating)
+        if (parentModalElement && (parentModalElement.id === 'bodyPolesModal' || parentModalElement.id === 'nanoCoatingModal')) {
+            const parentModal = bootstrap.Modal.getInstance(parentModalElement);
+            
+            // Tambahkan event listener: SETELAH modal pilihan paket selesai tertutup,
+            // BARU buka modal konfirmasi pembelian.
+            parentModalElement.addEventListener('hidden.bs.modal', () => {
+                purchaseModal.show();
+            }, { once: true }); // { once: true } memastikan ini hanya berjalan sekali
+
+            // Perintahkan modal pilihan paket untuk menutup
+            parentModal.hide();
+        } 
+        // Jika tombol diklik dari kartu paket biasa di halaman utama
+        else {
+            purchaseModal.show();
+        }
+        // ===================== AKHIR DARI LOGIKA BARU =====================
     });
 
     if(confirmButton) {
