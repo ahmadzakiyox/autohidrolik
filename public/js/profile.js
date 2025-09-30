@@ -106,35 +106,66 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // ======================= LOGIKA BARU UNTUK KARTU NANO =======================
-        const nanoCardSection = document.getElementById('nano-card-section');
-        if (user.nanoCoatingCard && user.nanoCoatingCard.isActive) {
-            const card = user.nanoCoatingCard;
-            const formatDate = (dateString) => new Date(dateString).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+       <div id="nano-card-section" class="mb-4 d-none">
+    <div class="nano-card-background">
+        <div class="nano-card-header text-center">
+            <img src="/images/logo.png" alt="Logo" class="nano-card-logo">
+            <h5 class="nano-card-title mt-2">KARTU MAINTENANCE NANO COATING</h5>
+        </div>
 
-            // Jika No. Polisi sudah diisi, tampilkan kartu digital
-            if (card.plateNumber) {
-                document.getElementById('nano-card-display').classList.remove('d-none');
-                document.getElementById('nano-card-form-container').classList.add('d-none');
+        <div class="nano-card-content">
+            <div id="nano-card-display" class="d-none">
+                <div class="nano-card-field">
+                    <label>No. Kartu</label>
+                    <span id="nano-card-number"></span>
+                </div>
+                <div class="nano-card-field">
+                    <label>Nama Pemilik</label>
+                    <span id="nano-owner-name-display"></span>
+                </div>
+                <div class="nano-card-field">
+                    <label>No. Polisi Mobil</label>
+                    <span id="nano-plate-number-display"></span>
+                </div>
+                <div class="nano-card-field">
+                    <label>Tanggal Coating</label>
+                    <span id="nano-coating-date"></span>
+                </div>
+                <div class="nano-card-field">
+                    <label>Berlaku Hingga</label>
+                    <span id="nano-expires-at"></span>
+                </div>
+            </div>
 
-                document.getElementById('nano-card-number').textContent = card.cardNumber;
-                document.getElementById('nano-owner-name-display').textContent = card.ownerName;
-                document.getElementById('nano-plate-number-display').textContent = card.plateNumber;
-                document.getElementById('nano-coating-date').textContent = formatDate(card.coatingDate);
-                document.getElementById('nano-expires-at').textContent = formatDate(card.expiresAt);
-            } 
-            // Jika belum, tampilkan form
-            else {
-                document.getElementById('nano-card-display').classList.add('d-none');
-                document.getElementById('nano-card-form-container').classList.remove('d-none');
+            <div id="nano-card-form-container">
+                <p class="text-center small">Silakan lengkapi detail kartu Anda.</p>
+                <form id="nano-card-form">
+                    <div id="nano-form-message"></div>
+                    <div class="mb-2">
+                        <label class="form-label small">Nama Pemilik</label>
+                        <input type="text" class="form-control form-control-sm" id="nano-owner-name-form" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small">No. Polisi Mobil</label>
+                        <input type="text" class="form-control form-control-sm" id="nano-plate-number-form" placeholder="Contoh: B 1234 ABC" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm w-100">Simpan Detail</button>
+                </form>
+            </div>
+        </div>
 
-                document.getElementById('nano-card-number-form').value = card.cardNumber;
-                document.getElementById('nano-owner-name-form').value = card.ownerName || user.username; // Pre-fill dengan username
-            }
-            
-            nanoCardSection.classList.remove('d-none');
-        }
-        // ===================== AKHIR DARI LOGIKA KARTU NANO =====================
-
+        <div class="nano-card-footer">
+            <h6>Keterangan Maintenance:</h6>
+            <ul>
+                <li>Kartu ini berlaku 1 tahun sejak tanggal coating.</li>
+                <li>Selama periode berlaku, pemilik berhak melakukan maintenance nano coating (1 layer) seharga Rp 500.000.</li>
+                <li>Maintenance menjaga kilap & proteksi hydrophobic.</li>
+                <li>Tidak mencakup kerusakan akibat kecelakaan, goresan kasar, atau perawatan yang salah.</li>
+                <li>Disarankan perawatan & pencucian di Auto Hidrolik untuk hasil terbaik.</li>
+            </ul>
+        </div>
+    </div>
+</div>
         profileLoading.classList.add('d-none');
         profileContent.classList.remove('d-none');
     };
