@@ -261,7 +261,7 @@ const setupPurchaseModal = () => {
             }
         });
     }
-};    
+};
     /**
      * Mengatur efek visual (navbar scroll dan fade-in).
      */
