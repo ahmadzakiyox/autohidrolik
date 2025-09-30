@@ -56,26 +56,40 @@
                 </div>
             </div>
 
-              <div id="nano-card-section" class="card mb-4 d-none">
-            <div class="card-header"><h5>Kartu Maintenance Nano Coating</h5></div>
-            <div class="card-body">
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item"><strong>No. Kartu:</strong> <span id="nano-card-number"></span></li>
-                    <li class="list-group-item"><strong>No. Polisi Mobil:</strong> <span id="nano-plate-number"></span></li>
-                    <li class="list-group-item"><strong>Tanggal Coating:</strong> <span id="nano-coating-date"></span></li>
-                    <li class="list-group-item"><strong>Berlaku Hingga:</strong> <span id="nano-expires-at"></span></li>
-                </ul>
-                <div class="alert alert-info mt-3 small">
-                    <strong>Keterangan Maintenance:</strong>
-                    <ul class="mb-0 mt-2">
-                        <li>Kartu ini berlaku 1 tahun.</li>
-                        <li>Anda berhak melakukan maintenance (1 layer) seharga Rp 500.000.</li>
-                        <li>Disarankan perawatan & pencucian di Auto Hidrolik untuk hasil terbaik.</li>
-                    </ul>
+          <div id="nano-card-section" class="card mb-4 d-none">
+    <div class="card-header"><h5>Kartu Maintenance Nano Coating</h5></div>
+    <div class="card-body">
+        <div id="nano-card-display" class="d-none">
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item"><strong>No. Kartu:</strong> <span id="nano-card-number"></span></li>
+                <li class="list-group-item"><strong>Nama Pemilik:</strong> <span id="nano-owner-name-display"></span></li>
+                <li class="list-group-item"><strong>No. Polisi Mobil:</strong> <span id="nano-plate-number-display"></span></li>
+                <li class="list-group-item"><strong>Tanggal Coating:</strong> <span id="nano-coating-date"></span></li>
+                <li class="list-group-item"><strong>Berlaku Hingga:</strong> <span id="nano-expires-at"></span></li>
+            </ul>
+        </div>
+
+        <div id="nano-card-form-container">
+            <p class="text-muted">Silakan lengkapi detail kartu maintenance Anda.</p>
+            <form id="nano-card-form">
+                <div id="nano-form-message"></div>
+                <div class="mb-3">
+                    <label class="form-label">No. Kartu</label>
+                    <input type="text" class="form-control" id="nano-card-number-form" readonly>
                 </div>
-            </div>
+                <div class="mb-3">
+                    <label for="nano-owner-name-form" class="form-label">Nama Pemilik</label>
+                    <input type="text" class="form-control" id="nano-owner-name-form" required>
+                </div>
+                <div class="mb-3">
+                    <label for="nano-plate-number-form" class="form-label">No. Polisi Mobil</label>
+                    <input type="text" class="form-control" id="nano-plate-number-form" placeholder="Contoh: B 1234 ABC" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Simpan Detail Kartu</button>
+            </form>
         </div>
-        </div>
+    </div>
+</div>
 
             <div class="col-lg-5">
                 <div class="card mb-4">
