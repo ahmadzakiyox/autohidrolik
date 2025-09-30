@@ -19,6 +19,8 @@
       const memberTableBody = document.getElementById('member-table-body');
       const nonMemberTableBody = document.getElementById('non-member-table-body');
       const expiredMemberTableBody = document.getElementById('expired-member-table-body');
+      const extendMembershipModal = new bootstrap.Modal(document.getElementById('extendMembershipModal'));
+
       
       // Inisialisasi semua modal (pop-up)
       const addUserModal = new bootstrap.Modal(document.getElementById('addUserModal'));
@@ -203,6 +205,7 @@ const displayMembers = (members) => {
 
         // Logika tombol aksi Anda
         let actionButtons = `
+            <button class="btn btn-sm btn-info extend-membership-btn" title="Perpanjang"><i class="bi bi-calendar-plus"></i></button>
             <button class="btn btn-sm btn-outline-secondary reset-password-btn" title="Reset Sandi"><i class="bi bi-key-fill"></i></button>
             <button class="btn btn-sm btn-outline-success edit-user-btn" title="Edit"><i class="bi bi-pencil-square"></i></button>
             <button class="btn btn-sm btn-outline-danger delete-user-btn" title="Hapus"><i class="bi bi-trash3"></i></button>
@@ -407,7 +410,19 @@ const displayMembers = (members) => {
   
       editExpiryModal.show();
   };
-  
+
+  // --- FUNGSI BARU UNTUK MEMBUKA MODAL PERPANJANGAN ---
+const openExtendMembershipModal = (user) => {
+    document.getElementById('extend-userid').value = user._id;
+    document.getElementById('extend-username').textContent = user.username;
+
+    const currentExpiry = new Date(user.membership.expiresAt).toLocaleDateString('id-ID', {
+        day: 'numeric', month: 'long', year: 'numeric'
+    });
+    document.getElementById('extend-current-expiry').textContent = currentExpiry;
+
+    extendMembershipModal.show();
+};
   
       // --- EVENT LISTENER UTAMA (EVENT DELEGATION) ---
       // Listener untuk tombol Reset Transaksi (FITUR BARU)
@@ -439,6 +454,40 @@ const displayMembers = (members) => {
       document.body.addEventListener('click', (e) => {
           const button = e.target.closest('button');
           if (!button) return;
+
+    // Handler untuk tombol perpanjangan di dalam modal
+    if (button.classList.contains('extend-btn')) {
+        const userId = document.getElementById('extend-userid').value;
+        const months = button.dataset.months;
+
+        button.disabled = true;
+        button.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+        try {
+            const response = await fetch(`/api/users/${userId}/extend-membership`, {
+                method: 'POST',
+                headers: getHeaders(),
+                body: JSON.stringify({ months })
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.msg);
+
+            showAlert(result.msg, 'success');
+            extendMembershipModal.hide();
+            fetchUsers();
+
+        } catch (error) {
+            showAlert(error.message);
+        } finally {
+            // Kembalikan semua tombol ke keadaan semula
+            document.querySelectorAll('.extend-btn').forEach((btn, index) => {
+                btn.disabled = false;
+                const durations = [1, 3, 6];
+                btn.innerHTML = `+ ${durations[index]} Bulan`;
+            });
+        }
+        return; // Hentikan eksekusi setelah menangani klik di modal
+    }
   
           const userRow = button.closest('tr[data-user-id]');
           if (userRow) {
@@ -453,8 +502,7 @@ const displayMembers = (members) => {
                   if (button.classList.contains('reset-password-btn')) return openResetPasswordModal(user);
                   if (button.classList.contains('edit-combo-btn')) return openEditComboWashesModal(user); // <-- TAMBAHKAN INI
                   if (button.classList.contains('edit-expiry-btn')) return openEditExpiryModal(user);
-  
-  
+                  if (button.classList.contains('extend-membership-btn')) return openExtendMembershipModal(user);
               }
           }
   
