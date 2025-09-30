@@ -249,6 +249,29 @@
                         </div>
                     </div>
                 </div>
+                <div class="col-md-6 col-lg-4 mb-4">
+    <div class="card h-100 shadow-sm">
+        <div class="card-body d-flex flex-column text-center">
+            <h5 class="card-title"><i class="bi bi-brush-fill text-primary me-2"></i>Paket Body Poles</h5>
+            <p class="card-text flex-grow-1">Mengembalikan kilap cat mobil Anda dan menghilangkan goresan halus.</p>
+            <button class="btn btn-primary mt-auto" data-bs-toggle="modal" data-bs-target="#bodyPolesModal">
+                Lihat Pilihan Paket
+            </button>
+        </div>
+    </div>
+</div>
+
+             <div class="col-md-6 col-lg-4 mb-4">
+    <div class="card h-100 shadow-sm">
+        <div class="card-body d-flex flex-column text-center">
+            <h5 class="card-title"><i class="bi bi-shield-fill-check text-success me-2"></i>Paket Nano Coating</h5>
+            <p class="card-text flex-grow-1">Memberikan proteksi super hidrofobik dan kilap tahan lama pada cat mobil.</p>
+            <button class="btn btn-primary mt-auto" data-bs-toggle="modal" data-bs-target="#nanoCoatingModal">
+                Lihat Pilihan Paket
+            </button>
+        </div>
+    </div>
+         </div>
             </div>
         </section>
 
@@ -365,6 +388,134 @@
             </div>
         </div>
     </div>
+    
+    <div class="modal fade" id="bodyPolesModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Pilihan Paket Body Poles</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                
+                <h6 class="text-light border-bottom border-secondary pb-2 mb-3">Mobil Kecil</h6>
+                <ul class="list-group list-group-flush mb-4">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>Paket Poles Biasa</strong>
+                            <small class="d-block text-muted">(+1x Cuci Hidrolik + Vacuum)</small>
+                        </div>
+                        <div class="text-end">
+                            <span class="d-block fw-bold fs-5">Rp 800.000</span>
+                            <button class="btn btn-outline-primary btn-sm mt-1 buy-btn" data-package-name="Body Poles Biasa - Mobil Kecil" data-package-price="800000" data-total-washes="1">Pilih Paket</button>
+                        </div>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>Paket Bundling</strong>
+                            <small class="d-block text-muted">(Termasuk 1x Poles + 5x Cuci Hidrolik)</small>
+                        </div>
+                        <div class="text-end bundling-offer">
+                            <span class="hemat-badge">Hemat Rp 200.000</span>
+                            <span class="d-block fw-bold price-member">Rp 1.050.000</span>
+                             <button class="btn btn-primary btn-sm mt-1 buy-btn" data-package-name="Body Poles Bundling - Mobil Kecil" data-package-price="1050000" data-total-washes="5">Pilih Paket</button>
+                        </div>
+                    </li>
+                </ul>
+
+                <h6 class="text-light border-bottom border-secondary pb-2 mb-3">Mobil Medium</h6>
+                <ul class="list-group list-group-flush mb-4">
+                     <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>Paket Poles Biasa</strong>
+                            <small class="d-block text-muted">(+1x Cuci Hidrolik + Vacuum)</small>
+                        </div>
+                        <div class="text-end">
+                            <span class="d-block fw-bold fs-5">Rp 1.000.000</span>
+                            <button class="btn btn-outline-primary btn-sm mt-1 buy-btn" data-package-name="Body Poles Biasa - Mobil Medium" data-package-price="1000000" data-total-washes="1">Pilih Paket</button>
+                        </div>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>Paket Bundling</strong>
+                            <small class="d-block text-muted">(Termasuk 1x Poles + 5x Cuci Hidrolik)</small>
+                        </div>
+                        <div class="text-end bundling-offer">
+                            <span class="hemat-badge">Hemat Rp 200.000</span>
+                            <span class="d-block fw-bold price-member">Rp 1.250.000</span>
+                             <button class="btn btn-primary btn-sm mt-1 buy-btn" data-package-name="Body Poles Bundling - Mobil Medium" data-package-price="1250000" data-total-washes="5">Pilih Paket</button>
+                        </div>
+                    </li>
+                </ul>
+
+                <h6 class="text-light border-bottom border-secondary pb-2 mb-3">Mobil Besar</h6>
+                <ul class="list-group list-group-flush">
+                     <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>Paket Poles Biasa</strong>
+                            <small class="d-block text-muted">(+1x Cuci Hidrolik + Vacuum)</small>
+                        </div>
+                        <div class="text-end">
+                            <span class="d-block fw-bold fs-5">Rp 1.200.000</span>
+                            <button class="btn btn-outline-primary btn-sm mt-1 buy-btn" data-package-name="Body Poles Biasa - Mobil Besar" data-package-price="1200000" data-total-washes="1">Pilih Paket</button>
+                        </div>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>Paket Bundling</strong>
+                            <small class="d-block text-muted">(Termasuk 1x Poles + 5x Cuci Hidrolik)</small>
+                        </div>
+                        <div class="text-end bundling-offer">
+                            <span class="hemat-badge">Hemat Rp 200.000</span>
+                            <span class="d-block fw-bold price-member">Rp 1.450.000</span>
+                             <button class="btn btn-primary btn-sm mt-1 buy-btn" data-package-name="Body Poles Bundling - Mobil Besar" data-package-price="1450000" data-total-washes="5">Pilih Paket</button>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="nanoCoatingModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Pilihan Paket Nano Coating</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted">Semua paket sudah termasuk: 1x Nano Coating + 1x Cuci Hidrolik + Vacuum + 1x Voucher Cuci.</p>
+                 <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div><strong>Mobil Kecil</strong><br><small>2 Layer</small></div>
+                        <div class="text-end bundling-offer">
+                            <span class="hemat-badge">Hemat Rp 200.000</span>
+                            <span class="d-block fw-bold price-member">Rp 2.500.000</span>
+                            <small class="text-success">Harga Paket</small>
+                        </div>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div><strong>Mobil Medium</strong><br><small>2 Layer</small></div>
+                        <div class="text-end bundling-offer">
+                             <span class="hemat-badge">Hemat Rp 200.000</span>
+                            <span class="d-block fw-bold price-member">Rp 3.000.000</span>
+                            <small class="text-success">Harga Paket</small>
+                        </div>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div><strong>Mobil Besar</strong><br><small>3 Layer</small></div>
+                        <div class="text-end bundling-offer">
+                            <span class="hemat-badge">Hemat Rp 200.000</span>
+                            <span class="d-block fw-bold price-member">Rp 4.000.000</span>
+                            <small class="text-success">Harga Paket</small>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
     
     <footer class="bg-dark text-white text-center py-4 mt-5">
         <div class="container">
