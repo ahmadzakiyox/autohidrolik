@@ -1,22 +1,29 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-// Skema untuk Keanggotaan
-// models/User.js
+// Skema untuk Kartu Maintenance Nano Coating (dari kode Anda)
+const NanoCoatingCardSchema = new Schema({
+    cardNumber: { type: String, unique: true },
+    plateNumber: { type: String, default: '' },
+    coatingDate: { type: Date, default: Date.now },
+    expiresAt: { type: Date },
+    isActive: { type: Boolean, default: false } 
+});
+
+// Skema untuk Keanggotaan (dari kode Anda)
 const MembershipSchema = new Schema({
     packageName: {
         type: String,
         required: true
     },
-    totalWashes: { // Tetap digunakan untuk paket biasa
+    totalWashes: {
         type: Number,
         required: true
     },
-    remainingWashes: { // Tetap digunakan untuk paket biasa
+    remainingWashes: {
         type: Number,
         required: true
     },
-    // KHUSUS untuk Paket Kombinasi
     washes: {
         bodywash: { type: Number, default: 0 },
         hidrolik: { type: Number, default: 0 }
@@ -25,26 +32,23 @@ const MembershipSchema = new Schema({
         type: Date,
         default: Date.now
     },
-    // Field baru untuk melacak status pembayaran
     isPaid: {
         type: Boolean,
         default: false 
     },
-        // --- TAMBAHKAN BARIS INI ---
     expiresAt: {
         type: Date
     }
-
 });
 
-// Skema Utama Pengguna
+// Skema Utama Pengguna (dengan penyesuaian)
 const UserSchema = new Schema({
     memberId: { 
         type: String, 
         unique: true, 
-        sparse: true // Hanya terapkan unique jika field ini ada
+        sparse: true
     },
-        username: { type: String, required: true, trim: true },
+    username: { type: String, required: true, trim: true },
     email: { type: String, required: false, unique: true, sparse: true, lowercase: true, trim: true },
     password: { type: String, required: true },
     phone: { type: String, required: true, trim: true },
@@ -52,8 +56,15 @@ const UserSchema = new Schema({
     isVerified: { type: Boolean, default: true },
     membership: {
         type: MembershipSchema,
-        default: null // Menjadi member jika field ini diisi
+        default: null 
     },
+    // ======================= PENYESUAIAN DI SINI =======================
+    // Menambahkan referensi ke skema kartu nano coating
+    nanoCoatingCard: {
+        type: NanoCoatingCardSchema,
+        default: null
+    },
+    // ===================== AKHIR DARI PENYESUAIAN =====================
     date: { type: Date, default: Date.now }
 });
 
