@@ -33,6 +33,8 @@
       const editReviewModal = new bootstrap.Modal(document.getElementById('editReviewModal'));
       const resetPasswordModal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
       const resetTransactionsButton = document.getElementById('reset-transactions-btn'); // Tambahkan ini
+      const editNanoCardModal = new bootstrap.Modal(document.getElementById('editNanoCardModal'));
+
   
       let cachedUsers = []; // Variabel untuk menyimpan data pengguna sementara
   
@@ -211,6 +213,12 @@ const displayMembers = (members) => {
             <button class="btn btn-sm btn-outline-danger delete-user-btn" title="Hapus"><i class="bi bi-trash3"></i></button>
             <button class="btn btn-sm btn-outline-info set-package-btn" title="Atur/Ganti Paket"><i class="bi bi-gem"></i></button>
         `;
+
+        // Tambahkan tombol Edit Kartu Nano jika user memilikinya
+       if (user.nanoCoatingCard && user.nanoCoatingCard.isActive) {
+    actionButtons += `<button class="btn btn-sm btn-dark edit-nanocard-btn" title="Edit Kartu Nano"><i class="bi bi-credit-card-2-front"></i></button>`;
+          }
+        
         if (user.membership.packageName === 'Paket Kombinasi') {
             actionButtons = `<button class="btn btn-sm btn-outline-primary edit-combo-btn" title="Edit Jatah Kombinasi"><i class="bi bi-sliders"></i></button>` + actionButtons;
         }
@@ -234,7 +242,30 @@ const displayMembers = (members) => {
         memberTableBody.appendChild(row);
     });
 };
-  
+
+        // --- EVENT LISTENER BARU UNTUK FORM EDIT KARTU NANO ---
+document.getElementById('edit-nanocard-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const userId = document.getElementById('edit-nanocard-userid').value;
+    const plateNumber = document.getElementById('edit-nanocard-plate').value;
+
+    try {
+        const response = await fetch(`/api/users/${userId}/update-nanocard`, {
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify({ plateNumber })
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.msg);
+
+        showAlert(result.msg, 'success');
+        editNanoCardModal.hide();
+        fetchUsers(); // Refresh data
+
+    } catch (error) {
+        showAlert(error.message);
+    }
+});
   // --- FUNGSI BARU UNTUK MENAMPILKAN MEMBER KEDALUWARSA ---
   const displayExpiredMembers = (members) => {
       expiredMemberTableBody.innerHTML = '';
@@ -423,7 +454,14 @@ const openExtendMembershipModal = (user) => {
 
     extendMembershipModal.show();
 };
-  
+
+        const openEditNanoCardModal = (user) => {
+    document.getElementById('edit-nanocard-userid').value = user._id;
+    document.getElementById('edit-nanocard-username').textContent = user.username;
+    document.getElementById('edit-nanocard-plate').value = user.nanoCoatingCard.plateNumber || '';
+    editNanoCardModal.show();
+};
+        
       // --- EVENT LISTENER UTAMA (EVENT DELEGATION) ---
       // Listener untuk tombol Reset Transaksi (FITUR BARU)
       resetTransactionsButton.addEventListener('click', async () => {
@@ -503,6 +541,8 @@ const openExtendMembershipModal = (user) => {
                   if (button.classList.contains('edit-combo-btn')) return openEditComboWashesModal(user); // <-- TAMBAHKAN INI
                   if (button.classList.contains('edit-expiry-btn')) return openEditExpiryModal(user);
                   if (button.classList.contains('extend-membership-btn')) return openExtendMembershipModal(user);
+                  if (button.classList.contains('edit-nanocard-btn')) return openEditNanoCardModal(user);
+
               }
           }
   
