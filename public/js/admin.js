@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('DOMContentLoaded', () => {
     // --- KONFIGURASI & INISIALISASI ---
     const token = localStorage.getItem('token');
     if (!token || localStorage.getItem('userRole') !== 'admin') {
@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const editUserModal = new bootstrap.Modal(document.getElementById('editUserModal'));
     const editComboWashesModal = new bootstrap.Modal(document.getElementById('editComboWashesModal')); // <-- TAMBAHKAN INI
     const editTransactionModal = new bootstrap.Modal(document.getElementById('editTransactionModal'));
+    const editExpiryModal = new bootstrap.Modal(document.getElementById('editExpiryModal'));
     const viewBarcodeModal = new bootstrap.Modal(document.getElementById('viewBarcodeModal'));
     const setPackageModal = new bootstrap.Modal(document.getElementById('setPackageModal'));
     const editReviewModal = new bootstrap.Modal(document.getElementById('editReviewModal'));
@@ -262,6 +263,10 @@ const displayExpiredMembers = (members) => {
             day: 'numeric', month: 'long', year: 'numeric'
         });
 
+        const editButton = `<button class="btn btn-sm btn-link p-0 ms-2 edit-expiry-btn" title="Edit Tanggal"><i class="bi bi-pencil"></i></button>`;
+        expiryDateHtml = (isExpired ? `<span class="text-danger fw-bold">${formattedDate}</span>` : formattedDate) + editButton;
+        }
+                    
         // Tombol aksi hanya untuk memperbarui paket
         const actionButtons = `
             <button class="btn btn-sm btn-success set-package-btn" title="Perbarui Paket Member">
@@ -397,6 +402,23 @@ const displayExpiredMembers = (members) => {
         editComboWashesModal.show();
     };
 
+// --- FUNGSI BARU UNTUK MEMBUKA MODAL EDIT TANGGAL ---
+const openEditExpiryModal = (user) => {
+    document.getElementById('edit-expiry-userid').value = user._id;
+    document.getElementById('edit-expiry-username').textContent = user.username;
+
+    // Format tanggal 'YYYY-MM-DD' yang dibutuhkan oleh input type="date"
+    if (user.membership.expiresAt) {
+        const currentDate = new Date(user.membership.expiresAt);
+        const year = currentDate.getFullYear();
+        const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+        const day = String(currentDate.getDate()).padStart(2, '0');
+        document.getElementById('edit-expiry-date').value = `${year}-${month}-${day}`;
+    }
+
+    editExpiryModal.show();
+};
+
 
     // --- EVENT LISTENER UTAMA (EVENT DELEGATION) ---
     // Listener untuk tombol Reset Transaksi (FITUR BARU)
@@ -441,6 +463,8 @@ const displayExpiredMembers = (members) => {
                 if (button.classList.contains('set-package-btn')) return openSetPackageModal(user);
                 if (button.classList.contains('reset-password-btn')) return openResetPasswordModal(user);
                 if (button.classList.contains('edit-combo-btn')) return openEditComboWashesModal(user); // <-- TAMBAHKAN INI
+                if (button.classList.contains('edit-expiry-btn')) return openEditExpiryModal(user);
+
 
             }
         }
@@ -559,6 +583,31 @@ document.getElementById('edit-transaction-form').addEventListener('submit', asyn
             resetPasswordModal.hide();
         } catch (error) { showAlert(error.message); }
     });
+
+    // --- EVENT LISTENER BARU UNTUK FORM EDIT TANGGAL ---
+document.getElementById('edit-expiry-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const userId = document.getElementById('edit-expiry-userid').value;
+    const newExpiryDate = document.getElementById('edit-expiry-date').value;
+
+    try {
+        const response = await fetch(`/api/users/${userId}/update-expiry`, {
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify({ newExpiryDate })
+        });
+
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.msg || 'Gagal mengupdate tanggal.');
+
+        showAlert(result.msg, 'success');
+        editExpiryModal.hide();
+        fetchUsers(); // Muat ulang data untuk menampilkan tanggal terbaru
+
+    } catch (error) {
+        showAlert(error.message);
+    }
+});
 
     document.getElementById('set-package-form').addEventListener('submit', async (e) => {
         e.preventDefault();
