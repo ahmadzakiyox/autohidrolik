@@ -190,8 +190,8 @@ const displayMembers = (members) => {
             const today = new Date();
             const isExpired = expiryDate < today;
 
-            const formattedDate = expiryDate.toLocaleDate'String'('id-ID', {
-                day: 'numeric', month: 'long', year: 'numeric'
+        const formattedDate = expiryDate.toLocaleDateString('id-ID', {
+         day: 'numeric', month: 'long', year: 'numeric'
             });
 
             // ======================= PERUBAHAN DI SINI =======================
