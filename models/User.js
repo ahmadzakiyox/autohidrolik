@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-// Skema untuk Kartu Maintenance Nano Coating (dari kode Anda)
 const NanoCoatingCardSchema = new Schema({
     cardNumber: { type: String, unique: true },
+    ownerName: { type: String, default: '' },
     plateNumber: { type: String, default: '' },
     coatingDate: { type: Date, default: Date.now },
     expiresAt: { type: Date },
