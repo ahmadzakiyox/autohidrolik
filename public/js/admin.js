@@ -155,93 +155,82 @@
       // Ganti fungsi displayUsers yang lama dengan dua fungsi baru ini
       // --- FUNGSI TAMPILAN (DISPLAY) ---
       // public/js/admin.js
-  const displayMembers = (members) => {
-      // Perbarui colspan jika tidak ada member
-      memberTableBody.innerHTML = '';
-      if (members.length === 0) {
-          memberTableBody.innerHTML = `<tr><td colspan="8" class="text-center text-muted">Belum ada member.</td></tr>`; // Ubah 7 -> 8
-          return;
-      }
-      let counter = 1;
-      members.forEach(user => {
-          const row = document.createElement('tr');
-          row.dataset.userId = user._id;
-  
-          let membershipStatus = '';
-          if (user.membership.packageName === 'Paket Kombinasi') {
-              membershipStatus = `
-                  <div>Paket Kombinasi</div>
-                  <small class="text-muted">
-                      Bodywash: <strong>${user.membership.washes.bodywash}x</strong>, 
-                      Hidrolik: <strong>${user.membership.washes.hidrolik}x</strong>
-                  </small>
-              `;
-          } else {
-              membershipStatus = `${user.membership.packageName} (${user.membership.remainingWashes}x)`;
-          }
-  
-          let paymentStatus = user.membership.isPaid
-              ? '<span class="badge bg-success">Lunas</span>'
-              : '<span class="badge bg-warning text-dark">Belum Bayar</span>';
-              
-          // ======================= LOGIKA BARU UNTUK TANGGAL =======================
-          let expiryDateHtml = '-';
-          if (user.membership.expiresAt) {
-              const expiryDate = new Date(user.membership.expiresAt);
-              const today = new Date();
-              const isExpired = expiryDate < today;
-  
-              // Format tanggal menjadi "29 September 2025"
-              const formattedDate = expiryDate.toLocaleDateString('id-ID', {
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric'
-              });
-  
-              // Beri warna merah jika sudah kedaluwarsa
-              expiryDateHtml = isExpired 
-                  ? `<span class="text-danger fw-bold">${formattedDate}</span>` 
-                  : formattedDate;
-          }
-          // ===================== AKHIR DARI LOGIKA TANGGAL =====================
-  
-          // Logika tombol aksi Anda (tidak diubah, hanya disalin)
-          let actionButtons = `
-              <button class="btn btn-sm btn-outline-secondary reset-password-btn" title="Reset Sandi"><i class="bi bi-key-fill"></i></button>
-              <button class="btn btn-sm btn-outline-success edit-user-btn" title="Edit"><i class="bi bi-pencil-square"></i></button>
-              <button class="btn btn-sm btn-outline-danger delete-user-btn" title="Hapus"><i class="bi bi-trash3"></i></button>
-              <button class="btn btn-sm btn-outline-info set-package-btn" title="Atur/Ganti Paket"><i class="bi bi-gem"></i></button>
-          `;
-          
-          if (user.membership.packageName === 'Paket Kombinasi') {
-              actionButtons = `
-                  <button class="btn btn-sm btn-outline-primary edit-combo-btn" title="Edit Jatah Kombinasi"><i class="bi bi-sliders"></i></button>
-                  ` + actionButtons;
-          }
-  
-          if (user.membership.isPaid) {
-              actionButtons = `
-                  <button class="btn btn-sm btn-outline-info view-barcode-btn" title="QR Code"><i class="bi bi-qr-code"></i></button>
-                  ` + actionButtons;
-          } else {
-              actionButtons = `
-                  <button class="btn btn-sm btn-info confirm-payment-btn" title="Konfirmasi Bayar"><i class="bi bi-check-circle"></i></button>
-                  ` + actionButtons;
-          }
-  
-          // Susun ulang baris tabel dengan kolom baru
-          row.innerHTML = `
-              <td>${String(counter++).padStart(3, '0')}</td>
-              <td>${user.username}</td>
-              <td>${user.email}</td>
-              <td>${user.phone || '-'}</td>
-              <td>${membershipStatus}</td>
-              <td>${paymentStatus}</td>
-              <td>${expiryDateHtml}</td> <td><div class="btn-group">${actionButtons}</div></td>
-          `;
-          memberTableBody.appendChild(row);
-      });
-  };
+const displayMembers = (members) => {
+    // Perbarui colspan jika tidak ada member
+    memberTableBody.innerHTML = '';
+    if (members.length === 0) {
+        memberTableBody.innerHTML = `<tr><td colspan="8" class="text-center text-muted">Belum ada member.</td></tr>`; // Ubah 7 -> 8
+        return;
+    }
+    let counter = 1;
+    members.forEach(user => {
+        const row = document.createElement('tr');
+        row.dataset.userId = user._id;
+
+        let membershipStatus = '';
+        if (user.membership.packageName === 'Paket Kombinasi') {
+            membershipStatus = `
+                <div>Paket Kombinasi</div>
+                <small class="text-muted">
+                    Bodywash: <strong>${user.membership.washes.bodywash}x</strong>, 
+                    Hidrolik: <strong>${user.membership.washes.hidrolik}x</strong>
+                </small>
+            `;
+        } else {
+            membershipStatus = `${user.membership.packageName} (${user.membership.remainingWashes}x)`;
+        }
+
+        let paymentStatus = user.membership.isPaid
+            ? '<span class="badge bg-success">Lunas</span>'
+            : '<span class="badge bg-warning text-dark">Belum Bayar</span>';
+
+        let expiryDateHtml = '-';
+        if (user.membership.expiresAt) {
+            const expiryDate = new Date(user.membership.expiresAt);
+            const today = new Date();
+            const isExpired = expiryDate < today;
+
+            const formattedDate = expiryDate.toLocaleDate'String'('id-ID', {
+                day: 'numeric', month: 'long', year: 'numeric'
+            });
+
+            // ======================= PERUBAHAN DI SINI =======================
+            // Tambahkan tombol edit kecil di sebelah tanggal
+            const editButton = `<button class="btn btn-sm btn-link p-0 ms-2 edit-expiry-btn" title="Edit Tanggal"><i class="bi bi-pencil"></i></button>`;
+            expiryDateHtml = (isExpired ? `<span class="text-danger fw-bold">${formattedDate}</span>` : formattedDate) + editButton;
+            // ===================== AKHIR DARI PERUBAHAN =====================
+        }
+
+        // Logika tombol aksi Anda
+        let actionButtons = `
+            <button class="btn btn-sm btn-outline-secondary reset-password-btn" title="Reset Sandi"><i class="bi bi-key-fill"></i></button>
+            <button class="btn btn-sm btn-outline-success edit-user-btn" title="Edit"><i class="bi bi-pencil-square"></i></button>
+            <button class="btn btn-sm btn-outline-danger delete-user-btn" title="Hapus"><i class="bi bi-trash3"></i></button>
+            <button class="btn btn-sm btn-outline-info set-package-btn" title="Atur/Ganti Paket"><i class="bi bi-gem"></i></button>
+        `;
+        if (user.membership.packageName === 'Paket Kombinasi') {
+            actionButtons = `<button class="btn btn-sm btn-outline-primary edit-combo-btn" title="Edit Jatah Kombinasi"><i class="bi bi-sliders"></i></button>` + actionButtons;
+        }
+        if (user.membership.isPaid) {
+            actionButtons = `<button class="btn btn-sm btn-outline-info view-barcode-btn" title="QR Code"><i class="bi bi-qr-code"></i></button>` + actionButtons;
+        } else {
+            actionButtons = `<button class="btn btn-sm btn-info confirm-payment-btn" title="Konfirmasi Bayar"><i class="bi bi-check-circle"></i></button>` + actionButtons;
+        }
+
+        // Susun ulang baris tabel dengan kolom baru
+        row.innerHTML = `
+            <td>${String(counter++).padStart(3, '0')}</td>
+            <td>${user.username}</td>
+            <td>${user.email}</td>
+            <td>${user.phone || '-'}</td>
+            <td>${membershipStatus}</td>
+            <td>${paymentStatus}</td>
+            <td>${expiryDateHtml}</td>
+            <td><div class="btn-group">${actionButtons}</div></td>
+        `;
+        memberTableBody.appendChild(row);
+    });
+};
   
   // --- FUNGSI BARU UNTUK MENAMPILKAN MEMBER KEDALUWARSA ---
   const displayExpiredMembers = (members) => {
