@@ -136,6 +136,55 @@ body {
     animation: pop-in 0.5s ease-out forwards;
 }
 
+.nano-card-background {
+    background: linear-gradient(to bottom, #004a7f, #007ac1);
+    border-radius: 15px;
+    padding: 20px;
+    color: white;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+.nano-card-logo {
+    width: 120px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    padding: 5px;
+}
+.nano-card-title {
+    font-weight: bold;
+    color: white;
+    letter-spacing: 1px;
+}
+.nano-card-content {
+    background-color: white;
+    color: #333;
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: 20px;
+    font-size: 0.9rem;
+}
+.nano-card-field {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+}
+.nano-card-field:last-child {
+    border-bottom: none;
+}
+.nano-card-field label {
+    font-weight: normal;
+    color: #555;
+}
+.nano-card-field span {
+    font-weight: bold;
+}
+.nano-card-footer {
+    padding: 20px 5px 0 5px;
+    font-size: 0.8rem;
+}
+.nano-card-footer ul {
+    padding-left: 20px;
+}
 /* Animasi sederhana untuk badge */
 @keyframes pop-in {
     0% {
