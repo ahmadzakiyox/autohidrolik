@@ -921,6 +921,41 @@ app.post('/api/transactions/correction', auth, adminAuth, async (req, res) => {
     }
 });
 
+// --- RUTE BARU: ADMIN MEMPERPANJANG MASA AKTIF MEMBER ---
+app.post('/api/users/:id/extend-membership', auth, adminAuth, async (req, res) => {
+    const { months } = req.body;
+    const monthsToAdd = parseInt(months, 10);
+
+    if (!monthsToAdd || ![1, 3, 6].includes(monthsToAdd)) {
+        return res.status(400).json({ msg: 'Durasi perpanjangan tidak valid.' });
+    }
+
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user || !user.membership) {
+            return res.status(404).json({ msg: 'Data member tidak ditemukan.' });
+        }
+
+        // Ambil tanggal kedaluwarsa saat ini, atau tanggal hari ini jika sudah lewat
+        const today = new Date();
+        const currentExpiry = new Date(user.membership.expiresAt);
+        const startDate = currentExpiry < today ? today : currentExpiry;
+
+        // Tambahkan bulan sesuai permintaan
+        const newExpiryDate = new Date(startDate.setMonth(startDate.getMonth() + monthsToAdd));
+
+        user.membership.expiresAt = newExpiryDate;
+        user.markModified('membership');
+        await user.save();
+
+        res.json({ msg: `Masa aktif ${user.username} berhasil diperpanjang ${monthsToAdd} bulan.` });
+
+    } catch (error) {
+        console.error("Error di /api/users/:id/extend-membership:", error);
+        res.status(500).send('Server error');
+    }
+});
+
 // Rute untuk menggunakan jatah cuci (scan barcode)
 /*app.post('/api/use-wash', auth, adminAuth, async (req, res) => { // <-- PERBAIKAN DI SINI
     const { userId } = req.body;
