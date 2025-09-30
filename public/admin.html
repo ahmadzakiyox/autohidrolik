@@ -350,6 +350,27 @@
             </div>
         </div>
     </div>
+    <div class="modal fade" id="extendMembershipModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Perpanjang Masa Aktif</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="extend-userid">
+                <p>Perpanjang keanggotaan untuk: <strong id="extend-username"></strong></p>
+                <p class="mb-4">Kedaluwarsa saat ini: <strong id="extend-current-expiry"></strong></p>
+                
+                <div class="d-grid gap-2">
+                    <button class="btn btn-primary extend-btn" data-months="1">+ 1 Bulan</button>
+                    <button class="btn btn-primary extend-btn" data-months="3">+ 3 Bulan</button>
+                    <button class="btn btn-primary extend-btn" data-months="6">+ 6 Bulan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+   </div>
     <div class="modal fade" id="resetPasswordModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
