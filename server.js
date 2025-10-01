@@ -12,6 +12,20 @@ require('dotenv').config();
 // Inisialisasi Aplikasi Express
 const app = express();
 
+// Mekanisme penangkap log sederhana
+const serverLogs = [];
+const originalConsoleLog = console.log;
+console.log = (...args) => {
+    // Tampilkan di konsol asli
+    originalConsoleLog.apply(console, args);
+    // Simpan ke array log (hanya 100 log terakhir)
+    const logMessage = args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : arg).join(' ');
+    serverLogs.push(logMessage);
+    if (serverLogs.length > 100) {
+        serverLogs.shift();
+    }
+};
+
 // Import Model
 const User = require('./models/User');
 const Review = require('./models/Review'); // Pastikan model Review diimpor
@@ -111,6 +125,29 @@ function calculateExpiryDate() {
     expiryDate.setMonth(expiryDate.getMonth() + 3); // Tambah 3 bulan dari sekarang
     return expiryDate;
 }
+
+
+// ================== RUTE BARU UNTUK STATUS SERVER ==================
+app.get('/api/server-status', auth, adminAuth, (req, res) => {
+    try {
+        const specs = {
+            platform: os.platform(),
+            arch: os.arch(),
+            totalMemory: os.totalmem(),
+            freeMemory: os.freemem(),
+            uptime: os.uptime(),
+        };
+
+        res.json({
+            specs,
+            logs: serverLogs.slice().reverse() // Kirim log dari yang terbaru
+        });
+    } catch (error) {
+        console.log('Error saat mengambil status server:', error.message);
+        res.status(500).json({ msg: 'Gagal mengambil status server.' });
+    }
+});
+// ================== AKHIR RUTE BARU ==================
 
 // ======================================================
 // --- API ROUTES ---
@@ -1325,6 +1362,11 @@ app.get('/Profile', (req, res) => {
 app.get('/Admin-Dashboard', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
+// Rute baru untuk halaman status
+app.get('/Server-Status', auth, adminAuth, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'status.html'));
+});
+
 
 // --- PENAMBAHAN BARU: Rute untuk halaman scanner ---
 app.get('/Scanner-QRCODE', (req, res) => {
