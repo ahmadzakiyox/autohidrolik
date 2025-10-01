@@ -38,7 +38,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const editReviewModal = new bootstrap.Modal(document.getElementById('editReviewModal'));
     const resetPasswordModal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
     const extendMembershipModal = new bootstrap.Modal(document.getElementById('extendMembershipModal'));
-    const editNanoCardModal = new bootstrap.Modal(document.getElementById('editNanoCardModal'));
     const resetTransactionsButton = document.getElementById('reset-transactions-btn');
 
     let cachedUsers = [];
@@ -154,9 +153,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 expiryDateHtml = (isExpired ? `<span class="text-danger fw-bold">${formattedDate}</span>` : formattedDate) + editButton;
             }
             let actionButtons = `<button class="btn btn-sm btn-info extend-membership-btn" title="Perpanjang"><i class="bi bi-calendar-plus"></i></button><button class="btn btn-sm btn-outline-secondary reset-password-btn" title="Reset Sandi"><i class="bi bi-key-fill"></i></button><button class="btn btn-sm btn-outline-success edit-user-btn" title="Edit"><i class="bi bi-pencil-square"></i></button><button class="btn btn-sm btn-outline-danger delete-user-btn" title="Hapus"><i class="bi bi-trash3"></i></button><button class="btn btn-sm btn-outline-info set-package-btn" title="Atur/Ganti Paket"><i class="bi bi-gem"></i></button>`;
-            if (user.nanoCoatingCard && user.nanoCoatingCard.isActive) {
-                actionButtons += `<button class="btn btn-sm btn-dark edit-nanocard-btn" title="Edit Kartu Nano"><i class="bi bi-credit-card-2-front"></i></button>`;
-            }
             if (user.membership.packageName === 'Paket Kombinasi') {
                 actionButtons = `<button class="btn btn-sm btn-outline-primary edit-combo-btn" title="Edit Jatah Kombinasi"><i class="bi bi-sliders"></i></button>` + actionButtons;
             }
@@ -322,15 +318,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('extend-current-expiry').textContent = currentExpiry;
         extendMembershipModal.show();
     };
-
-    const openEditNanoCardModal = (user) => {
-        document.getElementById('edit-nanocard-userid').value = user._id;
-        document.getElementById('edit-nanocard-username').textContent = user.username;
-        document.getElementById('edit-nanocard-owner').value = user.nanoCoatingCard.ownerName || '';
-        document.getElementById('edit-nanocard-plate').value = user.nanoCoatingCard.plateNumber || '';
-        editNanoCardModal.show();
-    };
-
+    
     // --- EVENT LISTENER UTAMA ---
     resetTransactionsButton.addEventListener('click', async () => {
         const confirmation = prompt('PERINGATAN: Tindakan ini akan menghapus SEMUA catatan transaksi. Ketik "RESET" untuk melanjutkan.');
@@ -395,7 +383,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (button.classList.contains('edit-combo-btn')) return openEditComboWashesModal(user);
                 if (button.classList.contains('edit-expiry-btn')) return openEditExpiryModal(user);
                 if (button.classList.contains('extend-membership-btn')) return openExtendMembershipModal(user);
-                if (button.classList.contains('edit-nanocard-btn')) return openEditNanoCardModal(user);
             }
         }
 
@@ -542,27 +529,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) { showAlert(error.message); }
     });
     
-    document.getElementById('edit-nanocard-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const userId = document.getElementById('edit-nanocard-userid').value;
-        const ownerName = document.getElementById('edit-nanocard-owner').value;
-        const plateNumber = document.getElementById('edit-nanocard-plate').value;
-        try {
-            const response = await fetch(`/api/users/${userId}/update-nanocard`, {
-                method: 'PUT',
-                headers: getHeaders(),
-                body: JSON.stringify({ ownerName, plateNumber })
-            });
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.msg);
-            showAlert(result.msg, 'success');
-            editNanoCardModal.hide();
-            fetchUsers();
-        } catch (error) {
-            showAlert(error.message);
-        }
-    });
-
     downloadButton.addEventListener('click', async () => {
         downloadButton.disabled = true;
         downloadButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Mengunduh...';
