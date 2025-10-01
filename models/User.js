@@ -1,16 +1,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const NanoCoatingCardSchema = new Schema({
-    cardNumber: { type: String, unique: true },
-    ownerName: { type: String, default: '' },
-    plateNumber: { type: String, default: '' },
-    coatingDate: { type: Date, default: Date.now },
-    expiresAt: { type: Date },
-    isActive: { type: Boolean, default: false } 
-});
-
-// Skema untuk Keanggotaan (dari kode Anda)
+// Skema untuk Keanggotaan (Membership)
 const MembershipSchema = new Schema({
     packageName: {
         type: String,
@@ -24,7 +15,7 @@ const MembershipSchema = new Schema({
         type: Number,
         required: true
     },
-    washes: {
+    washes: { // Untuk paket kombinasi
         bodywash: { type: Number, default: 0 },
         hidrolik: { type: Number, default: 0 }
     },
@@ -38,10 +29,25 @@ const MembershipSchema = new Schema({
     },
     expiresAt: {
         type: Date
+    },
+    // ID unik untuk setiap paket, akan digunakan di QR code
+    packageId: {
+        type: String,
+        unique: true,
+        sparse: true
     }
 });
 
-// Skema Utama Pengguna (dengan penyesuaian)
+const NanoCoatingCardSchema = new Schema({
+    cardNumber: { type: String, unique: true },
+    ownerName: { type: String, default: '' },
+    plateNumber: { type: String, default: '' },
+    coatingDate: { type: Date, default: Date.now },
+    expiresAt: { type: Date },
+    isActive: { type: Boolean, default: false } 
+});
+
+// Skema Utama Pengguna
 const UserSchema = new Schema({
     memberId: { 
         type: String, 
@@ -54,17 +60,16 @@ const UserSchema = new Schema({
     phone: { type: String, required: true, trim: true },
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
     isVerified: { type: Boolean, default: true },
-    membership: {
-        type: MembershipSchema,
-        default: null 
-    },
-    // ======================= PENYESUAIAN DI SINI =======================
-    // Menambahkan referensi ke skema kartu nano coating
+    
+    // ================== PERUBAHAN UTAMA DI SINI ==================
+    // 'membership' diubah menjadi 'memberships' dan menjadi array
+    memberships: [MembershipSchema],
+    // ================= AKHIR PERUBAHAN =================
+    
     nanoCoatingCard: {
         type: NanoCoatingCardSchema,
         default: null
     },
-    // ===================== AKHIR DARI PENYESUAIAN =====================
     date: { type: Date, default: Date.now }
 });
 
