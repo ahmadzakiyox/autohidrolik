@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Auto Hidrolik Carwash Terbaik di indonesia - Cuci Mobil & Motor</title>
+    <title>Auto Hidrolik Carwash Terbaik di indonesia - Admin Panel</title>
     <link rel="icon" type="image/png" href="/images/log.png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
@@ -23,24 +23,13 @@
             background-color: #161b22 !important;
             box-shadow: 0 2px 10px rgba(0,0,0,0.5);
         }
-        .hero-section {
-            /* === PERUBAHAN DI SINI === */
-            /* Gradien 3 warna baru yang disesuaikan dengan gambar undangan Anda */
+        .admin-section {
             background: linear-gradient(135deg, #012A61, #0b2cff, #0686f7);
-            
             background-size: cover;
             background-position: center;
-            padding: 100px 0;
-            position: relative; /* Menambahkan position relative untuk watermark jika diperlukan */
-        }
-        /* Saya menghapus rule duplikat untuk .hero-section dan watermark yang tidak terpakai */
-        
-        /* Pastikan konten di dalam hero section berada di atas elemen lain */
-        .hero-section .container {
+            padding: 80px 0;
             position: relative;
-            z-index: 2;
         }
-        /* --- AKHIR PERUBAHAN HERO SECTION --- */
         .card {
             background-color: #161b22;
             border: 1px solid #30363d;
@@ -76,34 +65,10 @@
         .navbar-toggler-icon {
             filter: invert(1) grayscale(100%) brightness(200%);
         }
-        .price-member {
-            font-size: 2.2rem;
-            font-weight: 700;
-            color: #a777ff;
+        .admin-header {
+            text-align: center;
+            margin-bottom: 40px;
         }
-        .stars {
-            color: #ffc107;
-        }
-        .feature-icon {
-            font-size: 3rem;
-            color: #8250df;
-        }
-        .map-container {
-            position: relative;
-            overflow: hidden;
-            padding-top: 56.25%; /* 16:9 Aspect Ratio */
-            border-radius: 15px;
-            border: 1px solid #30363d;
-        }
-        .map-container iframe {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border: 0;
-        }
-        /* Animasi Fade-in */
         .fade-in-section {
             opacity: 0;
             transform: translateY(20px);
@@ -113,483 +78,104 @@
             opacity: 1;
             transform: translateY(0);
         }
-        /* Style untuk review slider */
-        #reviewCarousel .carousel-item {
-            padding: 2rem;
-        }
-        #reviewCarousel .card {
-            background-color: #0d1117;
+        .admin-table th, .admin-table td {
+            color: #c9d1d9;
         }
     </style>
 </head>
 <body>
 
- <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="container">
-            <a class="navbar-brand d-flex align-items-center" href="#">
-                <img src="/images/logo.png" alt="AUTOHIDROLIK Logo" style="height: 30px;" class="me-2">
-                <span class="fw-bold">AUTOHIDROLIK</span>
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><a class="nav-link active" href="/">Home</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#layanan">Layanan</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#paket-member">Paket Member</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#review">Review</a></li>
-                    
-                    <li class="nav-item" id="nav-profile" style="display: none;"><a class="nav-link" href="/Profile">Profil</a></li>
-                    <li class="nav-item" id="nav-admin" style="display: none;"><a class="nav-link" href="/Admin-Dashboard">Admin Dashboard</a></li>
-                    <li class="nav-item" id="nav-logout" style="display: none;"><a class="nav-link" href="#" id="logout-btn">Logout</a></li>
-
-                    <li class="nav-item" id="nav-login"><a class="nav-link" href="/Login">Login</a></li>
-                    <li class="nav-item" id="nav-register"><a class="nav-link" href="/Register-User">Register</a></li>
-                </ul>
-            </div>
-        </div>
- </nav>
-
- <header class="hero-section">
-    <div class="container text-center">
-        <img src="/images/log2.png" alt="AUTOHIDROLIK Logo" style="height: 250px; margin-bottom: 50px;">
-        <h1 class="display-4">Bersih Cepat dan Hemat</h1>
-        <p class="lead">Berikan perawatan terbaik untuk kendaraan Anda bersama kami. Cepat, bersih, dan profesional.</p>
-        <a href="/Register-User" class="btn btn-custom btn-lg mt-3">Gabung Sekarang! Dapatkan Diskon 20%</a>
-    </div>
-</header>
-
-    <main class="container mt-5">
-        <section id="paket-member" class="text-center mb-5 pt-5 fade-in-section">
-            <h2>Paket Member</h2>
-            <p class="lead">Pilih paket terbaik untuk perawatan kendaraan Anda!</p>
-            <div class="row mt-4">
-                <div class="col-md-6 col-lg-4 mb-4">
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-body d-flex flex-column">
-                            <h5 class="card-title"><i class="bi bi-emoji-smile-fill text-warning me-2"></i>Body Wash</h5>
-                            <p class="card-text text-success fw-bold">10x Cuci + FREE 2x</p>
-                            <div class="price-wrapper">
-                                <span class="original-price"><del>Rp 600.000</del></span>
-                                <p class="price-member">Rp 500.000</p>
-                            </div>
-                            <button class="btn btn-primary mt-3 buy-btn" data-package="Body Wash">Beli Paket</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6 col-lg-4 mb-4">
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-body d-flex flex-column">
-                            <h5 class="card-title"><i class="bi bi-emoji-smile-fill text-warning me-2"></i>Cuci Mobil Hidrolik</h5>
-                            <p class="card-text text-success fw-bold">8x Cuci + FREE 2x</p>
-                            <div class="price-wrapper">
-                                <span class="original-price"><del>Rp 700.000</del></span>
-                                <p class="price-member">Rp 560.000</p>
-                            </div>
-                            <button class="btn btn-primary mt-3 buy-btn" data-package="Cuci Mobil Hidrolik">Beli Paket</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6 col-lg-4 mb-4">
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-body d-flex flex-column">
-                            <h5 class="card-title"><i class="bi bi-emoji-smile-fill text-warning me-2"></i>Cuci Motor Besar</h5>
-                            <p class="card-text text-success fw-bold">8x Cuci + FREE 2x</p>
-                            <div class="price-wrapper">
-                                <span class="original-price"><del>Rp 250.000</del></span>
-                                <p class="price-member">Rp 200.000</p>
-                            </div>
-                            <button class="btn btn-primary mt-3 buy-btn" data-package="Cuci Motor Besar">Beli Paket</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6 col-lg-4 mb-4">
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-body d-flex flex-column">
-                            <h5 class="card-title"><i class="bi bi-emoji-smile-fill text-warning me-2"></i>Cuci Motor Kecil</h5>
-                            <p class="card-text text-success fw-bold">10x Cuci + FREE 2x</p>
-                            <div class="price-wrapper">
-                                <span class="original-price"><del>Rp 240.000</del></span>
-                                <p class="price-member">Rp 200.000</p>
-                            </div>
-                            <button class="btn btn-primary mt-3 buy-btn" data-package="Cuci Motor Kecil">Beli Paket</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6 col-lg-4 mb-4">
-                    <div class="card h-100 shadow-sm border-primary">
-                        <div class="card-body d-flex flex-column">
-                            <h5 class="card-title">Paket Kombinasi</h5>
-                            <p class="card-text">5x Body Wash + 5x Cuci Hidrolik</p>
-                            <p class="card-text text-success fw-bold">10x Cuci + FREE 2x</p>
-                            <div class="price-wrapper">
-                                <span class="original-price"><del>Rp 740.000</del></span>
-                                <p class="price-member">Rp 600.000</p>
-                            </div>
-                            <button class="btn btn-primary mt-3 buy-btn" data-package="Paket Kombinasi">Beli Paket</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6 col-lg-4 mb-4">
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-body d-flex flex-column">
-                            <h5 class="card-title">Add-On Vacuum Cleaner</h5>
-                            <p class="card-text">(Hanya untuk Mobil)</p>
-                            <div class="price-wrapper flex-grow-1">
-                                <p class="price-member">Rp 20.000</p>
-                            </div>
-                            <p class="text-info mt-3 fw-bold"><i class="bi bi-shop me-2"></i>Tersedia untuk pembelian di kasir</p>
-                            </div>
-                    </div>
-                </div>
-                <div class="col-md-6 col-lg-4 mb-4">
-    <div class="card h-100 shadow-sm">
-        <div class="card-body d-flex flex-column text-center">
-            <h5 class="card-title"><i class="bi bi-brush-fill text-primary me-2"></i>Paket Body Poles</h5>
-            <p class="card-text flex-grow-1">Mengembalikan kilap cat mobil Anda dan menghilangkan goresan halus.</p>
-            <button class="btn btn-primary mt-auto" data-bs-toggle="modal" data-bs-target="#bodyPolesModal">
-                Lihat Pilihan Paket
-            </button>
+<nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container">
+        <a class="navbar-brand d-flex align-items-center" href="#">
+            <img src="/images/logo.png" alt="AUTOHIDROLIK Logo" style="height: 30px;" class="me-2">
+            <span class="fw-bold">AUTOHIDROLIK</span>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link active" href="/">Home</a></li>
+                <li class="nav-item"><a class="nav-link" href="/Admin-Dashboard">Admin Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link" href="#" id="logout-btn">Logout</a></li>
+            </ul>
         </div>
     </div>
-</div>
+</nav>
 
-             <div class="col-md-6 col-lg-4 mb-4">
-    <div class="card h-100 shadow-sm">
-        <div class="card-body d-flex flex-column text-center">
-            <h5 class="card-title"><i class="bi bi-shield-fill-check text-success me-2"></i>Paket Nano Coating</h5>
-            <p class="card-text flex-grow-1">Memberikan proteksi super hidrofobik dan kilap tahan lama pada cat mobil.</p>
-            <button class="btn btn-primary mt-auto" data-bs-toggle="modal" data-bs-target="#nanoCoatingModal">
-                Lihat Pilihan Paket
-            </button>
+<section class="admin-section">
+    <div class="container">
+        <div class="admin-header">
+            <h1 class="display-5 fw-bold">Admin Panel</h1>
+            <p class="lead">Kelola data pelanggan, paket, dan review di sini.</p>
         </div>
-    </div>
-         </div>
-            </div>
-        </section>
-
-        <section id="mengapa-kami" class="text-center py-5 my-5 fade-in-section">
-            <div class="container">
-                <h2>Mengapa Memilih AUTOHIDROLIK?</h2>
-                <p class="lead">Komitmen kami adalah kepuasan Anda.</p>
-                <div class="row mt-5">
-                    <div class="col-md-4 mb-4">
-                        <i class="bi bi-shield-check feature-icon mb-3"></i>
-                        <h4>Hasil Berkualitas</h4>
-                        <p>Kami menggunakan produk pembersih terbaik untuk memastikan mobil Anda bersih sempurna tanpa merusak cat.</p>
-                    </div>
-                    <div class="col-md-4 mb-4">
-                        <i class="bi bi-clock-history feature-icon mb-3"></i>
-                        <h4>Cepat & Efisien</h4>
-                        <p>Proses pengerjaan kami yang sistematis memastikan hasil maksimal dalam waktu sesingkat mungkin.</p>
-                    </div>
-                    <div class="col-md-4 mb-4">
-                        <i class="bi bi-gem feature-icon mb-3"></i>
-                        <h4>Layanan Premium</h4>
-                        <p>Dilengkapi ruang tunggu nyaman dan staf profesional yang siap melayani kebutuhan kendaraan Anda.</p>
+        <div class="row fade-in-section">
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm text-center">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="bi bi-people-fill text-warning me-2"></i>Data Pengguna</h5>
+                        <p class="card-text">Lihat & kelola data pengguna terdaftar.</p>
+                        <a href="/Admin-Users" class="btn btn-primary">Kelola</a>
                     </div>
                 </div>
             </div>
-        </section>
-
-        <section id="lokasi" class="py-5 my-5 bg-light rounded fade-in-section">
-            <div class="container">
-                <h2 class="text-center mb-5">Temukan Kami</h2>
-                <div class="row align-items-center">
-                    <div class="col-lg-6 mb-4 mb-lg-0">
-                        <div class="map-container">
-                        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3966.980488444589!2d106.82798417146385!3d-6.133323660125216!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e6a1fcd4f262a5b%3A0xbf514acc1338248a!2sMarketing%20Office%20Bursa%20Onderdil%20WTC%20Mangga%20Dua%20Tahap%202!5e0!3m2!1sid!2sid!4v1756125189281!5m2!1sid!2sid" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-                        </div>
-                    </div>
-                    <div class="col-lg-6">
-                        <h4>Alamat Kami</h4>
-                        <p>WTC Mangga Dua, Jl. Mangga Dua Raya No.8, Ancol, Kec. Pademangan, Jkt Utara, Daerah Khusus Ibukota Jakarta 14430</p>
-                        <h4>Jam Operasional</h4>
-                        <ul class="list-unstyled">
-                            <li><strong>Senin - Minggu:</strong> 09:00 - 20:00</li>
-                        </ul>
-                        <a href="https://wa.me/6282264359639" target="_blank" class="btn btn-success"><i class="bi bi-whatsapp"></i> Hubungi via WhatsApp</a>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm text-center">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="bi bi-box-seam text-info me-2"></i>Paket & Transaksi</h5>
+                        <p class="card-text">Kelola paket layanan dan transaksi.</p>
+                        <a href="/Admin-Packages" class="btn btn-primary">Kelola</a>
                     </div>
                 </div>
             </div>
-        </section>
-
-        <section id="review" class="py-5 rounded fade-in-section">
-            <div class="container">
-                <h2 class="text-center">Apa Kata Pelanggan Kami?</h2>
-                
-                <div id="reviewCarousel" class="carousel slide mt-4" data-bs-ride="carousel">
-                    <div class="carousel-inner" id="review-list">
-                        </div>
-                    <button class="carousel-control-prev" type="button" data-bs-target="#reviewCarousel" data-bs-slide="prev">
-                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                        <span class="visually-hidden">Previous</span>
-                    </button>
-                    <button class="carousel-control-next" type="button" data-bs-target="#reviewCarousel" data-bs-slide="next">
-                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                        <span class="visually-hidden">Next</span>
-                    </button>
-                </div>
-
-                <div id="add-review-section" class="mt-5" style="display: none;">
-                    <hr>
-                    <h4 class="text-center mt-4">Bagikan Pengalaman Anda</h4>
-                    <form id="add-review-form" class="card p-4 mt-3">
-                        <div class="mb-3">
-                            <label for="rating" class="form-label">Rating</label>
-                            <select id="rating" class="form-select bg-dark text-white" required>
-                                <option value="5">★★★★★ (Luar Biasa)</option>
-                                <option value="4">★★★★☆ (Baik)</option>
-                                <option value="3">★★★☆☆ (Cukup)</option>
-                                <option value="2">★★☆☆☆ (Kurang)</option>
-                                <option value="1">★☆☆☆☆ (Buruk)</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="comment" class="form-label">Ulasan Anda</label>
-                            <textarea id="comment" class="form-control bg-dark text-white" rows="4" required placeholder="Ceritakan pengalaman Anda di sini..."></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Kirim Ulasan</button>
-                    </form>
-                </div>
-            </div>
-        </section>
-    </main>
-
-   <div class="modal fade" id="purchaseModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Konfirmasi Pembelian</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div id="purchase-message" class="mb-3"></div>
-                
-                    <div id="purchase-confirmation-content">
-                        <p>Anda yakin ingin membeli paket <strong id="package-name"></strong> senilai <strong id="package-price"></strong>?</p>
-                        <p class="small">Setelah ini, silakan lakukan pembayaran dan tunggu konfirmasi dari admin.</p>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm text-center">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="bi bi-star-fill text-success me-2"></i>Ulasan Pelanggan</h5>
+                        <p class="card-text">Moderasi & tanggapi review pelanggan.</p>
+                        <a href="/Admin-Reviews" class="btn btn-primary">Kelola</a>
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                    <button type="button" class="btn btn-primary" id="confirm-purchase-btn">Yakin</button>
                 </div>
             </div>
         </div>
     </div>
-    
- <div class="modal fade" id="bodyPolesModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Pilihan Paket Body Poles</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                
-                <h6 class="text-light border-bottom border-secondary pb-2 mb-3">Mobil Kecil</h6>
-                <ul class="list-group list-group-flush mb-4">
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <div>
-                            <strong>Paket Poles Biasa</strong>
-                            <small class="d-block">Termasuk: 1x Body Poles + 1x Cuci Hidrolik + Vacuum</small>
-                        </div>
-                        <div class="text-end">
-                            <span class="d-block fw-bold fs-5">Rp 800.000</span>
-                            <button class="btn btn-outline-primary btn-sm mt-1 buy-btn" 
-                                    data-package-name="Body Poles Biasa - Mobil Kecil" 
-                                    data-package-price="800000" 
-                                    data-total-washes="1">Pilih Paket</button>
-                        </div>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <div>
-                            <strong>Paket Bundling</strong>
-                             <small class="d-block">Termasuk: 1x Body Poles + 5x Cuci Hidrolik + Vacuum</small>
-                        </div>
-                        <div class="text-end bundling-offer">
-                            <span class="hemat-badge">Hemat Rp 200.000</span>
-                            <span class="d-block fw-bold price-member">Rp 1.050.000</span>
-                             <button class="btn btn-primary btn-sm mt-1 buy-btn" 
-                                     data-package-name="Body Poles Bundling - Mobil Kecil" 
-                                     data-package-price="1050000" 
-                                     data-total-washes="5">Pilih Paket</button>
-                        </div>
-                    </li>
-                </ul>
+</section>
 
-                <h6 class="text-light border-bottom border-secondary pb-2 mb-3">Mobil Medium</h6>
-                <ul class="list-group list-group-flush mb-4">
-                     <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <div>
-                            <strong>Paket Poles Biasa</strong>
-                             <small class="d-block">Termasuk: 1x Body Poles + 1x Cuci Hidrolik + Vacuum</small>
-                        </div>
-                        <div class="text-end">
-                            <span class="d-block fw-bold fs-5">Rp 1.000.000</span>
-                            <button class="btn btn-outline-primary btn-sm mt-1 buy-btn" 
-                                    data-package-name="Body Poles Biasa - Mobil Medium" 
-                                    data-package-price="1000000" 
-                                    data-total-washes="1">Pilih Paket</button>
-                        </div>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <div>
-                            <strong>Paket Bundling</strong>
-                             <small class="d-block">Termasuk: 1x Body Poles + 5x Cuci Hidrolik + Vacuum</small>
-                        </div>
-                        <div class="text-end bundling-offer">
-                            <span class="hemat-badge">Hemat Rp 200.000</span>
-                            <span class="d-block fw-bold price-member">Rp 1.250.000</span>
-                             <button class="btn btn-primary btn-sm mt-1 buy-btn" 
-                                     data-package-name="Body Poles Bundling - Mobil Medium" 
-                                     data-package-price="1250000" 
-                                     data-total-washes="5">Pilih Paket</button>
-                        </div>
-                    </li>
-                </ul>
-
-                <h6 class="text-light border-bottom border-secondary pb-2 mb-3">Mobil Besar</h6>
-                <ul class="list-group list-group-flush">
-                     <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <div>
-                            <strong>Paket Poles Biasa</strong>
-                             <small class="d-block">Termasuk: 1x Body Poles + 1x Cuci Hidrolik + Vacuum</small>
-                        </div>
-                        <div class="text-end">
-                            <span class="d-block fw-bold fs-5">Rp 1.200.000</span>
-                            <button class="btn btn-outline-primary btn-sm mt-1 buy-btn" 
-                                    data-package-name="Body Poles Biasa - Mobil Besar" 
-                                    data-package-price="1200000" 
-                                    data-total-washes="1">Pilih Paket</button>
-                        </div>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <div>
-                            <strong>Paket Bundling</strong>
-                             <small class="d-block">Termasuk: 1x Body Poles + 5x Cuci Hidrolik + Vacuum</small>
-                        </div>
-                        <div class="text-end bundling-offer">
-                            <span class="hemat-badge">Hemat Rp 200.000</span>
-                            <span class="d-block fw-bold price-member">Rp 1.450.000</span>
-                             <button class="btn btn-primary btn-sm mt-1 buy-btn" 
-                                     data-package-name="Body Poles Bundling - Mobil Besar" 
-                                     data-package-price="1450000" 
-                                     data-total-washes="5">Pilih Paket</button>
-                        </div>
-                    </li>
-                </ul>
-            </div>
-        </div>
+<footer class="bg-dark text-white text-center py-4 mt-5">
+    <div class="container">
+        <p class="mb-0">© 2025 AUTOHIDROLIK Carwash. All Rights Reserved.</p>
     </div>
-</div>
+</footer>
 
-<div class="modal fade" id="nanoCoatingModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Paket Nano Coating</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="text-center mb-4">
-                    <h4 class="text-light">Mobil Tetap Kinclong & Terlindungi!</h4>
-                </div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/auth.js"></script>
+<script>
+    // Script untuk efek scroll pada navbar
+    const nav = document.querySelector('.navbar');
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 50) {
+            nav.classList.add('navbar-scrolled');
+        } else {
+            nav.classList.remove('navbar-scrolled');
+        }
+    });
 
-                <ul class="list-unstyled mb-4">
-                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Perlindungan cat hingga 2-3 layer</li>
-                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Tampilan mengkilap seperti baru</li>
-                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Sudah termasuk 1x Cuci Hidrolik + Vacuum</li>
-                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Free 1x Voucher Wash Hidrolik + Vacuum</li>
-                </ul>
-
-                 <ul class="list-group list-group-flush">
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <div>
-                            <strong>Mobil Kecil</strong><br>
-                            <small class="text-muted">(2 Layer)</small>
-                        </div>
-                        <div class="text-end">
-                            <span class="d-block fw-bold price-member">Rp 2.500.000</span>
-                        </div>
-                        <button class="btn btn-primary ms-3 buy-btn" 
-                                data-package-name="Nano Coating - Mobil Kecil (2 Layer)" 
-                                data-package-price="2500000" 
-                                data-total-washes="2">Pilih Paket</button>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <div>
-                            <strong>Mobil Medium</strong><br>
-                            <small class="text-muted">(2 Layer)</small>
-                        </div>
-                        <div class="text-end">
-                            <span class="d-block fw-bold price-member">Rp 3.000.000</span>
-                        </div>
-                        <button class="btn btn-primary ms-3 buy-btn" 
-                                data-package-name="Nano Coating - Mobil Medium (2 Layer)" 
-                                data-package-price="3000000" 
-                                data-total-washes="2">Pilih Paket</button>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <div>
-                            <strong>Mobil Besar</strong><br>
-                            <small class="text-muted">(3 Layer)</small>
-                        </div>
-                        <div class="text-end">
-                            <span class="d-block fw-bold price-member">Rp 4.000.000</span>
-                        </div>
-                        <button class="btn btn-primary ms-3 buy-btn" 
-                                data-package-name="Nano Coating - Mobil Besar (3 Layer)" 
-                                data-package-price="4000000" 
-                                data-total-washes="2">Pilih Paket</button>
-                    </li>
-                </ul>
-
-                <div class="alert alert-info mt-4" style="background-color: #1a2a45; border-color: var(--purple-accent); color: var(--text-primary);">
-                    <strong>Info Tambahan:</strong> Opsional tambah 1 layer seharga Rp 500.000,-
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-    
-    <footer class="bg-dark text-white text-center py-4 mt-5">
-        <div class="container">
-            <p class="mb-0">© 2025 AUTOHIDROLIK Carwash. All Rights Reserved.</p>
-        </div>
-    </footer>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="/js/auth.js"></script>
-    <script src="/js/index.js"></script>
-    <script>
-        // Script untuk efek scroll pada navbar
-        const nav = document.querySelector('.navbar');
-        window.addEventListener('scroll', () => {
-            if (window.scrollY > 50) {
-                nav.classList.add('navbar-scrolled');
-            } else {
-                nav.classList.remove('navbar-scrolled');
+    // Script untuk animasi fade-in saat scroll
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('is-visible');
             }
         });
+    }, {
+        threshold: 0.1
+    });
 
-        // Script untuk animasi fade-in saat scroll
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('is-visible');
-                }
-            });
-        }, {
-            threshold: 0.1
-        });
-
-        const sections = document.querySelectorAll('.fade-in-section');
-        sections.forEach(section => {
-            observer.observe(section);
-        });
-    </script>
+    const sections = document.querySelectorAll('.fade-in-section');
+    sections.forEach(section => {
+        observer.observe(section);
+    });
+</script>
 </body>
 </html>
