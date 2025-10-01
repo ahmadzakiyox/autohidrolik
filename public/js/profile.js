@@ -1,16 +1,23 @@
 document.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('token');
-    let currentUserData = null; // Variabel untuk menyimpan data user
+    let currentUserData = null; 
 
-    // Loading elements
+    // Elemen Loading
     const profileLoading = document.getElementById('profile-loading');
     const profileContent = document.getElementById('profile-content');
     
-    // Edit Profile Modal Elements
+    // Elemen Modal Edit Profil
     const editProfileModal = new bootstrap.Modal(document.getElementById('editProfileModal'));
     const editProfileForm = document.getElementById('edit-profile-form');
     const saveProfileButton = document.getElementById('save-profile-button');
-
+    
+    // ================== KODE BARU DI SINI ==================
+    // Elemen Modal Edit Kartu Nano
+    const editNanoCardModal = new bootstrap.Modal(document.getElementById('editNanoCardModal'));
+    const editNanoCardForm = document.getElementById('edit-nanocard-form');
+    const saveNanoCardButton = document.getElementById('save-nanocard-button');
+    // ================= AKHIR KODE BARU =================
+    
     if (!token) {
         document.querySelector('.profile-container').innerHTML = `
             <div class="text-center">
@@ -29,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             if (!response.ok) throw new Error('Sesi tidak valid.');
             
-            currentUserData = await response.json(); // Simpan data user
+            currentUserData = await response.json();
             displayProfileData(currentUserData);
 
         } catch (error) {
@@ -39,7 +46,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const displayProfileData = (user) => {
-        // ... (fungsi displayProfileData yang sudah ada, tidak ada perubahan di dalamnya)
         document.getElementById('profile-username').textContent = user.username || '-';
         document.getElementById('profile-email').textContent = user.email || '-';
         document.getElementById('profile-phone').textContent = user.phone || '-';
@@ -143,8 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
         profileLoading.classList.add('d-none');
         profileContent.classList.remove('d-none');
     };
-
-    // ================== KODE BARU DI SINI ==================
+    
     // Event listener untuk tombol "Edit Data"
     document.getElementById('edit-profile-btn').addEventListener('click', () => {
         if (currentUserData) {
@@ -154,7 +159,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Event listener untuk form edit profil
     if (editProfileForm) {
         editProfileForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -175,18 +179,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
                     body: JSON.stringify(updatedData)
                 });
-
                 const result = await response.json();
                 if (!response.ok) throw new Error(result.msg || 'Gagal menyimpan data.');
-
                 messageDiv.innerHTML = `<div class="alert alert-success">Profil berhasil diperbarui.</div>`;
-
                 setTimeout(() => {
                     messageDiv.innerHTML = '';
                     editProfileModal.hide();
-                    fetchProfileData(); // Muat ulang data profil di halaman
+                    fetchProfileData();
                 }, 2000);
-
             } catch (error) {
                 messageDiv.innerHTML = `<div class="alert alert-danger">${error.message}</div>`;
             } finally {
@@ -195,56 +195,96 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // ================== KODE BARU DI SINI ==================
+    // Event listener untuk tombol "Edit Kartu Nano"
+    const editNanoCardBtn = document.getElementById('edit-nanocard-btn');
+    if (editNanoCardBtn) {
+        editNanoCardBtn.addEventListener('click', () => {
+            if (currentUserData && currentUserData.nanoCoatingCard) {
+                const card = currentUserData.nanoCoatingCard;
+                document.getElementById('edit-nanocard-owner').value = card.ownerName || '';
+                document.getElementById('edit-nanocard-plate').value = card.plateNumber || '';
+            }
+        });
+    }
+
+    // Event listener untuk form edit kartu nano
+    if (editNanoCardForm) {
+        editNanoCardForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const messageDiv = document.getElementById('edit-nanocard-message');
+            messageDiv.innerHTML = '';
+            saveNanoCardButton.disabled = true;
+            saveNanoCardButton.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Menyimpan...`;
+
+            const updatedNanoData = {
+                ownerName: document.getElementById('edit-nanocard-owner').value,
+                plateNumber: document.getElementById('edit-nanocard-plate').value
+            };
+
+            try {
+                // Menggunakan endpoint yang sudah kita buat sebelumnya
+                const response = await fetch('/api/profile/update-nanocard', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+                    body: JSON.stringify(updatedNanoData)
+                });
+
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.msg);
+
+                messageDiv.innerHTML = `<div class="alert alert-success">${result.msg}</div>`;
+                setTimeout(() => {
+                    messageDiv.innerHTML = '';
+                    editNanoCardModal.hide();
+                    fetchProfileData();
+                }, 2000);
+
+            } catch (error) {
+                messageDiv.innerHTML = `<div class="alert alert-danger">${error.message}</div>`;
+            } finally {
+                saveNanoCardButton.disabled = false;
+                saveNanoCardButton.innerHTML = 'Simpan Perubahan';
+            }
+        });
+    }
     // ================= AKHIR KODE BARU =================
     
-    // --- EVENT LISTENER UNTUK FORM GANTI PASSWORD ---
-    // ... (kode form ganti password dan nano card yang sudah ada, tidak ada perubahan)
+    // --- Event Listeners yang Sudah Ada ---
     const changePasswordForm = document.getElementById('change-password-form');
     if (changePasswordForm) {
         changePasswordForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-
             const messageDiv = document.getElementById('password-message');
             const submitButton = document.getElementById('change-password-button');
             const currentPassword = document.getElementById('current-password').value;
             const newPassword = document.getElementById('new-password').value;
             const confirmNewPassword = document.getElementById('confirm-new-password').value;
-
             messageDiv.innerHTML = '';
             submitButton.disabled = true;
             submitButton.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Menyimpan...`;
-
             if (newPassword !== confirmNewPassword) {
                 messageDiv.innerHTML = `<div class="alert alert-danger">Konfirmasi password baru tidak cocok.</div>`;
                 submitButton.disabled = false;
                 submitButton.innerHTML = 'Simpan Perubahan';
                 return;
             }
-
             try {
                 const response = await fetch('/api/profile/change-password', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'x-auth-token': token
-                    },
+                    headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
                     body: JSON.stringify({ currentPassword, newPassword })
                 });
-
                 const result = await response.json();
-                if (!response.ok) {
-                    throw new Error(result.msg || 'Gagal mengubah password.');
-                }
-
+                if (!response.ok) { throw new Error(result.msg || 'Gagal mengubah password.'); }
                 messageDiv.innerHTML = `<div class="alert alert-success">${result.msg}</div>`;
                 changePasswordForm.reset();
-
                 setTimeout(() => {
                     const modal = bootstrap.Modal.getInstance(document.getElementById('changePasswordModal'));
                     modal.hide();
                     messageDiv.innerHTML = '';
                 }, 2000);
-
             } catch (error) {
                 messageDiv.innerHTML = `<div class="alert alert-danger">${error.message}</div>`;
             } finally {
@@ -259,32 +299,23 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             const messageDiv = document.getElementById('nano-form-message');
             messageDiv.innerHTML = '';
-
             const ownerName = document.getElementById('nano-owner-name-form').value;
             const plateNumber = document.getElementById('nano-plate-number-form').value;
-
             try {
                 const response = await fetch('/api/profile/update-nanocard', {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
                     body: JSON.stringify({ ownerName, plateNumber })
                 });
-
                 const result = await response.json();
                 if (!response.ok) throw new Error(result.msg);
-
                 messageDiv.innerHTML = `<div class="alert alert-success">${result.msg}</div>`;
-
-                setTimeout(() => {
-                    fetchProfileData();
-                }, 2000);
-
+                setTimeout(() => { fetchProfileData(); }, 2000);
             } catch (error) {
                 messageDiv.innerHTML = `<div class="alert alert-danger">${error.message}</div>`;
             }
         });
     }
 
-    // Panggil fungsi untuk memuat data saat halaman dibuka
     fetchProfileData();
 });
