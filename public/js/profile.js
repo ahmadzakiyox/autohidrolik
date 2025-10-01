@@ -11,12 +11,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const editProfileForm = document.getElementById('edit-profile-form');
     const saveProfileButton = document.getElementById('save-profile-button');
     
-    // ================== KODE BARU DI SINI ==================
     // Elemen Modal Edit Kartu Nano
     const editNanoCardModal = new bootstrap.Modal(document.getElementById('editNanoCardModal'));
     const editNanoCardForm = document.getElementById('edit-nanocard-form');
     const saveNanoCardButton = document.getElementById('save-nanocard-button');
-    // ================= AKHIR KODE BARU =================
     
     if (!token) {
         document.querySelector('.profile-container').innerHTML = `
@@ -55,6 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (user.membership) {
             const formatDate = (dateString) => {
+                if (!dateString) return '-';
                 const options = { year: 'numeric', month: 'long', day: 'numeric' };
                 return new Date(dateString).toLocaleDateString('id-ID', options);
             };
@@ -76,26 +75,11 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
             
             if (user.membership.isPaid && user.membership.remainingWashes > 0 && !isExpired) {
-                memberCodeSection.innerHTML = `
-                    <div id="qrcode-wrapper" class="d-flex flex-column align-items-center justify-content-center">
-                        <div id="qrcode-container"></div>
-                        <p class="mt-3 text-muted">Tunjukkan kode ini kepada staf kami.</p>
-                    </div>
-                `;
-                
+                memberCodeSection.innerHTML = `<div id="qrcode-wrapper" class="d-flex flex-column align-items-center justify-content-center"><div id="qrcode-container"></div><p class="mt-3 text-muted">Tunjukkan kode ini kepada staf kami.</p></div>`;
                 const qrCodeContainer = document.getElementById('qrcode-container');
                 qrCodeContainer.innerHTML = ''; 
-
                 if (user.memberId) {
-                    new QRCode(qrCodeContainer, {
-                        text: user.memberId,
-                        width: 180,
-                        height: 180,
-                        colorDark : "#000000",
-                        colorLight : "#ffffff",
-                        correctLevel : QRCode.CorrectLevel.H
-                    });
-                    
+                    new QRCode(qrCodeContainer, { text: user.memberId, width: 180, height: 180, colorDark : "#000000", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.H });
                     const memberIdText = document.createElement('p');
                     memberIdText.className = 'mt-2 fw-bold';
                     memberIdText.textContent = user.memberId;
@@ -112,13 +96,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
         } else {
-            membershipStatus.innerHTML = `
-                <p class="text-white">Anda saat ini bukan member aktif.</p>
-                <a href="/" class="btn btn-primary">Lihat Paket Member</a>
-            `;
-            memberCodeSection.innerHTML = `
-                <p class="text-center text-white p-4">Beli paket member untuk mendapatkan kode Anda.</p>
-            `;
+            membershipStatus.innerHTML = `<p class="text-white">Anda saat ini bukan member aktif.</p><a href="/" class="btn btn-primary">Lihat Paket Member</a>`;
+            memberCodeSection.innerHTML = `<p class="text-center text-white p-4">Beli paket member untuk mendapatkan kode Anda.</p>`;
         }
 
         const nanoCardSection = document.getElementById('nano-card-section');
@@ -126,22 +105,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const card = user.nanoCoatingCard;
             const formatDate = (dateString) => new Date(dateString).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 
-            if (card.plateNumber) {
-                document.getElementById('nano-card-display').classList.remove('d-none');
-                document.getElementById('nano-card-form-container').classList.add('d-none');
-
-                document.getElementById('nano-card-number').textContent = card.cardNumber;
-                document.getElementById('nano-owner-name-display').textContent = card.ownerName;
-                document.getElementById('nano-plate-number-display').textContent = card.plateNumber;
-                document.getElementById('nano-coating-date').textContent = formatDate(card.coatingDate);
-                document.getElementById('nano-expires-at').textContent = formatDate(card.expiresAt);
-            } 
-            else {
-                document.getElementById('nano-card-display').classList.add('d-none');
-                document.getElementById('nano-card-form-container').classList.remove('d-none');
-                document.getElementById('nano-card-number-form').value = card.cardNumber;
-                document.getElementById('nano-owner-name-form').value = card.ownerName || user.username;
-            }
+            // Selalu tampilkan data display, karena form awal sudah dihapus
+            document.getElementById('nano-card-number').textContent = card.cardNumber || '-';
+            document.getElementById('nano-owner-name-display').textContent = card.ownerName || 'Belum diisi';
+            document.getElementById('nano-plate-number-display').textContent = card.plateNumber || 'Belum diisi';
+            document.getElementById('nano-coating-date').textContent = formatDate(card.coatingDate);
+            document.getElementById('nano-expires-at').textContent = formatDate(card.expiresAt);
             
             nanoCardSection.classList.remove('d-none');
         }
@@ -195,8 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-
-    // ================== KODE BARU DI SINI ==================
+    
     // Event listener untuk tombol "Edit Kartu Nano"
     const editNanoCardBtn = document.getElementById('edit-nanocard-btn');
     if (editNanoCardBtn) {
@@ -209,7 +177,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Event listener untuk form edit kartu nano
     if (editNanoCardForm) {
         editNanoCardForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -224,23 +191,19 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             try {
-                // Menggunakan endpoint yang sudah kita buat sebelumnya
                 const response = await fetch('/api/profile/update-nanocard', {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
                     body: JSON.stringify(updatedNanoData)
                 });
-
                 const result = await response.json();
                 if (!response.ok) throw new Error(result.msg);
-
                 messageDiv.innerHTML = `<div class="alert alert-success">${result.msg}</div>`;
                 setTimeout(() => {
                     messageDiv.innerHTML = '';
                     editNanoCardModal.hide();
                     fetchProfileData();
                 }, 2000);
-
             } catch (error) {
                 messageDiv.innerHTML = `<div class="alert alert-danger">${error.message}</div>`;
             } finally {
@@ -249,9 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-    // ================= AKHIR KODE BARU =================
     
-    // --- Event Listeners yang Sudah Ada ---
     const changePasswordForm = document.getElementById('change-password-form');
     if (changePasswordForm) {
         changePasswordForm.addEventListener('submit', async (e) => {
@@ -290,29 +251,6 @@ document.addEventListener('DOMContentLoaded', () => {
             } finally {
                 submitButton.disabled = false;
                 submitButton.innerHTML = 'Simpan Perubahan';
-            }
-        });
-    }
-    const nanoCardForm = document.getElementById('nano-card-form');
-    if (nanoCardForm) {
-        nanoCardForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const messageDiv = document.getElementById('nano-form-message');
-            messageDiv.innerHTML = '';
-            const ownerName = document.getElementById('nano-owner-name-form').value;
-            const plateNumber = document.getElementById('nano-plate-number-form').value;
-            try {
-                const response = await fetch('/api/profile/update-nanocard', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
-                    body: JSON.stringify({ ownerName, plateNumber })
-                });
-                const result = await response.json();
-                if (!response.ok) throw new Error(result.msg);
-                messageDiv.innerHTML = `<div class="alert alert-success">${result.msg}</div>`;
-                setTimeout(() => { fetchProfileData(); }, 2000);
-            } catch (error) {
-                messageDiv.innerHTML = `<div class="alert alert-danger">${error.message}</div>`;
             }
         });
     }
