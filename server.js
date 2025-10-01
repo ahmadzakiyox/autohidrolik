@@ -12,7 +12,7 @@ require('dotenv').config();
 // Inisialisasi Aplikasi Express
 const app = express();
 
-// Mekanisme penangkap log sederhana
+// ================== PENANGKAP LOG (BARU) ==================
 const serverLogs = [];
 const originalConsoleLog = console.log;
 console.log = (...args) => {
@@ -25,6 +25,7 @@ console.log = (...args) => {
         serverLogs.shift();
     }
 };
+// ================== AKHIR PENANGKAP LOG 
 
 // Import Model
 const User = require('./models/User');
@@ -137,7 +138,6 @@ app.get('/api/server-status', auth, adminAuth, (req, res) => {
             freeMemory: os.freemem(),
             uptime: os.uptime(),
         };
-
         res.json({
             specs,
             logs: serverLogs.slice().reverse() // Kirim log dari yang terbaru
@@ -148,6 +148,7 @@ app.get('/api/server-status', auth, adminAuth, (req, res) => {
     }
 });
 // ================== AKHIR RUTE BARU ==================
+
 
 // ======================================================
 // --- API ROUTES ---
