@@ -48,64 +48,83 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('profile-email').textContent = user.email || '-';
         document.getElementById('profile-phone').textContent = user.phone || '-';
 
-        const membershipStatus = document.getElementById('membership-status');
-        const memberCodeSection = document.getElementById('member-code-section');
+        // ================== PERUBAHAN LOGIKA UTAMA DI SINI ==================
+        const membershipsContainer = document.getElementById('memberships-container');
+        membershipsContainer.innerHTML = ''; // Kosongkan kontainer
 
-        if (user.membership) {
-            const formatDate = (dateString) => {
-                if (!dateString) return '-';
-                const options = { year: 'numeric', month: 'long', day: 'numeric' };
-                return new Date(dateString).toLocaleDateString('id-ID', options);
-            };
+        if (user.memberships && user.memberships.length > 0) {
+            user.memberships.forEach(membership => {
+                const formatDate = (dateString) => new Date(dateString).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+                const isExpired = new Date() > new Date(membership.expiresAt);
 
-            const isExpired = new Date() > new Date(user.membership.expiresAt);
+                const card = document.createElement('div');
+                card.className = 'card mb-4';
+                
+                let cardBody = `
+                    <div class="card-header d-flex justify-content-between">
+                        <h5 class="mb-0">${membership.packageName}</h5>
+                        ${membership.isPaid ? '<span class="badge bg-success">Lunas</span>' : '<span class="badge bg-warning text-dark">Menunggu Konfirmasi</span>'}
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-7">
+                                <p class="display-4 fw-bold">${membership.remainingWashes}x</p>
+                                <p class="text-muted">Sisa Jatah Pencucian</p>
+                                <hr>
+                                <p><small>Berlaku hingga: <strong>${formatDate(membership.expiresAt)}</strong></small></p>
+                                ${isExpired ? '<p class="text-danger fw-bold">Paket sudah kedaluwarsa!</p>' : ''}
+                            </div>
+                            <div class="col-md-5 text-center d-flex flex-column justify-content-center align-items-center">
+                `;
 
-            membershipStatus.innerHTML = `
-                <h5 class="card-title">${user.membership.packageName}</h5>
-                <p class="display-4 fw-bold">${user.membership.remainingWashes}x</p>
-                <p class="text-muted">Sisa Jatah Pencucian</p>
-                <hr>
-                <p>Berlaku hingga: <strong>${formatDate(user.membership.expiresAt)}</strong></p>
-                <p>Status Pembayaran: 
-                    ${user.membership.isPaid 
-                        ? '<span class="badge bg-success">Lunas</span>' 
-                        : '<span class="badge bg-warning text-dark">Menunggu Konfirmasi</span>'}
-                </p>
-                ${isExpired ? '<p class="text-danger fw-bold mt-2">Paket Anda sudah kedaluwarsa!</p>' : ''}
-            `;
-            
-            if (user.membership.isPaid && user.membership.remainingWashes > 0 && !isExpired) {
-                memberCodeSection.innerHTML = `<div id="qrcode-wrapper" class="d-flex flex-column align-items-center justify-content-center"><div id="qrcode-container"></div><p class="mt-3 text-muted">Tunjukkan kode ini kepada staf kami.</p></div>`;
-                const qrCodeContainer = document.getElementById('qrcode-container');
-                qrCodeContainer.innerHTML = ''; 
-                if (user.memberId) {
-                    new QRCode(qrCodeContainer, { text: user.memberId, width: 180, height: 180, colorDark : "#000000", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.H });
-                    const memberIdText = document.createElement('p');
-                    memberIdText.className = 'mt-2 fw-bold';
-                    memberIdText.textContent = user.memberId;
-                    qrCodeContainer.appendChild(memberIdText);
+                // Logika untuk menampilkan QR Code
+                if (membership.isPaid && !isExpired && membership.remainingWashes > 0) {
+                    cardBody += `
+                        <div id="qrcode-container-${membership.packageId}" class="mb-2"></div>
+                        <p class="small text-muted">Tunjukkan kode ini ke staf.</p>
+                    `;
                 } else {
-                    memberCodeSection.innerHTML = '<p class="text-danger">Member ID tidak ditemukan.</p>';
+                    cardBody += `<div class="qr-pending-message small">QR Code akan muncul setelah pembayaran dikonfirmasi.</div>`;
                 }
-            } else if (!user.membership.isPaid) {
-                memberCodeSection.innerHTML = `<div class="qr-pending-message">QR code akan muncul setelah pembayaran dikonfirmasi.</div>`;
-            } else if (isExpired) {
-                memberCodeSection.innerHTML = `<p class="text-center text-danger p-4 fw-bold">Paket telah hangus.</p>`;
-            } else {
-                memberCodeSection.innerHTML = `<p class="text-center text-white p-4">Jatah cuci Anda sudah habis.</p>`;
-            }
 
+                cardBody += `
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                card.innerHTML = cardBody;
+                membershipsContainer.appendChild(card);
+                
+                // Generate QR Code jika valid
+                if (membership.isPaid && !isExpired && membership.remainingWashes > 0) {
+                    const qrContainer = document.getElementById(`qrcode-container-${membership.packageId}`);
+                    // Format QR Code: "memberId;packageId"
+                    const qrData = `${user.memberId};${membership.packageId}`;
+                    new QRCode(qrContainer, {
+                        text: qrData,
+                        width: 128,
+                        height: 128,
+                    });
+                }
+            });
         } else {
-            membershipStatus.innerHTML = `<p class="text-white">Anda saat ini bukan member aktif.</p><a href="/" class="btn btn-primary">Lihat Paket Member</a>`;
-            memberCodeSection.innerHTML = `<p class="text-center text-white p-4">Beli paket member untuk mendapatkan kode Anda.</p>`;
+            membershipsContainer.innerHTML = `
+                <div class="card">
+                    <div class="card-body text-center">
+                        <p>Anda belum memiliki paket member aktif.</p>
+                        <a href="/" class="btn btn-primary">Lihat Pilihan Paket</a>
+                    </div>
+                </div>
+            `;
         }
+        // ================= AKHIR PERUBAHAN =================
 
         const nanoCardSection = document.getElementById('nano-card-section');
         if (user.nanoCoatingCard && user.nanoCoatingCard.isActive) {
             const card = user.nanoCoatingCard;
             const formatDate = (dateString) => new Date(dateString).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-
-            // Selalu tampilkan data display, karena form awal sudah dihapus
+            
             document.getElementById('nano-card-number').textContent = card.cardNumber || '-';
             document.getElementById('nano-owner-name-display').textContent = card.ownerName || 'Belum diisi';
             document.getElementById('nano-plate-number-display').textContent = card.plateNumber || 'Belum diisi';
