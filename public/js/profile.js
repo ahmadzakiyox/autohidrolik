@@ -48,9 +48,8 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('profile-email').textContent = user.email || '-';
         document.getElementById('profile-phone').textContent = user.phone || '-';
 
-        // ================== PERUBAHAN LOGIKA UTAMA DI SINI ==================
         const membershipsContainer = document.getElementById('memberships-container');
-        membershipsContainer.innerHTML = ''; // Kosongkan kontainer
+        membershipsContainer.innerHTML = ''; 
 
         if (user.memberships && user.memberships.length > 0) {
             user.memberships.forEach(membership => {
@@ -77,49 +76,27 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div class="col-md-5 text-center d-flex flex-column justify-content-center align-items-center">
                 `;
 
-                // Logika untuk menampilkan QR Code
                 if (membership.isPaid && !isExpired && membership.remainingWashes > 0) {
-                    cardBody += `
-                        <div id="qrcode-container-${membership.packageId}" class="mb-2"></div>
-                        <p class="small text-muted">Tunjukkan kode ini ke staf.</p>
-                    `;
+                    cardBody += `<div id="qrcode-container-${membership.packageId}" class="mb-2"></div><p class="small text-muted">Tunjukkan kode ini ke staf.</p>`;
                 } else {
                     cardBody += `<div class="qr-pending-message small">QR Code akan muncul setelah pembayaran dikonfirmasi.</div>`;
                 }
 
-                cardBody += `
-                            </div>
-                        </div>
-                    </div>
-                `;
+                cardBody += `</div></div></div>`;
                 
                 card.innerHTML = cardBody;
                 membershipsContainer.appendChild(card);
                 
-                // Generate QR Code jika valid
                 if (membership.isPaid && !isExpired && membership.remainingWashes > 0) {
                     const qrContainer = document.getElementById(`qrcode-container-${membership.packageId}`);
-                    // Format QR Code: "memberId;packageId"
                     const qrData = `${user.memberId};${membership.packageId}`;
-                    new QRCode(qrContainer, {
-                        text: qrData,
-                        width: 128,
-                        height: 128,
-                    });
+                    new QRCode(qrContainer, { text: qrData, width: 128, height: 128 });
                 }
             });
         } else {
-            membershipsContainer.innerHTML = `
-                <div class="card">
-                    <div class="card-body text-center">
-                        <p>Anda belum memiliki paket member aktif.</p>
-                        <a href="/" class="btn btn-primary">Lihat Pilihan Paket</a>
-                    </div>
-                </div>
-            `;
+            membershipsContainer.innerHTML = `<div class="card"><div class="card-body text-center"><p>Anda belum memiliki paket member aktif.</p><a href="/" class="btn btn-primary">Lihat Pilihan Paket</a></div></div>`;
         }
-        // ================= AKHIR PERUBAHAN =================
-
+        
         const nanoCardSection = document.getElementById('nano-card-section');
         if (user.nanoCoatingCard && user.nanoCoatingCard.isActive) {
             const card = user.nanoCoatingCard;
@@ -154,13 +131,11 @@ document.addEventListener('DOMContentLoaded', () => {
             messageDiv.innerHTML = '';
             saveProfileButton.disabled = true;
             saveProfileButton.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Menyimpan...`;
-
             const updatedData = {
                 username: document.getElementById('edit-profile-username').value,
                 email: document.getElementById('edit-profile-email').value,
                 phone: document.getElementById('edit-profile-phone').value,
             };
-
             try {
                 const response = await fetch('/api/profile', {
                     method: 'PUT',
@@ -203,12 +178,10 @@ document.addEventListener('DOMContentLoaded', () => {
             messageDiv.innerHTML = '';
             saveNanoCardButton.disabled = true;
             saveNanoCardButton.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Menyimpan...`;
-
             const updatedNanoData = {
                 ownerName: document.getElementById('edit-nanocard-owner').value,
                 plateNumber: document.getElementById('edit-nanocard-plate').value
             };
-
             try {
                 const response = await fetch('/api/profile/update-nanocard', {
                     method: 'PUT',
