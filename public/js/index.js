@@ -66,11 +66,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 titleElement.insertAdjacentElement('afterend', promoTag);
             }
 
-            // --- PERBAIKAN DI BARIS INI ---
+            // ================== PERUBAHAN DI SINI ==================
             // Tambahkan Masa Berlaku
             const validityInfo = document.createElement('p');
-            validityInfo.className = 'small mt-2'; // Class 'text-muted' telah dihapus
-            validityInfo.innerHTML = '<i class="bi bi-clock"></i> Berlaku selama 3 bulan';
+            validityInfo.className = 'small mt-2';
+            validityInfo.innerHTML = '<i class="bi bi-clock"></i> Berlaku selama 6 bulan'; // Diubah dari 3 menjadi 6
+            // ================= AKHIR PERUBAHAN =================
             card.querySelector('.buy-btn')?.insertAdjacentElement('beforebegin', validityInfo);
         });
     };
