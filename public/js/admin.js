@@ -38,7 +38,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const editReviewModal = new bootstrap.Modal(document.getElementById('editReviewModal'));
     const resetPasswordModal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
     const extendMembershipModal = new bootstrap.Modal(document.getElementById('extendMembershipModal'));
-    const resetTransactionsButton = document.getElementById('reset-transactions-btn');
 
     let cachedUsers = [];
     let cachedReviews = [];
@@ -320,22 +319,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     // --- EVENT LISTENER UTAMA ---
-    resetTransactionsButton.addEventListener('click', async () => {
-        const confirmation = prompt('PERINGATAN: Tindakan ini akan menghapus SEMUA catatan transaksi. Ketik "RESET" untuk melanjutkan.');
-        if (confirmation === 'RESET') {
-            try {
-                const response = await fetch('/api/transactions/reset', { method: 'DELETE', headers: getHeaders(false) });
-                const result = await response.json();
-                if (!response.ok) throw new Error(result.msg);
-                showAlert('Semua transaksi berhasil direset.', 'success');
-                fetchDashboardStats();
-            } catch (error) {
-                showAlert(error.message);
-            }
-        } else {
-            showAlert('Reset dibatalkan.', 'info');
-        }
-    });
 
     document.body.addEventListener('click', async (e) => {
         const button = e.target.closest('button');
