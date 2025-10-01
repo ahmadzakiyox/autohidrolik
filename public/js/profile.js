@@ -105,13 +105,11 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
         }
 
-        // ======================= LOGIKA BARU UNTUK KARTU NANO =======================
         const nanoCardSection = document.getElementById('nano-card-section');
         if (user.nanoCoatingCard && user.nanoCoatingCard.isActive) {
             const card = user.nanoCoatingCard;
             const formatDate = (dateString) => new Date(dateString).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 
-            // Jika No. Polisi sudah diisi, tampilkan kartu digital
             if (card.plateNumber) {
                 document.getElementById('nano-card-display').classList.remove('d-none');
                 document.getElementById('nano-card-form-container').classList.add('d-none');
@@ -122,18 +120,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('nano-coating-date').textContent = formatDate(card.coatingDate);
                 document.getElementById('nano-expires-at').textContent = formatDate(card.expiresAt);
             } 
-            // Jika belum, tampilkan form
             else {
                 document.getElementById('nano-card-display').classList.add('d-none');
                 document.getElementById('nano-card-form-container').classList.remove('d-none');
 
+                // Kode ini sekarang aman karena elemennya sudah ada
                 document.getElementById('nano-card-number-form').value = card.cardNumber;
-                document.getElementById('nano-owner-name-form').value = card.ownerName || user.username; // Pre-fill dengan username
+                document.getElementById('nano-owner-name-form').value = card.ownerName || user.username;
             }
             
             nanoCardSection.classList.remove('d-none');
         }
-        // ===================== AKHIR DARI LOGIKA KARTU NANO =====================
 
         profileLoading.classList.add('d-none');
         profileContent.classList.remove('d-none');
@@ -218,7 +215,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 messageDiv.innerHTML = `<div class="alert alert-success">${result.msg}</div>`;
 
-                // Muat ulang data profil setelah 2 detik untuk menampilkan kartu digital
                 setTimeout(() => {
                     fetchProfileData();
                 }, 2000);
