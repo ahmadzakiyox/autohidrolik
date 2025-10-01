@@ -64,9 +64,14 @@
                 <div id="nano-card-section" class="card mb-4 d-none">
                     <div class="card-body">
                         <div class="nano-card-background">
-                            <div class="nano-card-header text-center">
-                                <img src="/images/logo.png" alt="Logo" class="nano-card-logo">
-                                <h5 class="nano-card-title mt-2">KARTU MAINTENANCE NANO COATING</h5>
+                            <div class="nano-card-header text-center d-flex justify-content-between align-items-center">
+                                <div class="flex-grow-1">
+                                    <img src="/images/logo.png" alt="Logo" class="nano-card-logo">
+                                    <h5 class="nano-card-title mt-2">KARTU MAINTENANCE NANO COATING</h5>
+                                </div>
+                                <button class="btn btn-sm btn-outline-light" id="edit-nanocard-btn" data-bs-toggle="modal" data-bs-target="#editNanoCardModal" style="align-self: flex-start;">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
                             </div>
                             <div class="nano-card-content">
                                 <div id="nano-card-display" class="d-none">
@@ -121,26 +126,39 @@
     <div class="modal fade" id="editProfileModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Edit Data Diri</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
+                <div class="modal-header"><h5 class="modal-title">Edit Data Diri</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
                 <div class="modal-body">
                     <form id="edit-profile-form">
                         <div id="edit-profile-message" class="mb-3"></div>
-                        <div class="mb-3">
-                            <label for="edit-profile-username" class="form-label">Username</label>
-                            <input type="text" class="form-control" id="edit-profile-username" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="edit-profile-email" class="form-label">Email</label>
-                            <input type="email" class="form-control" id="edit-profile-email">
-                        </div>
-                        <div class="mb-3">
-                            <label for="edit-profile-phone" class="form-label">No. WhatsApp</label>
-                            <input type="tel" class="form-control" id="edit-profile-phone" required>
-                        </div>
+                        <div class="mb-3"><label for="edit-profile-username" class="form-label">Username</label><input type="text" class="form-control" id="edit-profile-username" required></div>
+                        <div class="mb-3"><label for="edit-profile-email" class="form-label">Email</label><input type="email" class="form-control" id="edit-profile-email"></div>
+                        <div class="mb-3"><label for="edit-profile-phone" class="form-label">No. WhatsApp</label><input type="tel" class="form-control" id="edit-profile-phone" required></div>
                         <button type="submit" class="btn w-100" style="background-color: var(--purple-accent); color: white;" id="save-profile-button">Simpan Perubahan</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="editNanoCardModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Detail Kartu Nano</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="edit-nanocard-form">
+                        <div id="edit-nanocard-message" class="mb-3"></div>
+                        <div class="mb-3">
+                            <label for="edit-nanocard-owner" class="form-label">Nama Pemilik</label>
+                            <input type="text" class="form-control" id="edit-nanocard-owner" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-nanocard-plate" class="form-label">No. Polisi Mobil</label>
+                            <input type="text" class="form-control" id="edit-nanocard-plate" required placeholder="Contoh: B 1234 ABC">
+                        </div>
+                        <button type="submit" class="btn w-100" style="background-color: var(--purple-accent); color: white;" id="save-nanocard-button">Simpan Perubahan</button>
                     </form>
                 </div>
             </div>
