@@ -1,7 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('token');
 
-    // Cek keamanan
     if (!token || localStorage.getItem('userRole') !== 'admin') {
         document.body.innerHTML = `<div class="text-center p-5"><h1>Akses Ditolak</h1><p>Hanya admin yang dapat mengakses halaman ini.</p><a href="/login">Kembali ke Login</a></div>`;
         return;
@@ -36,12 +35,23 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const displayData = (data) => {
+        // ================== PERUBAHAN DI SINI ==================
         // Tampilkan Spesifikasi
+        document.getElementById('spec-hostname').textContent = data.specs.hostname;
+        document.getElementById('spec-os-type').textContent = data.specs.osType;
         document.getElementById('spec-platform').textContent = data.specs.platform;
         document.getElementById('spec-arch').textContent = data.specs.arch;
-        document.getElementById('spec-free-mem').textContent = `${(data.specs.freeMemory / 1024 / 1024).toFixed(2)} MB`;
-        document.getElementById('spec-total-mem').textContent = `${(data.specs.totalMemory / 1024 / 1024).toFixed(2)} MB`;
-        document.getElementById('spec-uptime').textContent = `${(data.specs.uptime / 3600).toFixed(2)} jam`;
+        document.getElementById('spec-cpu-model').textContent = data.specs.cpuModel;
+        document.getElementById('spec-cpu-cores').textContent = data.specs.cpuCores;
+        document.getElementById('spec-free-mem').textContent = `${(data.specs.freeMemory / 1024 / 1024 / 1024).toFixed(2)} GB`;
+        document.getElementById('spec-total-mem').textContent = `${(data.specs.totalMemory / 1024 / 1024 / 1024).toFixed(2)} GB`;
+        
+        const uptimeSeconds = data.specs.uptime;
+        const days = Math.floor(uptimeSeconds / (3600 * 24));
+        const hours = Math.floor((uptimeSeconds % (3600 * 24)) / 3600);
+        const minutes = Math.floor((uptimeSeconds % 3600) / 60);
+        document.getElementById('spec-uptime').textContent = `${days} hari, ${hours} jam, ${minutes} menit`;
+        // ================= AKHIR PERUBAHAN =================
 
         // Tampilkan Log
         const logContainer = document.getElementById('log-container');
@@ -51,20 +61,21 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             data.logs.forEach(log => {
                 const logEntry = document.createElement('div');
-                let logClass = 'log-info';
-                if (log.toLowerCase().includes('error') || log.toLowerCase().includes('gagal')) {
+                let logClass = 'log-default';
+                const logLower = log.toLowerCase();
+                if (logLower.includes('error') || logLower.includes('gagal')) {
                     logClass = 'log-error';
+                } else if (logLower.includes('berhasil') || logLower.includes('sukses')) {
+                    logClass = 'log-info';
                 }
-                logEntry.innerHTML = `<span class="log-timestamp">[${new Date().toLocaleString('id-ID')}]</span> <span class="${logClass}">${log}</span>`;
+                logEntry.innerHTML = `<span class="log-timestamp">[${log.timestamp}]</span> <span class="${logClass}">${log.message}</span>`;
                 logContainer.appendChild(logEntry);
             });
-            // Auto scroll ke bawah
             logContainer.scrollTop = logContainer.scrollHeight;
         }
     };
 
     document.getElementById('refresh-log-btn').addEventListener('click', fetchData);
 
-    // Muat data saat halaman pertama kali dibuka
     fetchData();
 });
