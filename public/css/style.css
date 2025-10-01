@@ -136,15 +136,17 @@ body {
     animation: pop-in 0.5s ease-out forwards;
 }
 
+/* ================== PERUBAHAN DI SINI ================== */
+/* --- NANO COATING CARD (VERSI LEBIH KECIL) --- */
 .nano-card-background {
     background: linear-gradient(to bottom, #004a7f, #007ac1);
-    border-radius: 15px;
-    padding: 20px;
+    border-radius: 12px; /* Sedikit lebih kecil */
+    padding: 15px; /* Lebih kecil dari 20px */
     color: white;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 .nano-card-logo {
-    width: 120px;
+    width: 80px; /* Lebih kecil dari 120px */
     background: rgba(255, 255, 255, 0.1);
     border-radius: 50%;
     padding: 5px;
@@ -153,19 +155,20 @@ body {
     font-weight: bold;
     color: white;
     letter-spacing: 1px;
+    font-size: 0.9rem; /* Judul lebih kecil */
 }
 .nano-card-content {
     background-color: white;
     color: #333;
-    border-radius: 10px;
-    padding: 20px;
-    margin-top: 20px;
-    font-size: 0.9rem;
+    border-radius: 8px; /* Lebih kecil */
+    padding: 15px; /* Lebih kecil */
+    margin-top: 15px; /* Jarak lebih dekat */
+    font-size: 0.85rem; /* Teks konten lebih kecil */
 }
 .nano-card-field {
     display: flex;
     justify-content: space-between;
-    padding: 8px 0;
+    padding: 6px 0; /* Jarak vertikal lebih rapat */
     border-bottom: 1px solid #eee;
 }
 .nano-card-field:last-child {
@@ -179,12 +182,16 @@ body {
     font-weight: bold;
 }
 .nano-card-footer {
-    padding: 20px 5px 0 5px;
-    font-size: 0.8rem;
+    padding: 15px 5px 0 5px; /* Padding atas lebih kecil */
+    font-size: 0.75rem; /* Teks footer lebih kecil */
 }
 .nano-card-footer ul {
     padding-left: 20px;
+    margin-bottom: 0; /* Hapus margin bawah dari list */
 }
+/* ================= AKHIR PERUBAHAN ================= */
+
+
 /* Animasi sederhana untuk badge */
 @keyframes pop-in {
     0% {
