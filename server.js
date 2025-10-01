@@ -13,20 +13,22 @@ require('dotenv').config();
 // Inisialisasi Aplikasi Express
 const app = express();
 
-// ================== PENANGKAP LOG (BARU) ==================
+// ================== PENANGKAP LOG (DIPERBARUI) ==================
 const serverLogs = [];
 const originalConsoleLog = console.log;
 console.log = (...args) => {
-    // Tampilkan di konsol asli
     originalConsoleLog.apply(console, args);
-    // Simpan ke array log (hanya 100 log terakhir)
     const logMessage = args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : arg).join(' ');
-    serverLogs.push(logMessage);
+    // Tambahkan timestamp ke setiap log
+    serverLogs.push({
+        message: logMessage,
+        timestamp: new Date().toLocaleString('id-ID', { hour12: false })
+    });
     if (serverLogs.length > 100) {
         serverLogs.shift();
     }
 };
-// ================== AKHIR PENANGKAP LOG 
+// ================== AKHIR PENANGKAP LOG ==================
 
 // Import Model
 const User = require('./models/User');
@@ -129,19 +131,26 @@ function calculateExpiryDate() {
 }
 
 
-// ================== RUTE BARU UNTUK STATUS SERVER ==================
 app.get('/api/server-status', auth, adminAuth, (req, res) => {
     try {
+        const cpus = os.cpus();
+        const cpuModel = cpus.length > 0 ? cpus[0].model : 'N/A';
+        const cpuCores = cpus.length;
+
         const specs = {
+            hostname: os.hostname(),
+            osType: os.type(),
             platform: os.platform(),
             arch: os.arch(),
+            cpuModel: cpuModel,
+            cpuCores: cpuCores,
             totalMemory: os.totalmem(),
             freeMemory: os.freemem(),
             uptime: os.uptime(),
         };
         res.json({
             specs,
-            logs: serverLogs.slice().reverse() // Kirim log dari yang terbaru
+            logs: serverLogs.slice().reverse()
         });
     } catch (error) {
         console.log('Error saat mengambil status server:', error.message);
