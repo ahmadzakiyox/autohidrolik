@@ -521,6 +521,38 @@ app.put('/api/profile', auth, async (req, res) => {
     }
 });
 
+// --- RUTE BARU: USER MENGUPDATE KARTU NANO MILIKNYA ---
+app.put('/api/profile/update-nanocard', auth, async (req, res) => {
+    const { ownerName, plateNumber } = req.body;
+
+    // Validasi dasar
+    if (!ownerName || !plateNumber) {
+        return res.status(400).json({ msg: 'Nama Pemilik dan No. Polisi wajib diisi.' });
+    }
+
+    try {
+        // Cari user berdasarkan token yang login
+        const user = await User.findById(req.user.id);
+        
+        if (!user || !user.nanoCoatingCard) {
+            return res.status(404).json({ msg: 'Kartu maintenance untuk user ini tidak ditemukan.' });
+        }
+
+        // Update data kartu nano
+        user.nanoCoatingCard.ownerName = ownerName;
+        user.nanoCoatingCard.plateNumber = plateNumber;
+        user.markModified('nanoCoatingCard'); // Tandai bahwa sub-dokumen ini diubah
+        
+        await user.save(); // Simpan perubahan
+
+        res.json({ msg: `Data kartu untuk ${user.username} berhasil diperbarui.` });
+
+    } catch (error) {
+        console.error("Error di /api/profile/update-nanocard:", error);
+        res.status(500).send('Server error');
+    }
+});
+
 // --- RUTE ADMIN: MANAJEMEN PENGGUNA ---
 app.get('/api/users', auth, adminAuth, async (req, res) => {
     try {
