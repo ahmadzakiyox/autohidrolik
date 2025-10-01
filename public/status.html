@@ -27,15 +27,16 @@
             overflow-y: scroll;
             font-family: 'Courier New', Courier, monospace;
             font-size: 0.85rem;
-            white-space: pre-wrap; /* Agar log tidak melebar */
+            white-space: pre-wrap;
         }
         .log-timestamp { color: #8b949e; }
         .log-info { color: #58a6ff; }
         .log-error { color: #f85149; }
+        .log-default { color: var(--text-primary); }
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-dark bg-dark border-bottom">
+    <nav class="navbar navbar-dark" style="background-color: var(--container-bg); border-bottom: 1px solid var(--border-color);">
         <div class="container">
             <a class="navbar-brand fw-bold" href="/Admin-Dashboard"><i class="bi bi-arrow-left"></i> Kembali ke Dashboard</a>
         </div>
@@ -56,12 +57,16 @@
             <div class="card mb-5">
                 <div class="card-body">
                     <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between"><strong>Hostname:</strong> <span id="spec-hostname">-</span></li>
+                        <li class="list-group-item d-flex justify-content-between"><strong>Tipe OS:</strong> <span id="spec-os-type">-</span></li>
                         <li class="list-group-item d-flex justify-content-between"><strong>Platform:</strong> <span id="spec-platform">-</span></li>
                         <li class="list-group-item d-flex justify-content-between"><strong>Arsitektur CPU:</strong> <span id="spec-arch">-</span></li>
+                        <li class="list-group-item d-flex justify-content-between"><strong>Model CPU:</strong> <span id="spec-cpu-model">-</span></li>
+                        <li class="list-group-item d-flex justify-content-between"><strong>Jumlah Core CPU:</strong> <span id="spec-cpu-cores">-</span></li>
                         <li class="list-group-item d-flex justify-content-between"><strong>Memori Tersisa:</strong> <span id="spec-free-mem">-</span></li>
                         <li class="list-group-item d-flex justify-content-between"><strong>Total Memori:</strong> <span id="spec-total-mem">-</span></li>
                         <li class="list-group-item d-flex justify-content-between"><strong>Server Uptime:</strong> <span id="spec-uptime">-</span></li>
-                    </ul>
+                        </ul>
                 </div>
             </div>
 
