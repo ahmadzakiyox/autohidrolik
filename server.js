@@ -124,9 +124,9 @@ function generateOTP() {
 }
 
 // --- Fungsi Helper untuk Menghitung Tanggal Kedaluwarsa ---
-function calculateExpiryDate() {
+function calculateExpiryDate(months = 6) { // Default 3 bulan
     const expiryDate = new Date();
-    expiryDate.setMonth(expiryDate.getMonth() + 3); // Tambah 3 bulan dari sekarang
+    expiryDate.setMonth(expiryDate.getMonth() + months);
     return expiryDate;
 }
 
@@ -863,16 +863,27 @@ app.post('/api/purchase-membership', auth, async (req, res) => {
         const user = await User.findById(req.user.id);
         if (!user) return res.status(404).json({ msg: 'Pengguna tidak ditemukan.' });
 
-        user.membership = {
+        // Buat ID unik untuk paket baru ini
+        const packageId = `PKG-${Date.now()}`;
+
+        const newMembership = {
             packageName: packageName,
             totalWashes: totalWashes,
             remainingWashes: totalWashes,
             isPaid: false,
-            expiresAt: calculateExpiryDate() // <-- TAMBAHKAN BARIS INI
+            expiresAt: calculateExpiryDate(), // Menggunakan fungsi helper
+            packageId: packageId
         };
+        
+        // ================== PERUBAHAN LOGIKA DI SINI ==================
+        // Tambahkan paket baru ke dalam array 'memberships'
+        user.memberships.push(newMembership);
+        // ================= AKHIR PERUBAHAN =================
+
         await user.save();
-        res.json({ msg: 'Pembelian paket berhasil! Menunggu konfirmasi pembayaran.', user });
+        res.json({ msg: 'Paket berhasil ditambahkan! Menunggu konfirmasi pembayaran.', user });
     } catch (error) {
+        console.error("Error di purchase-membership:", error);
         res.status(500).send('Server error');
     }
 });
@@ -921,40 +932,42 @@ app.post('/api/purchase-membership-admin/:userId', auth, adminAuth, async (req, 
 // Rute Penggunaan Jatah Cuci / Scanner (DIREVISI TOTAL)
 // server.js
 app.post('/api/use-wash', auth, adminAuth, async (req, res) => {
-    const { userId, washType } = req.body; // washType bersifat opsional
-    try {
-        const user = await User.findOne({ memberId: userId });
-        if (!user || !user.membership) return res.status(404).json({ msg: 'Data member tidak ditemukan.' });
+    // QR code akan berisi: "memberId;packageId"
+    const { qrData, washType } = req.body;
+    
+    if (!qrData || !qrData.includes(';')) {
+        return res.status(400).json({ msg: 'Format QR Code tidak valid.' });
+    }
 
-        if (new Date() > new Date(user.membership.expiresAt)) return res.status(400).json({ msg: 'Paket member sudah kedaluwarsa.' });
-        if (!user.membership.isPaid) return res.status(400).json({ msg: 'Paket member belum lunas.' });
+    const [memberId, packageId] = qrData.split(';');
+
+    try {
+        const user = await User.findOne({ memberId: memberId });
+        if (!user) return res.status(404).json({ msg: 'Data member tidak ditemukan.' });
+        
+        const membership = user.memberships.find(p => p.packageId === packageId);
+        if (!membership) return res.status(404).json({ msg: 'Paket member spesifik tidak ditemukan.' });
+
+        if (new Date() > new Date(membership.expiresAt)) return res.status(400).json({ msg: 'Paket member sudah kedaluwarsa.' });
+        if (!membership.isPaid) return res.status(400).json({ msg: 'Paket member belum lunas.' });
 
         let successMessage = '';
 
-        if (user.membership.packageName === 'Paket Kombinasi') {
+        if (membership.packageName === 'Paket Kombinasi') {
             if (!washType) return res.status(400).json({ msg: 'Untuk Paket Kombinasi, jenis cucian harus dipilih.' });
-            if (user.membership.washes[washType] <= 0) return res.status(400).json({ msg: `Jatah cuci untuk tipe '${washType}' sudah habis.` });
-
-            user.membership.washes[washType] -= 1;
+            if (membership.washes[washType] <= 0) return res.status(400).json({ msg: `Jatah cuci untuk tipe '${washType}' sudah habis.` });
+            membership.washes[washType] -= 1;
             successMessage = `Berhasil menggunakan 1 jatah ${washType} untuk ${user.username}.`;
         } else {
-            // Logika untuk paket biasa
-            if (user.membership.remainingWashes <= 0) return res.status(400).json({ msg: 'Jatah cuci pengguna ini sudah habis.' });
-
-            user.membership.remainingWashes -= 1;
+            if (membership.remainingWashes <= 0) return res.status(400).json({ msg: 'Jatah cuci untuk paket ini sudah habis.' });
+            membership.remainingWashes -= 1;
             successMessage = `Berhasil menggunakan 1 jatah cuci untuk ${user.username}.`;
         }
 
-        user.markModified('membership'); 
         await user.save();
-
-        // Kirim kembali data user yang sudah terupdate
         const updatedUser = await User.findById(user._id).select('-password');
+        res.json({ msg: successMessage, user: updatedUser });
 
-        res.json({ 
-            msg: successMessage,
-            user: updatedUser 
-        }); 
     } catch (error) {
         console.error("Error di use-wash:", error);
         res.status(500).send('Server error');
@@ -1061,63 +1074,46 @@ app.post('/api/users/:id/extend-membership', auth, adminAuth, async (req, res) =
 });*/
 
 // --- RUTE KONFIRMASI PEMBAYARAN (DIPERBARUI) ---
-app.post('/api/confirm-payment/:userId', auth, adminAuth, async (req, res) => {
+app.post('/api/confirm-payment/:userId/:packageId', auth, adminAuth, async (req, res) => {
     try {
         const user = await User.findById(req.params.userId);
-        if (!user || !user.membership) {
+        if (!user) {
             return res.status(404).json({ msg: 'Data member tidak ditemukan.' });
         }
         
-        // Cek agar transaksi tidak dicatat dua kali
-        if (user.membership.isPaid) {
-            return res.status(400).json({ msg: 'Pembayaran ini sudah pernah dikonfirmasi.' });
+        // Cari paket spesifik di dalam array memberships
+        const membership = user.memberships.id(req.params.packageId);
+        if (!membership) {
+            return res.status(404).json({ msg: 'Paket spesifik tidak ditemukan.' });
+        }
+        
+        if (membership.isPaid) {
+            return res.status(400).json({ msg: 'Pembayaran untuk paket ini sudah pernah dikonfirmasi.' });
         }
 
-        user.membership.isPaid = true;
-        // ======================= LOGIKA BARU UNTUK KARTU NANO =======================
-        // Cek apakah paket yang dibeli adalah Nano Coating
-        if (user.membership.packageName.includes('Nano Coating')) {
+        membership.isPaid = true;
+
+        // Logika untuk kartu nano jika paketnya adalah nano coating
+        if (membership.packageName.includes('Nano Coating')) {
             const coatingDate = new Date();
             const expiryDate = new Date(coatingDate);
-            expiryDate.setFullYear(expiryDate.getFullYear() + 1); // Berlaku 1 tahun
+            expiryDate.setFullYear(expiryDate.getFullYear() + 1);
 
             user.nanoCoatingCard = {
-                cardNumber: `NC-${Date.now()}`, // Nomor kartu unik sederhana
-                ownerName: user.username, // 
+                cardNumber: `NC-${Date.now()}`,
+                ownerName: user.username,
                 coatingDate: coatingDate,
                 expiresAt: expiryDate,
                 isActive: true
             };
+            user.markModified('nanoCoatingCard');
         }
-        // ===================== AKHIR DARI LOGIKA BARU =====================
 
-        user.markModified('membership');
-        user.markModified('nanoCoatingCard'); // Tandai nanoCoatingCard untuk disimpan
         await user.save();
+        
+        // (Opsional: Catat transaksi jika perlu)
 
-        // --- LOGIKA BARU: CATAT TRANSAKSI ---
-        // Daftar harga untuk menentukan jumlah transaksi
-        const packagePrices = {
-            'Body Wash': 500000,
-            'Cuci Mobil Hidrolik': 560000,
-            'Cuci Motor Besar': 200000,
-            'Cuci Motor Kecil': 200000,
-            'Paket Kombinasi': 600000,
-            'Add-On Vacuum Cleaner': 20000
-        };
-        const transactionAmount = packagePrices[user.membership.packageName] || 0;
-
-        // Buat catatan transaksi baru
-        const newTransaction = new Transaction({
-            user: user._id,
-            username: user.username,
-            packageName: user.membership.packageName,
-            amount: transactionAmount
-        });
-        await newTransaction.save();
-        // --- AKHIR LOGIKA BARU ---
-
-        res.json({ msg: `Pembayaran untuk ${user.username} telah dikonfirmasi dan dicatat.`, user });
+        res.json({ msg: `Pembayaran untuk paket "${membership.packageName}" telah dikonfirmasi.`, user });
 
     } catch (error) {
         console.error("Error di /api/confirm-payment:", error.message);
