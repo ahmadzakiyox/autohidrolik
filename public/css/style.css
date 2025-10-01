@@ -189,6 +189,13 @@ body {
     padding-left: 20px;
     margin-bottom: 0; /* Hapus margin bawah dari list */
 }
+
+/* Perbaikan Tampilan Kartu Nano di Halaman Profil */
+#nano-card-section.card {
+    background-color: transparent;
+    border: none;
+    padding: 0;
+}
 /* ================= AKHIR PERUBAHAN ================= */
 
 
