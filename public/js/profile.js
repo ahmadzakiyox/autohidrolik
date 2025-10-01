@@ -1,8 +1,15 @@
 document.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('token');
+    let currentUserData = null; // Variabel untuk menyimpan data user
 
+    // Loading elements
     const profileLoading = document.getElementById('profile-loading');
     const profileContent = document.getElementById('profile-content');
+    
+    // Edit Profile Modal Elements
+    const editProfileModal = new bootstrap.Modal(document.getElementById('editProfileModal'));
+    const editProfileForm = document.getElementById('edit-profile-form');
+    const saveProfileButton = document.getElementById('save-profile-button');
 
     if (!token) {
         document.querySelector('.profile-container').innerHTML = `
@@ -21,8 +28,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: { 'x-auth-token': token }
             });
             if (!response.ok) throw new Error('Sesi tidak valid.');
-            const user = await response.json();
-            displayProfileData(user);
+            
+            currentUserData = await response.json(); // Simpan data user
+            displayProfileData(currentUserData);
+
         } catch (error) {
             alert(error.message);
             window.location.href = '/login';
@@ -30,6 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const displayProfileData = (user) => {
+        // ... (fungsi displayProfileData yang sudah ada, tidak ada perubahan di dalamnya)
         document.getElementById('profile-username').textContent = user.username || '-';
         document.getElementById('profile-email').textContent = user.email || '-';
         document.getElementById('profile-phone').textContent = user.phone || '-';
@@ -88,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     memberCodeSection.innerHTML = '<p class="text-danger">Member ID tidak ditemukan.</p>';
                 }
             } else if (!user.membership.isPaid) {
-                memberCodeSection.innerHTML = `<p class="text-center text-white p-4">QR code akan muncul setelah pembayaran dikonfirmasi.</p>`;
+                memberCodeSection.innerHTML = `<div class="qr-pending-message">QR code akan muncul setelah pembayaran dikonfirmasi.</div>`;
             } else if (isExpired) {
                 memberCodeSection.innerHTML = `<p class="text-center text-danger p-4 fw-bold">Paket telah hangus.</p>`;
             } else {
@@ -123,8 +133,6 @@ document.addEventListener('DOMContentLoaded', () => {
             else {
                 document.getElementById('nano-card-display').classList.add('d-none');
                 document.getElementById('nano-card-form-container').classList.remove('d-none');
-
-                // Kode ini sekarang aman karena elemennya sudah ada
                 document.getElementById('nano-card-number-form').value = card.cardNumber;
                 document.getElementById('nano-owner-name-form').value = card.ownerName || user.username;
             }
@@ -136,7 +144,61 @@ document.addEventListener('DOMContentLoaded', () => {
         profileContent.classList.remove('d-none');
     };
 
+    // ================== KODE BARU DI SINI ==================
+    // Event listener untuk tombol "Edit Data"
+    document.getElementById('edit-profile-btn').addEventListener('click', () => {
+        if (currentUserData) {
+            document.getElementById('edit-profile-username').value = currentUserData.username || '';
+            document.getElementById('edit-profile-email').value = currentUserData.email || '';
+            document.getElementById('edit-profile-phone').value = currentUserData.phone || '';
+        }
+    });
+
+    // Event listener untuk form edit profil
+    if (editProfileForm) {
+        editProfileForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const messageDiv = document.getElementById('edit-profile-message');
+            messageDiv.innerHTML = '';
+            saveProfileButton.disabled = true;
+            saveProfileButton.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Menyimpan...`;
+
+            const updatedData = {
+                username: document.getElementById('edit-profile-username').value,
+                email: document.getElementById('edit-profile-email').value,
+                phone: document.getElementById('edit-profile-phone').value,
+            };
+
+            try {
+                const response = await fetch('/api/profile', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+                    body: JSON.stringify(updatedData)
+                });
+
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.msg || 'Gagal menyimpan data.');
+
+                messageDiv.innerHTML = `<div class="alert alert-success">Profil berhasil diperbarui.</div>`;
+
+                setTimeout(() => {
+                    messageDiv.innerHTML = '';
+                    editProfileModal.hide();
+                    fetchProfileData(); // Muat ulang data profil di halaman
+                }, 2000);
+
+            } catch (error) {
+                messageDiv.innerHTML = `<div class="alert alert-danger">${error.message}</div>`;
+            } finally {
+                saveProfileButton.disabled = false;
+                saveProfileButton.innerHTML = 'Simpan Perubahan';
+            }
+        });
+    }
+    // ================= AKHIR KODE BARU =================
+    
     // --- EVENT LISTENER UNTUK FORM GANTI PASSWORD ---
+    // ... (kode form ganti password dan nano card yang sudah ada, tidak ada perubahan)
     const changePasswordForm = document.getElementById('change-password-form');
     if (changePasswordForm) {
         changePasswordForm.addEventListener('submit', async (e) => {
@@ -191,8 +253,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-
-    // --- EVENT LISTENER BARU UNTUK FORM KARTU NANO ---
     const nanoCardForm = document.getElementById('nano-card-form');
     if (nanoCardForm) {
         nanoCardForm.addEventListener('submit', async (e) => {
@@ -225,5 +285,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Panggil fungsi untuk memuat data saat halaman dibuka
     fetchProfileData();
 });
