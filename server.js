@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const exceljs = require('exceljs');
 const nodemailer = require('nodemailer');
+const os = require('os'); // Diperlukan untuk status server
 const path = require('path'); // Modul 'path' diperlukan
 require('dotenv').config();
 
