@@ -26,6 +26,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const memberTableBody = document.getElementById('member-table-body');
     const nonMemberTableBody = document.getElementById('non-member-table-body');
     const expiredMemberTableBody = document.getElementById('expired-member-table-body');
+    const pendingPaymentTableBody = document.getElementById('pending-payment-table-body');
+
     
     // Inisialisasi semua modal (pop-up)
     const addUserModal = new bootstrap.Modal(document.getElementById('addUserModal'));
@@ -95,17 +97,53 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const fetchUsers = async () => {
-        try {
-            const response = await fetch('/api/users', { headers: getHeaders(false) });
-            if (!response.ok) throw new Error('Gagal mengambil data pengguna.');
-            cachedUsers = await response.json();
-            const today = new Date();
-            const activeMembers = cachedUsers.filter(user => user.membership && user.membership.expiresAt && new Date(user.membership.expiresAt) >= today);
-            const expiredMembers = cachedUsers.filter(user => user.membership && user.membership.expiresAt && new Date(user.membership.expiresAt) < today);
-            const nonMembers = cachedUsers.filter(user => !user.membership);
-            displayMembers(activeMembers);
-            displayExpiredMembers(expiredMembers);
-            displayNonMembers(nonMembers);
+    try {
+        const response = await fetch('/api/users', { headers: getHeaders(false) });
+        if (!response.ok) throw new Error('Gagal mengambil data pengguna.');
+        cachedUsers = await response.json();
+
+        // Filter dan tampilkan data di tabel yang sesuai
+        const today = new Date();
+        const activeMembers = [];
+        const expiredMembers = [];
+        const nonMembers = [];
+        const pendingPayments = [];
+
+        cachedUsers.forEach(user => {
+            if (user.memberships && user.memberships.length > 0) {
+                let hasActivePackage = false;
+                user.memberships.forEach(pkg => {
+                    if (pkg.isPaid) {
+                        if (new Date(pkg.expiresAt) >= today) {
+                            // Jika user memiliki setidaknya satu paket aktif, tambahkan ke daftar anggota aktif
+                            if (!activeMembers.some(u => u._id === user._id)) {
+                                activeMembers.push(user);
+                            }
+                            hasActivePackage = true;
+                        } else {
+                             if (!expiredMembers.some(u => u._id === user._id)) {
+                                expiredMembers.push(user);
+                            }
+                        }
+                    } else {
+                        // Tambahkan ke daftar pembayaran tertunda
+                        pendingPayments.push({ user, pkg });
+                    }
+                });
+                if(!hasActivePackage && !expiredMembers.some(u => u._id === user._id)){
+                     nonMembers.push(user);
+                }
+
+            } else {
+                nonMembers.push(user);
+            }
+        });
+
+        displayMembers(activeMembers);
+        displayExpiredMembers(expiredMembers);
+        displayNonMembers(nonMembers);
+        displayPendingPayments(pendingPayments); // Panggil fungsi baru
+
         } catch (error) {
             const errorMsg = `<tr><td colspan="8" class="text-center text-danger">${error.message}</td></tr>`;
             memberTableBody.innerHTML = errorMsg;
@@ -113,6 +151,39 @@ document.addEventListener('DOMContentLoaded', () => {
             nonMemberTableBody.innerHTML = errorMsg;
         }
     };
+    
+    const displayPendingPayments = (pendingItems) => {
+    pendingPaymentTableBody.innerHTML = '';
+    if (pendingItems.length === 0) {
+        pendingPaymentTableBody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Tidak ada pembayaran yang menunggu konfirmasi.</td></tr>`;
+        return;
+    }
+
+    pendingItems.forEach(item => {
+        const row = document.createElement('tr');
+        // Simpan kedua ID di baris tabel
+        row.dataset.userId = item.user._id;
+        row.dataset.packageId = item.pkg._id; // _id dari sub-dokumen
+
+        const purchaseDate = new Date(item.pkg.purchaseDate).toLocaleDateString('id-ID', {
+            day: 'numeric', month: 'long', year: 'numeric'
+        });
+
+        row.innerHTML = `
+            <td>${item.user.username}</td>
+            <td>${item.user.phone || '-'}</td>
+            <td>${item.pkg.packageName}</td>
+            <td>${purchaseDate}</td>
+            <td>
+                <button class="btn btn-sm btn-success confirm-payment-btn" title="Konfirmasi Bayar">
+                    <i class="bi bi-check-circle"></i> Konfirmasi
+                </button>
+            </td>
+        `;
+        pendingPaymentTableBody.appendChild(row);
+    });
+};
+
 
     const fetchReviews = async () => {
         try {
@@ -213,17 +284,26 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- FUNGSI-FUNGSI AKSI (OPERASI CRUD) ---
-    const handleConfirmPayment = async (userId) => {
-        if (!confirm('Anda yakin ingin mengonfirmasi pembayaran untuk pengguna ini?')) return;
-        try {
-            const response = await fetch(`/api/confirm-payment/${userId}`, { method: 'POST', headers: getHeaders(false) });
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.msg || 'Gagal konfirmasi.');
-            showAlert(`Pembayaran untuk ${result.user.username} berhasil dikonfirmasi.`, 'success');
-            fetchUsers();
-            fetchDashboardStats();
-        } catch (error) { showAlert(error.message); }
-    };
+    const handleConfirmPayment = async (userId, packageId) => {
+    if (!confirm('Anda yakin ingin mengonfirmasi pembayaran untuk paket ini?')) return;
+    try {
+        // Gunakan endpoint yang sudah diperbarui di server.js
+        const response = await fetch(`/api/confirm-payment/${userId}/${packageId}`, {
+            method: 'POST',
+            headers: getHeaders(false)
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.msg || 'Gagal konfirmasi.');
+
+        showAlert(`Pembayaran untuk ${result.user.username} berhasil dikonfirmasi.`, 'success');
+        fetchUsers(); // Muat ulang semua data pengguna
+        fetchDashboardStats(); // Perbarui statistik
+
+    } catch (error) {
+        showAlert(error.message);
+    }
+};
+
 
     const deleteUser = async (userId) => {
         if (!confirm('Anda yakin ingin menghapus pengguna ini? Tindakan ini tidak dapat dibatalkan.')) return;
@@ -353,8 +433,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const userRow = button.closest('tr[data-user-id]');
-        if (userRow) {
-            const userId = userRow.dataset.userId;
+if (userRow) {
+    const userId = userRow.dataset.userId;
+    // Cek apakah ada packageId juga (untuk tombol konfirmasi)
+    const packageId = userRow.dataset.packageId;
+
+    if (button.classList.contains('confirm-payment-btn') && packageId) {
+        return handleConfirmPayment(userId, packageId);
+    }
             const user = cachedUsers.find(u => u._id === userId);
             if (user) {
                 if (button.classList.contains('confirm-payment-btn')) return handleConfirmPayment(userId);
