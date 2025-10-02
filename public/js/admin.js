@@ -1,3 +1,4 @@
+
 document.addEventListener('DOMContentLoaded', () => {
     // ======================= PERBAIKAN UTAMA DI SINI =======================
     // "Penjaga" untuk memastikan kode ini hanya berjalan di halaman admin.
@@ -213,17 +214,25 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- FUNGSI-FUNGSI AKSI (OPERASI CRUD) ---
-    const handleConfirmPayment = async (userId) => {
-        if (!confirm('Anda yakin ingin mengonfirmasi pembayaran untuk pengguna ini?')) return;
-        try {
-            const response = await fetch(`/api/confirm-payment/${userId}`, { method: 'POST', headers: getHeaders(false) });
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.msg || 'Gagal konfirmasi.');
-            showAlert(`Pembayaran untuk ${result.user.username} berhasil dikonfirmasi.`, 'success');
-            fetchUsers();
-            fetchDashboardStats();
-        } catch (error) { showAlert(error.message); }
-    };
+   const handleConfirmPayment = async (userId, packageId) => {
+    if (!confirm('Anda yakin ingin mengonfirmasi pembayaran untuk paket ini?')) return;
+    try {
+        // PERBAIKAN: URL sekarang menyertakan userId dan packageId
+        const response = await fetch(`/api/confirm-payment/${userId}/${packageId}`, { 
+            method: 'POST', 
+            headers: getHeaders(false) 
+        });
+        
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.msg || 'Gagal konfirmasi.');
+        
+        showAlert(`Pembayaran untuk ${result.user.username} berhasil dikonfirmasi.`, 'success');
+        fetchUsers(); // Muat ulang data untuk memindahkan member dari tabel pending
+        fetchDashboardStats();
+    } catch (error) { 
+        showAlert(error.message); 
+    }
+};
 
     const deleteUser = async (userId) => {
         if (!confirm('Anda yakin ingin menghapus pengguna ini? Tindakan ini tidak dapat dibatalkan.')) return;
@@ -324,6 +333,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const button = e.target.closest('button');
         if (!button) return;
 
+            // PERBAIKAN pada bagian event listener untuk tombol konfirmasi
+    if (button.classList.contains('confirm-payment-btn')) {
+        const row = button.closest('tr');
+        if (row && row.dataset.userId && row.dataset.packageId) {
+            // Panggil fungsi dengan DUA argumen
+            handleConfirmPayment(row.dataset.userId, row.dataset.packageId);
+            return;
+        }
+    }
+
+    
         if (button.classList.contains('extend-btn')) {
             const userId = document.getElementById('extend-userid').value;
             const months = button.dataset.months;
