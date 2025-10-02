@@ -1,7 +1,9 @@
+// File: public/js/profile.js (Gunakan kode ini)
+
 document.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('token');
     if (!token) {
-        document.body.innerHTML = `<div class="text-center p-5"><h2>Akses Ditolak</h2><p>Silakan login terlebih dahulu.</p><a href="/login" class="btn btn-primary">Login</a></div>`;
+        document.body.innerHTML = `<div class="text-center p-5"><h2>Akses Ditolak</h2><p>Silakan login terlebih dahulu.</p><a href="/login.html" class="btn btn-primary">Login</a></div>`;
         return;
     }
 
@@ -18,7 +20,8 @@ document.addEventListener('DOMContentLoaded', () => {
             displayProfile(currentUserData);
         } catch (error) {
             alert(error.message);
-            window.location.href = '/login';
+            localStorage.removeItem('token');
+            window.location.href = '/login.html';
         }
     };
 
@@ -38,17 +41,24 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // Urutkan paket: yang belum lunas paling atas, lalu yang aktif, lalu yang kedaluwarsa
+        user.memberships.sort((a, b) => {
+            if (a.isPaid !== b.isPaid) return a.isPaid ? 1 : -1;
+            return new Date(b.expiresAt) - new Date(a.expiresAt);
+        });
+
         user.memberships.forEach(pkg => {
-            const isNano = pkg.packageName.toLowerCase().includes('nano');
-            const card = createPackageCard(pkg, user.memberId, isNano);
+            const card = createPackageCard(pkg, user.memberId);
             membershipsContainer.appendChild(card);
             
+            // Generate QR Code hanya untuk paket yang lunas dan belum kedaluwarsa
             if (pkg.isPaid && new Date() < new Date(pkg.expiresAt)) {
-                if (isNano || pkg.remainingWashes > 0) {
-                    const qrContainer = document.getElementById(`qrcode-container-${pkg.packageId}`);
-                    if (qrContainer) {
-                        new QRCode(qrContainer, {
-                            text: `${user.memberId};${pkg.packageId}`,
+                // Pastikan ada sisa layanan (bukan nano) atau ini adalah paket nano
+                if (pkg.remainingWashes > 0 || pkg.packageName.toLowerCase().includes('nano')) {
+                    const qrContainer = document.getElementById(`qrcode-container-${pkg._id}`);
+                    if (qrContainer && user.memberId && pkg._id) {
+                         new QRCode(qrContainer, {
+                            text: `${user.memberId};${pkg.packageId}`, // Menggunakan packageId yang unik
                             width: 128,
                             height: 128,
                         });
@@ -56,28 +66,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         });
-
-        document.querySelectorAll('.edit-pkg-btn').forEach(button => {
-            button.addEventListener('click', (e) => {
-                const packageId = e.currentTarget.dataset.pkgId;
-                const pkg = currentUserData.memberships.find(m => m._id === packageId);
-                if (pkg) {
-                    document.getElementById('edit-package-id').value = pkg._id;
-                    document.getElementById('edit-package-owner').value = pkg.ownerName || '';
-                    document.getElementById('edit-package-plate').value = pkg.plateNumber || '';
-                    editPackageDetailModal.show();
-                }
-            });
-        });
     };
 
-    const createPackageCard = (pkg, memberId, isNano) => {
+    const createPackageCard = (pkg, memberId) => {
         const card = document.createElement('div');
         card.className = 'card mb-4';
         const formatDate = (dateString) => new Date(dateString).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
         const isExpired = new Date() > new Date(pkg.expiresAt);
-        const statusBadge = pkg.isPaid ? '<span class="badge bg-success">Lunas</span>' : '<span class="badge bg-warning text-dark">Menunggu Konfirmasi</span>';
+        let statusBadge;
+
+        if (!pkg.isPaid) {
+            statusBadge = '<span class="badge bg-warning text-dark">Menunggu Konfirmasi</span>';
+        } else if (isExpired) {
+            statusBadge = '<span class="badge bg-danger">Kedaluwarsa</span>';
+        } else {
+            statusBadge = '<span class="badge bg-success">Aktif</span>';
+        }
         
+        const isNano = pkg.packageName.toLowerCase().includes('nano');
         let detailsHtml = '';
         let qrHtml = '';
 
@@ -88,36 +94,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 <hr>
                 <p><small>Berlaku hingga: <strong>${formatDate(pkg.expiresAt)}</strong></small></p>
             `;
-            if (pkg.isPaid && !isExpired) {
-                 qrHtml = `<div id="qrcode-container-${pkg.packageId}"></div><p class="small text-muted mt-2">Tunjukkan untuk maintenance.</p>`;
-            }
         } else {
             detailsHtml = `
-                <p class="display-4 fw-bold mb-0">${pkg.remainingWashes}x</p>
+                <p class="display-4 fw-bold mb-0">${pkg.remainingWashes || 0}x</p>
                 <p class="text-muted">Sisa Jatah Pencucian</p>
                 <hr>
                 <p><small>Berlaku hingga: <strong>${formatDate(pkg.expiresAt)}</strong></small></p>
             `;
-            if (pkg.isPaid && !isExpired && pkg.remainingWashes > 0) {
-                 qrHtml = `<div id="qrcode-container-${pkg.packageId}"></div><p class="small text-muted mt-2">Tunjukkan kode ini ke staf.</p>`;
-            }
         }
 
-        if (!qrHtml && pkg.isPaid && !isExpired) {
-            qrHtml = `<div class="qr-pending-message small p-3">Layanan Habis/Selesai</div>`;
+        if (pkg.isPaid && !isExpired) {
+            if (pkg.remainingWashes > 0 || isNano) {
+                qrHtml = `<div id="qrcode-container-${pkg._id}"></div><p class="small text-muted mt-2">Tunjukkan kode ini ke staf.</p>`;
+            } else {
+                 qrHtml = `<div class="qr-pending-message small p-3 text-center">Jatah cuci habis.</div>`;
+            }
         } else if (!pkg.isPaid) {
-            qrHtml = `<div class="qr-pending-message small p-3">QR Code muncul setelah lunas.</div>`;
+            qrHtml = `<div class="qr-pending-message small p-3 text-center">QR Code akan muncul setelah pembayaran dikonfirmasi admin.</div>`;
         } else if (isExpired) {
-             qrHtml = `<div class="text-danger fw-bold small p-3">Paket Kedaluwarsa</div>`;
+             qrHtml = `<div class="text-danger fw-bold small p-3 text-center">Paket Kedaluwarsa</div>`;
         }
 
         card.innerHTML = `
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">${pkg.packageName}</h5>
-                <div>
-                    ${isNano ? `<button class="btn btn-sm btn-outline-info me-2 edit-pkg-btn" data-bs-toggle="modal" data-bs-target="#editPackageDetailModal" data-pkg-id="${pkg._id}"><i class="bi bi-pencil"></i></button>` : ''}
-                    ${statusBadge}
-                </div>
+                ${statusBadge}
             </div>
             <div class="card-body">
                 <div class="row">
