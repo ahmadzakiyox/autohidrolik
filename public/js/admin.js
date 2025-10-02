@@ -44,7 +44,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!usersResponse.ok) throw new Error('Gagal mengambil data pengguna.');
             cachedUsers = await usersResponse.json();
 
-            // Logika Pemfilteran Pengguna
             const today = new Date();
             const pendingUsers = [];
             const activeUsers = [];
@@ -61,9 +60,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (hasPending) {
                         pendingUsers.push(user);
                     }
+                    
                     if (hasActive) {
                         activeUsers.push(user);
                     } 
+                    
                     if (!hasActive && !hasPending) {
                         expiredUsers.push(user);
                     }
