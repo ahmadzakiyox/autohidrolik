@@ -1,4 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
+    const adminPageMarker = document.getElementById('member-table-body');
+    if (!adminPageMarker) {
+        return;
+    }
+
     const token = localStorage.getItem('token');
     if (!token || localStorage.getItem('userRole') !== 'admin') {
         alert('Akses ditolak. Silakan login sebagai admin.');
@@ -8,26 +13,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Elemen UI ---
     const alertPlaceholder = document.getElementById('alert-placeholder');
+    const reviewTableBody = document.getElementById('review-table-body');
     const memberCountElement = document.getElementById('member-count');
     const visitorCountElement = document.getElementById('visitor-count');
     const transactionTotalElement = document.getElementById('transaction-total');
     const downloadButton = document.getElementById('download-data-btn');
-    
-    const pendingPaymentTableBody = document.getElementById('pending-payment-table-body');
     const memberTableBody = document.getElementById('member-table-body');
-    const expiredMemberTableBody = document.getElementById('expired-member-table-body');
     const nonMemberTableBody = document.getElementById('non-member-table-body');
-    const reviewTableBody = document.getElementById('review-table-body');
+    const expiredMemberTableBody = document.getElementById('expired-member-table-body');
+    const pendingPaymentTableBody = document.getElementById('pending-payment-table-body'); // Tambahkan ini
 
-    // Inisialisasi Modals
-    // ... (Pastikan semua modal diinisialisasi di sini jika Anda membutuhkannya)
+    // Inisialisasi semua modal
+    const addUserModal = new bootstrap.Modal(document.getElementById('addUserModal'));
+    const editUserModal = new bootstrap.Modal(document.getElementById('editUserModal'));
+    const editComboWashesModal = new bootstrap.Modal(document.getElementById('editComboWashesModal'));
+    const editTransactionModal = new bootstrap.Modal(document.getElementById('editTransactionModal'));
+    const editExpiryModal = new bootstrap.Modal(document.getElementById('editExpiryModal'));
+    const viewBarcodeModal = new bootstrap.Modal(document.getElementById('viewBarcodeModal'));
+    const setPackageModal = new bootstrap.Modal(document.getElementById('setPackageModal'));
+    const editReviewModal = new bootstrap.Modal(document.getElementById('editReviewModal'));
+    const resetPasswordModal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
+    const extendMembershipModal = new bootstrap.Modal(document.getElementById('extendMembershipModal'));
 
     let cachedUsers = [];
     let cachedReviews = [];
 
-    // --- FUNGSI HELPER ---
-    function showAlert(message, type = 'success') {
-        alertPlaceholder.innerHTML = `<div class="alert alert-${type} alert-dismissible fade show" role="alert">${message}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>`;
+    function showAlert(message, type = 'danger') {
+        if (alertPlaceholder) {
+            alertPlaceholder.innerHTML = `<div class="alert alert-${type} alert-dismissible fade show" role="alert">${message}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>`;
+        }
     }
 
     const getHeaders = (includeContentType = true) => {
@@ -36,14 +50,51 @@ document.addEventListener('DOMContentLoaded', () => {
         return headers;
     };
 
-    // --- FUNGSI PENGAMBILAN DATA ---
-    const fetchAllData = async () => {
+    const fetchRevenueTrend = async () => {
         try {
-            const usersResponse = await fetch('/api/users', { headers: getHeaders() });
-            if (!usersResponse.ok) throw new Error('Gagal mengambil data pengguna.');
-            cachedUsers = await usersResponse.json();
+            const response = await fetch('/api/revenue-trend', { headers: getHeaders(false) });
+            if (!response.ok) throw new Error('Gagal mengambil data grafik.');
+            const trendData = await response.json();
+            const ctx = document.getElementById('revenueChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: trendData.labels,
+                    datasets: [{
+                        label: 'Pendapatan (Rp)',
+                        data: trendData.data,
+                        backgroundColor: 'rgba(111, 66, 193, 0.6)',
+                        borderColor: 'rgba(111, 66, 193, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: { scales: { y: { beginAtZero: true } } }
+            });
+        } catch (error) {
+            showAlert(error.message);
+        }
+    };
+    
+    const fetchDashboardStats = async () => {
+        try {
+            const response = await fetch('/api/dashboard-stats', { headers: getHeaders(false) });
+            if (!response.ok) throw new Error('Gagal mengambil data statistik.');
+            const stats = await response.json();
+            memberCountElement.textContent = stats.activeMembers;
+            visitorCountElement.textContent = stats.totalVisitors;
+            transactionTotalElement.textContent = `Rp ${stats.totalTransactions.toLocaleString('id-ID')}`;
+        } catch (error) {
+            showAlert(error.message);
+        }
+    };
 
-            // ================== LOGIKA PEMFILTERAN YANG DIPERBAIKI TOTAL ==================
+    const fetchUsers = async () => {
+        try {
+            const response = await fetch('/api/users', { headers: getHeaders(false) });
+            if (!response.ok) throw new Error('Gagal mengambil data pengguna.');
+            cachedUsers = await response.json();
+            
+            // ================== LOGIKA PEMFILTERAN BARU ==================
             const today = new Date();
             const pendingUsers = [];
             const activeUsers = [];
@@ -51,27 +102,21 @@ document.addEventListener('DOMContentLoaded', () => {
             const nonMemberUsers = [];
 
             cachedUsers.forEach(user => {
-                // KASUS 1: Pengguna tidak punya paket sama sekali -> NON-MEMBER
                 if (!user.memberships || user.memberships.length === 0) {
                     nonMemberUsers.push(user);
-                    return; // Lanjut ke user berikutnya
+                    return;
                 }
 
-                // Cek status semua paket yang dimiliki user
                 const hasPendingPackage = user.memberships.some(pkg => !pkg.isPaid);
                 const hasActivePackage = user.memberships.some(pkg => pkg.isPaid && new Date(pkg.expiresAt) >= today);
 
-                // KASUS 2: Punya paket yang belum lunas -> MASUK TABEL PENDING
-                // (Seorang member bisa punya paket aktif DAN paket pending sekaligus)
                 if (hasPendingPackage) {
                     pendingUsers.push(user);
                 }
 
-                // KASUS 3: Punya minimal satu paket aktif -> MASUK TABEL MEMBER AKTIF
                 if (hasActivePackage) {
                     activeUsers.push(user);
                 } 
-                // KASUS 4: TIDAK punya paket aktif DAN TIDAK punya paket pending -> MEMBER KEDALUWARSA
                 else if (!hasActivePackage && !hasPendingPackage) {
                     expiredUsers.push(user);
                 }
@@ -83,64 +128,26 @@ document.addEventListener('DOMContentLoaded', () => {
             displayNonMembers(nonMemberUsers);
             // ================== AKHIR LOGIKA PEMFILTERAN ==================
 
-            fetchDashboardStats();
-            fetchRevenueTrend();
-            fetchReviews();
-
         } catch (error) {
-            showAlert(error.message, 'danger');
-        }
-    };
-
-    const fetchDashboardStats = async () => {
-        try {
-            const response = await fetch('/api/dashboard-stats', { headers: getHeaders(false) });
-            if (!response.ok) return;
-            const stats = await response.json();
-            memberCountElement.textContent = stats.activeMembers;
-            visitorCountElement.textContent = stats.totalVisitors;
-            transactionTotalElement.textContent = `Rp ${stats.totalTransactions.toLocaleString('id-ID')}`;
-        } catch (error) {
-            console.error('Error fetching stats:', error);
-        }
-    };
-
-    const fetchRevenueTrend = async () => {
-        try {
-            const response = await fetch('/api/revenue-trend', { headers: getHeaders(false) });
-            if (!response.ok) return;
-            const trendData = await response.json();
-            const ctx = document.getElementById('revenueChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: trendData.labels,
-                    datasets: [{
-                        label: 'Pendapatan (Rp)',
-                        data: trendData.data,
-                        backgroundColor: 'rgba(111, 66, 193, 0.6)',
-                    }]
-                },
-                options: { scales: { y: { beginAtZero: true } } }
-            });
-        } catch (error) {
-            console.error('Error fetching revenue trend:', error);
+            const errorMsg = `<tr><td colspan="8" class="text-center text-danger">${error.message}</td></tr>`;
+            memberTableBody.innerHTML = errorMsg;
+            expiredMemberTableBody.innerHTML = errorMsg;
+            nonMemberTableBody.innerHTML = errorMsg;
         }
     };
 
     const fetchReviews = async () => {
         try {
             const response = await fetch('/api/reviews/all', { headers: getHeaders(false) });
-            if (response.ok) {
-                cachedReviews = await response.json();
-                displayReviews(cachedReviews);
-            }
+            if (!response.ok) throw new Error('Gagal mengambil data ulasan.');
+            cachedReviews = await response.json();
+            displayReviews(cachedReviews);
         } catch (error) {
-             console.error('Error fetching reviews:', error);
+            reviewTableBody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">${error.message}</td></tr>`;
         }
     };
 
-    // --- FUNGSI TAMPILAN ---
+    // --- FUNGSI TAMPILAN (DISPLAY) ---
     const displayPendingPayments = (users) => {
         pendingPaymentTableBody.innerHTML = '';
         if (users.length === 0) {
@@ -239,20 +246,14 @@ document.addEventListener('DOMContentLoaded', () => {
         reviewTableBody.innerHTML = '';
         reviews.forEach(review => {
             const row = document.createElement('tr');
-            const ratingStars = '★'.repeat(review.rating) + '☆'.repeat(5 - review.rating);
-            row.innerHTML = `
-                <td>${review.username || 'Anonim'}</td>
-                <td class="rating-stars">${ratingStars}</td>
-                <td>${review.comment}</td>
-                <td>
-                    <button class="btn btn-sm btn-outline-danger delete-review-btn" data-review-id="${review._id}"><i class="bi bi-trash3"></i></button>
-                </td>
-            `;
+            const ratingStars = '<span class="rating-stars">' + '★'.repeat(review.rating) + '☆'.repeat(5 - review.rating) + '</span>';
+            const username = review.user ? review.user.username : '<em class="text-muted">Pengguna Dihapus</em>';
+            row.innerHTML = `<td>${username}</td><td>${ratingStars}</td><td>${review.comment}</td><td><div class="btn-group"><button class="btn btn-sm btn-outline-warning edit-review-btn" data-review-id="${review._id}"><i class="bi bi-pencil-square"></i></button><button class="btn btn-sm btn-outline-danger delete-review-btn" data-review-id="${review._id}"><i class="bi bi-trash3"></i></button></div></td>`;
             reviewTableBody.appendChild(row);
         });
     };
 
-    // --- EVENT LISTENER ---
+    // --- FUNGSI AKSI & EVENT LISTENER ---
     document.body.addEventListener('click', async (e) => {
         const button = e.target.closest('button');
         if (!button) return;
@@ -260,18 +261,20 @@ document.addEventListener('DOMContentLoaded', () => {
         if (button.classList.contains('confirm-payment-btn')) {
             const userId = button.dataset.userId;
             const packageId = button.dataset.packageId;
-            if (!confirm('Anda yakin ingin mengonfirmasi pembayaran untuk paket ini?')) return;
-            try {
-                const response = await fetch(`/api/confirm-payment/${userId}/${packageId}`, { 
-                    method: 'POST', 
-                    headers: { 'x-auth-token': token } 
-                });
-                const result = await response.json();
-                if (!response.ok) throw new Error(result.msg);
-                showAlert('Pembayaran berhasil dikonfirmasi.');
-                fetchAllData();
-            } catch (error) {
-                showAlert(error.message, 'danger');
+            if (confirm('Anda yakin ingin mengonfirmasi pembayaran untuk paket ini?')) {
+                try {
+                    const response = await fetch(`/api/confirm-payment/${userId}/${packageId}`, { 
+                        method: 'POST', 
+                        headers: getHeaders() 
+                    });
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.msg);
+                    showAlert('Pembayaran berhasil dikonfirmasi.');
+                    fetchUsers(); // Cukup panggil fetchUsers, karena fetch lain akan dipanggil di dalamnya jika perlu
+                    fetchDashboardStats();
+                } catch (error) {
+                    showAlert(error.message, 'danger');
+                }
             }
         }
     });
@@ -282,6 +285,9 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.href = '/login.html';
     });
     
-    // Inisialisasi
-    fetchAllData();
+    // --- INISIALISASI ---
+    fetchDashboardStats();
+    fetchUsers();
+    fetchReviews();
+    fetchRevenueTrend();
 });
