@@ -1,3 +1,4 @@
+
 // Import dependensi
 const express = require('express');
 const mongoose = require('mongoose');
@@ -884,34 +885,32 @@ app.post('/api/purchase-membership-admin/:userId', auth, adminAuth, async (req, 
     const { packageName, totalWashes } = req.body;
     try {
         const user = await User.findById(req.params.userId);
-        if (!user) return res.status(404).json({ msg: 'Pengguna tidak ditemukan.' });
-
-        const membershipData = {
-            packageName,
-            isPaid: false, // Setiap paket baru statusnya belum bayar
-            expiresAt: calculateExpiryDate() // Pastikan fungsi ini ada
-        };
-
-        if (packageName === 'Paket Kombinasi') {
-            // Logika khusus untuk Paket Kombinasi
-            membershipData.washes = {
-                bodywash: 5,
-                hidrolik: 7 // 5x Cuci Hidrolik + 2x GRATIS
-            };
-            // Reset field lama agar tidak membingungkan
-            membershipData.totalWashes = 0;
-            membershipData.remainingWashes = 0;
-        } else {
-            // Logika untuk semua paket biasa
-            membershipData.totalWashes = totalWashes;
-            membershipData.remainingWashes = totalWashes;
-            // Reset field baru agar tidak membingungkan
-            membershipData.washes = { bodywash: 0, hidrolik: 0 };
+        if (!user) {
+            return res.status(404).json({ msg: 'Pengguna tidak ditemukan.' });
         }
 
-        user.membership = membershipData;
+        // PERBAIKAN UTAMA: Buat objek paket baru dan PUSH ke array
+        const newMembership = {
+            packageName: packageName,
+            totalWashes: totalWashes,
+            remainingWashes: totalWashes,
+            isPaid: false, // Paket yang ditambahkan admin defaultnya belum lunas
+            expiresAt: calculateExpiryDate(), // Menggunakan fungsi helper yang sudah ada
+            packageId: `PKG-${Date.now()}` // Buat ID unik untuk paket ini
+        };
+
+        // Jika user belum punya array memberships, buat dulu
+        if (!user.memberships) {
+            user.memberships = [];
+        }
+        
+        // Tambahkan paket baru ke array
+        user.memberships.push(newMembership);
+
         await user.save();
-        res.json({ msg: `Paket untuk ${user.username} berhasil diatur.`, user });
+        
+        res.json({ msg: `Paket "${packageName}" berhasil ditambahkan untuk ${user.username}. Menunggu pembayaran.`, user });
+
     } catch (error) {
         console.error("Error di purchase-membership-admin:", error);
         res.status(500).send('Server error');
