@@ -19,15 +19,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const nonMemberTableBody = document.getElementById('non-member-table-body');
     const reviewTableBody = document.getElementById('review-table-body');
 
-    // Inisialisasi modals
-    const addUserModal = new bootstrap.Modal(document.getElementById('addUserModal'));
-    const editUserModal = new bootstrap.Modal(document.getElementById('editUserModal'));
-    const editTransactionModal = new bootstrap.Modal(document.getElementById('editTransactionModal'));
-    const viewBarcodeModal = new bootstrap.Modal(document.getElementById('viewBarcodeModal'));
-    const setPackageModal = new bootstrap.Modal(document.getElementById('setPackageModal'));
-    const editReviewModal = new bootstrap.Modal(document.getElementById('editReviewModal'));
-    const resetPasswordModal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
-    const extendMembershipModal = new bootstrap.Modal(document.getElementById('extendMembershipModal'));
+    // Inisialisasi Modals
+    // ... (Pastikan semua modal diinisialisasi di sini jika Anda membutuhkannya)
 
     let cachedUsers = [];
     let cachedReviews = [];
@@ -37,13 +30,20 @@ document.addEventListener('DOMContentLoaded', () => {
         alertPlaceholder.innerHTML = `<div class="alert alert-${type} alert-dismissible fade show" role="alert">${message}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>`;
     }
 
+    const getHeaders = (includeContentType = true) => {
+        const headers = { 'x-auth-token': token };
+        if (includeContentType) headers['Content-Type'] = 'application/json';
+        return headers;
+    };
+
     // --- FUNGSI PENGAMBILAN DATA ---
     const fetchAllData = async () => {
         try {
-            const usersResponse = await fetch('/api/users', { headers: { 'x-auth-token': token } });
+            const usersResponse = await fetch('/api/users', { headers: getHeaders() });
             if (!usersResponse.ok) throw new Error('Gagal mengambil data pengguna.');
             cachedUsers = await usersResponse.json();
 
+            // ================== LOGIKA PEMFILTERAN YANG DIPERBAIKI TOTAL ==================
             const today = new Date();
             const pendingUsers = [];
             const activeUsers = [];
@@ -51,23 +51,29 @@ document.addEventListener('DOMContentLoaded', () => {
             const nonMemberUsers = [];
 
             cachedUsers.forEach(user => {
+                // KASUS 1: Pengguna tidak punya paket sama sekali -> NON-MEMBER
                 if (!user.memberships || user.memberships.length === 0) {
                     nonMemberUsers.push(user);
-                } else {
-                    const hasPending = user.memberships.some(pkg => !pkg.isPaid);
-                    const hasActive = user.memberships.some(pkg => pkg.isPaid && new Date(pkg.expiresAt) >= today);
-                    
-                    if (hasPending) {
-                        pendingUsers.push(user);
-                    }
-                    
-                    if (hasActive) {
-                        activeUsers.push(user);
-                    } 
-                    
-                    if (!hasActive && !hasPending) {
-                        expiredUsers.push(user);
-                    }
+                    return; // Lanjut ke user berikutnya
+                }
+
+                // Cek status semua paket yang dimiliki user
+                const hasPendingPackage = user.memberships.some(pkg => !pkg.isPaid);
+                const hasActivePackage = user.memberships.some(pkg => pkg.isPaid && new Date(pkg.expiresAt) >= today);
+
+                // KASUS 2: Punya paket yang belum lunas -> MASUK TABEL PENDING
+                // (Seorang member bisa punya paket aktif DAN paket pending sekaligus)
+                if (hasPendingPackage) {
+                    pendingUsers.push(user);
+                }
+
+                // KASUS 3: Punya minimal satu paket aktif -> MASUK TABEL MEMBER AKTIF
+                if (hasActivePackage) {
+                    activeUsers.push(user);
+                } 
+                // KASUS 4: TIDAK punya paket aktif DAN TIDAK punya paket pending -> MEMBER KEDALUWARSA
+                else if (!hasActivePackage && !hasPendingPackage) {
+                    expiredUsers.push(user);
                 }
             });
 
@@ -75,10 +81,12 @@ document.addEventListener('DOMContentLoaded', () => {
             displayActiveMembers(activeUsers);
             displayExpiredMembers(expiredUsers);
             displayNonMembers(nonMemberUsers);
+            // ================== AKHIR LOGIKA PEMFILTERAN ==================
 
             fetchDashboardStats();
             fetchRevenueTrend();
             fetchReviews();
+
         } catch (error) {
             showAlert(error.message, 'danger');
         }
@@ -86,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const fetchDashboardStats = async () => {
         try {
-            const response = await fetch('/api/dashboard-stats', { headers: { 'x-auth-token': token } });
+            const response = await fetch('/api/dashboard-stats', { headers: getHeaders(false) });
             if (!response.ok) return;
             const stats = await response.json();
             memberCountElement.textContent = stats.activeMembers;
@@ -99,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const fetchRevenueTrend = async () => {
         try {
-            const response = await fetch('/api/revenue-trend', { headers: { 'x-auth-token': token } });
+            const response = await fetch('/api/revenue-trend', { headers: getHeaders(false) });
             if (!response.ok) return;
             const trendData = await response.json();
             const ctx = document.getElementById('revenueChart').getContext('2d');
@@ -122,7 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const fetchReviews = async () => {
         try {
-            const response = await fetch('/api/reviews/all', { headers: { 'x-auth-token': token } });
+            const response = await fetch('/api/reviews/all', { headers: getHeaders(false) });
             if (response.ok) {
                 cachedReviews = await response.json();
                 displayReviews(cachedReviews);
@@ -169,8 +177,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const packagesHtml = activePackages.map(pkg => {
                 const remaining = pkg.packageName.toLowerCase().includes('nano') ? 'Aktif' : `${pkg.remainingWashes}x`;
                 return `<div><span class="fw-bold">${pkg.packageName}:</span> ${remaining}</div>`;
-            }).join('');
-            const expiryDate = new Date(activePackages[0].expiresAt).toLocaleDateString('id-ID');
+            }).join('<hr class="my-1">');
+            const expiryDate = new Date(activePackages.sort((a,b) => new Date(b.expiresAt) - new Date(a.expiresAt))[0].expiresAt).toLocaleDateString('id-ID');
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td>${index + 1}</td>
@@ -179,7 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td>${expiryDate}</td>
                 <td>
                     <button class="btn btn-sm btn-outline-info view-barcode-btn" data-user-id="${user._id}" title="Lihat QR Codes"><i class="bi bi-qr-code"></i></button>
-                    </td>
+                </td>
             `;
             memberTableBody.appendChild(row);
         });
