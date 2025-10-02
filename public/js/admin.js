@@ -13,14 +13,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const transactionTotalElement = document.getElementById('transaction-total');
     const downloadButton = document.getElementById('download-data-btn');
     
-    // Elemen Tabel Baru
     const pendingPaymentTableBody = document.getElementById('pending-payment-table-body');
     const memberTableBody = document.getElementById('member-table-body');
     const expiredMemberTableBody = document.getElementById('expired-member-table-body');
     const nonMemberTableBody = document.getElementById('non-member-table-body');
     const reviewTableBody = document.getElementById('review-table-body');
 
-    // Inisialisasi semua modal
+    // Inisialisasi modals
     const addUserModal = new bootstrap.Modal(document.getElementById('addUserModal'));
     const editUserModal = new bootstrap.Modal(document.getElementById('editUserModal'));
     const editTransactionModal = new bootstrap.Modal(document.getElementById('editTransactionModal'));
@@ -45,19 +44,40 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!usersResponse.ok) throw new Error('Gagal mengambil data pengguna.');
             cachedUsers = await usersResponse.json();
 
-            displayPendingPayments(cachedUsers);
-            displayActiveMembers(cachedUsers);
-            displayExpiredMembers(cachedUsers);
-            displayNonMembers(cachedUsers);
+            // Logika Pemfilteran Pengguna
+            const today = new Date();
+            const pendingUsers = [];
+            const activeUsers = [];
+            const expiredUsers = [];
+            const nonMemberUsers = [];
 
-            const reviewsResponse = await fetch('/api/reviews/all', { headers: { 'x-auth-token': token } });
-            if(reviewsResponse.ok) {
-                cachedReviews = await reviewsResponse.json();
-                displayReviews(cachedReviews);
-            }
+            cachedUsers.forEach(user => {
+                if (!user.memberships || user.memberships.length === 0) {
+                    nonMemberUsers.push(user);
+                } else {
+                    const hasPending = user.memberships.some(pkg => !pkg.isPaid);
+                    const hasActive = user.memberships.some(pkg => pkg.isPaid && new Date(pkg.expiresAt) >= today);
+                    
+                    if (hasPending) {
+                        pendingUsers.push(user);
+                    }
+                    if (hasActive) {
+                        activeUsers.push(user);
+                    } 
+                    if (!hasActive && !hasPending) {
+                        expiredUsers.push(user);
+                    }
+                }
+            });
+
+            displayPendingPayments(pendingUsers);
+            displayActiveMembers(activeUsers);
+            displayExpiredMembers(expiredUsers);
+            displayNonMembers(nonMemberUsers);
 
             fetchDashboardStats();
             fetchRevenueTrend();
+            fetchReviews();
         } catch (error) {
             showAlert(error.message, 'danger');
         }
@@ -99,55 +119,60 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    const fetchReviews = async () => {
+        try {
+            const response = await fetch('/api/reviews/all', { headers: { 'x-auth-token': token } });
+            if (response.ok) {
+                cachedReviews = await response.json();
+                displayReviews(cachedReviews);
+            }
+        } catch (error) {
+             console.error('Error fetching reviews:', error);
+        }
+    };
+
     // --- FUNGSI TAMPILAN ---
     const displayPendingPayments = (users) => {
         pendingPaymentTableBody.innerHTML = '';
-        let hasPending = false;
-        users.forEach(user => {
-            const pendingPackages = user.memberships.filter(pkg => !pkg.isPaid);
-            if (pendingPackages.length > 0) {
-                hasPending = true;
-                pendingPackages.forEach(pkg => {
-                    const row = document.createElement('tr');
-                    const purchaseDate = new Date(pkg.purchaseDate).toLocaleDateString('id-ID');
-                    row.innerHTML = `
-                        <td>${user.username}</td>
-                        <td>${user.phone || '-'}</td>
-                        <td>${pkg.packageName}</td>
-                        <td>${purchaseDate}</td>
-                        <td>
-                            <button class="btn btn-sm btn-success confirm-payment-btn" data-user-id="${user._id}" data-package-id="${pkg._id}">
-                                <i class="bi bi-check-circle"></i> Konfirmasi
-                            </button>
-                        </td>
-                    `;
-                    pendingPaymentTableBody.appendChild(row);
-                });
-            }
-        });
-        if (!hasPending) {
+        if (users.length === 0) {
             pendingPaymentTableBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Tidak ada pembayaran yang menunggu konfirmasi.</td></tr>';
+            return;
         }
+        users.forEach(user => {
+            user.memberships.filter(pkg => !pkg.isPaid).forEach(pkg => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${user.username}</td>
+                    <td>${user.phone || '-'}</td>
+                    <td>${pkg.packageName}</td>
+                    <td>${new Date(pkg.purchaseDate).toLocaleDateString('id-ID')}</td>
+                    <td>
+                        <button class="btn btn-sm btn-success confirm-payment-btn" data-user-id="${user._id}" data-package-id="${pkg._id}">
+                            <i class="bi bi-check-circle"></i> Konfirmasi
+                        </button>
+                    </td>
+                `;
+                pendingPaymentTableBody.appendChild(row);
+            });
+        });
     };
 
     const displayActiveMembers = (users) => {
         memberTableBody.innerHTML = '';
-        let counter = 1;
-        const activeMemberList = users.filter(user => user.memberships && user.memberships.some(pkg => pkg.isPaid));
-
-        activeMemberList.forEach(user => {
+        if (users.length === 0) {
+            memberTableBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Tidak ada member aktif.</td></tr>';
+            return;
+        }
+        users.forEach((user, index) => {
             const activePackages = user.memberships.filter(pkg => pkg.isPaid && new Date(pkg.expiresAt) >= new Date());
-            if (activePackages.length === 0) return;
-
-            const row = document.createElement('tr');
             const packagesHtml = activePackages.map(pkg => {
                 const remaining = pkg.packageName.toLowerCase().includes('nano') ? 'Aktif' : `${pkg.remainingWashes}x`;
                 return `<div><span class="fw-bold">${pkg.packageName}:</span> ${remaining}</div>`;
             }).join('');
-            
             const expiryDate = new Date(activePackages[0].expiresAt).toLocaleDateString('id-ID');
+            const row = document.createElement('tr');
             row.innerHTML = `
-                <td>${counter++}</td>
+                <td>${index + 1}</td>
                 <td>${user.username}</td>
                 <td>${packagesHtml}</td>
                 <td>${expiryDate}</td>
@@ -158,22 +183,22 @@ document.addEventListener('DOMContentLoaded', () => {
             memberTableBody.appendChild(row);
         });
     };
-
+    
     const displayExpiredMembers = (users) => {
         expiredMemberTableBody.innerHTML = '';
-        let counter = 1;
-        const expiredMemberList = users.filter(user => user.memberships && user.memberships.length > 0 && user.memberships.every(pkg => new Date(pkg.expiresAt) < new Date()));
-        
-        expiredMemberList.forEach(user => {
+        if (users.length === 0) {
+            expiredMemberTableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Tidak ada member yang kedaluwarsa.</td></tr>';
+            return;
+        }
+        users.forEach((user, index) => {
             const lastPackage = user.memberships.sort((a, b) => new Date(b.expiresAt) - new Date(a.expiresAt))[0];
             const row = document.createElement('tr');
-            const expiryDate = new Date(lastPackage.expiresAt).toLocaleDateString('id-ID');
             row.innerHTML = `
-                <td>${counter++}</td>
+                <td>${index + 1}</td>
                 <td>${user.username}</td>
                 <td>${user.email || '-'}</td>
                 <td>${lastPackage.packageName}</td>
-                <td class="text-danger fw-bold">${expiryDate}</td>
+                <td class="text-danger fw-bold">${new Date(lastPackage.expiresAt).toLocaleDateString('id-ID')}</td>
                 <td><button class="btn btn-sm btn-success set-package-btn" data-user-id="${user._id}">Perbarui Paket</button></td>
             `;
             expiredMemberTableBody.appendChild(row);
@@ -182,19 +207,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const displayNonMembers = (users) => {
         nonMemberTableBody.innerHTML = '';
-        let counter = 1;
-        const nonMemberList = users.filter(user => !user.memberships || user.memberships.length === 0);
-
-        nonMemberList.forEach(user => {
+        if (users.length === 0) {
+            nonMemberTableBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Tidak ada pengguna non-member.</td></tr>';
+            return;
+        }
+        users.forEach((user, index) => {
             const row = document.createElement('tr');
             row.innerHTML = `
-                <td>${counter++}</td>
+                <td>${index + 1}</td>
                 <td>${user.username}</td>
                 <td>${user.email || '-'}</td>
                 <td>${user.phone || '-'}</td>
                 <td>
                     <button class="btn btn-sm btn-outline-success set-package-btn" data-user-id="${user._id}">Jadikan Member</button>
-                    </td>
+                </td>
             `;
             nonMemberTableBody.appendChild(row);
         });
@@ -206,10 +232,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const row = document.createElement('tr');
             const ratingStars = '★'.repeat(review.rating) + '☆'.repeat(5 - review.rating);
             row.innerHTML = `
-                <td>${review.username}</td>
+                <td>${review.username || 'Anonim'}</td>
                 <td class="rating-stars">${ratingStars}</td>
                 <td>${review.comment}</td>
-                <td></td>
+                <td>
+                    <button class="btn btn-sm btn-outline-danger delete-review-btn" data-review-id="${review._id}"><i class="bi bi-trash3"></i></button>
+                </td>
             `;
             reviewTableBody.appendChild(row);
         });
@@ -244,7 +272,7 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.removeItem('userRole');
         window.location.href = '/login.html';
     });
-
+    
     // Inisialisasi
     fetchAllData();
 });
