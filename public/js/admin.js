@@ -96,61 +96,67 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const fetchUsers = async () => {
+const fetchUsers = async () => {
     try {
         const response = await fetch('/api/users', { headers: getHeaders(false) });
         if (!response.ok) throw new Error('Gagal mengambil data pengguna.');
         cachedUsers = await response.json();
 
-        // Filter dan tampilkan data di tabel yang sesuai
         const today = new Date();
         const activeMembers = [];
         const expiredMembers = [];
         const nonMembers = [];
-        const pendingPayments = [];
+        const pendingPayments = []; // Array ini dari solusi sebelumnya untuk pembayaran tertunda
 
         cachedUsers.forEach(user => {
+            // Cek apakah pengguna punya array memberships dan tidak kosong
             if (user.memberships && user.memberships.length > 0) {
-                let hasActivePackage = false;
+                let hasActivePaidPackage = false;
+                let hasAnyPaidPackage = false; // Untuk menandai apakah user pernah membayar
+
                 user.memberships.forEach(pkg => {
                     if (pkg.isPaid) {
+                        hasAnyPaidPackage = true;
+                        // Cek apakah paketnya masih aktif (belum kedaluwarsa)
                         if (new Date(pkg.expiresAt) >= today) {
-                            // Jika user memiliki setidaknya satu paket aktif, tambahkan ke daftar anggota aktif
-                            if (!activeMembers.some(u => u._id === user._id)) {
-                                activeMembers.push(user);
-                            }
-                            hasActivePackage = true;
-                        } else {
-                             if (!expiredMembers.some(u => u._id === user._id)) {
-                                expiredMembers.push(user);
-                            }
+                            hasActivePaidPackage = true;
                         }
                     } else {
-                        // Tambahkan ke daftar pembayaran tertunda
+                        // Jika ada paket yang belum dibayar, masukkan ke daftar tunggu konfirmasi
                         pendingPayments.push({ user, pkg });
                     }
                 });
-                if(!hasActivePackage && !expiredMembers.some(u => u._id === user._id)){
-                     nonMembers.push(user);
+
+                if (hasActivePaidPackage) {
+                    // Jika punya setidaknya satu paket lunas dan aktif, dia adalah member aktif
+                    activeMembers.push(user);
+                } else if (hasAnyPaidPackage) {
+                    // Jika pernah punya paket lunas tapi tidak ada yang aktif, dia adalah member kedaluwarsa
+                    expiredMembers.push(user);
+                } else {
+                    // Jika punya paket tapi semuanya belum lunas, dia masih dianggap non-member
+                    nonMembers.push(user);
                 }
 
             } else {
+                // Jika tidak punya array memberships sama sekali, dia adalah non-member
                 nonMembers.push(user);
             }
         });
 
+        // Panggil fungsi untuk menampilkan data ke setiap tabel
         displayMembers(activeMembers);
         displayExpiredMembers(expiredMembers);
         displayNonMembers(nonMembers);
-        displayPendingPayments(pendingPayments); // Panggil fungsi baru
+        displayPendingPayments(pendingPayments); // Pastikan fungsi ini juga dipanggil
 
-        } catch (error) {
-            const errorMsg = `<tr><td colspan="8" class="text-center text-danger">${error.message}</td></tr>`;
-            memberTableBody.innerHTML = errorMsg;
-            expiredMemberTableBody.innerHTML = errorMsg;
-            nonMemberTableBody.innerHTML = errorMsg;
-        }
-    };
+    } catch (error) {
+        const errorMsg = `<tr><td colspan="8" class="text-center text-danger">${error.message}</td></tr>`;
+        memberTableBody.innerHTML = errorMsg;
+        expiredMemberTableBody.innerHTML = errorMsg;
+        nonMemberTableBody.innerHTML = errorMsg;
+    }
+};
     
     const displayPendingPayments = (pendingItems) => {
     pendingPaymentTableBody.innerHTML = '';
