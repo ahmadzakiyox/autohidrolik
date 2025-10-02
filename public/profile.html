@@ -18,10 +18,8 @@
         body { background-color: var(--bg-color); color: var(--text-primary); font-family: 'Poppins', sans-serif; }
         .profile-container { max-width: 900px; margin: 2rem auto; }
         .card { background-color: var(--container-bg); border: 1px solid var(--border-color); }
-        .card-header { color: var(--purple-accent); }
-        .text-white { color: var(--text-primary)}
+        .card-header { color: var(--text-primary); background-color: #0d1117; }
         .list-group-item { background-color: transparent; border-color: var(--border-color); color: var(--text-primary); }
-        #qrcode-wrapper { padding: 1.5rem; background: #fff; border-radius: 8px; display: inline-block; }
         .modal-content { background-color: var(--container-bg); border-color: var(--border-color); }
         .form-control { background-color: #0d1117; border: 1px solid var(--border-color); color: var(--text-primary); }
         .form-control:focus { background-color: #0d1117; border-color: var(--purple-accent); color: var(--text-primary); box-shadow: 0 0 0 0.2rem rgba(162, 123, 255, 0.25); }
@@ -38,84 +36,40 @@
             <div class="spinner-border" style="color: var(--purple-accent);" role="status"></div>
         </div>
 
-       <div id="profile-content" class="row d-none">
-            <div class="col-lg-5">
-                <div class="card mb-4">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5>Data Diri</h5>
-                        </div>
-                    <div class="card-body">
-                        <ul class="list-group list-group-flush">
-                            <li class="list-group-item"><strong>Username:</strong> <span id="profile-username"></span></li>
-                            <li class="list-group-item"><strong>Email:</strong> <span id="profile-email"></span></li>
-                            <li class="list-group-item"><strong>No. WhatsApp:</strong> <span id="profile-phone"></span></li>
-                        </ul>
+        <div id="profile-content" class="d-none">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5>Data Diri</h5>
+                    <div>
+                        <button class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                            <i class="bi bi-pencil-square"></i> Edit Data
+                        </button>
+                        <button class="btn btn-outline-warning btn-sm" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+                            <i class="bi bi-key-fill"></i> Ubah Password
+                        </button>
                     </div>
                 </div>
-
-                </div>
-
-            <div class="col-lg-7">
-                <h4 class="mb-3" style="color: var(--purple-accent);">Paket Member Aktif Anda</h4>
-                <div id="memberships-container">
-                    </div>
-                </div>
-        </div>
-
-                <div id="nano-card-section" class="card mb-4 d-none">
-                    <div class="card-body">
-                        <div class="nano-card-background">
-                            <div class="nano-card-header text-center d-flex justify-content-between align-items-center">
-                                <div class="flex-grow-1">
-                                    <img src="/images/logo.png" alt="Logo" class="nano-card-logo">
-                                    <h5 class="nano-card-title mt-2">KARTU MAINTENANCE NANO COATING</h5>
-                                </div>
-                                <button class="btn btn-sm btn-outline-light" id="edit-nanocard-btn" data-bs-toggle="modal" data-bs-target="#editNanoCardModal" style="align-self: flex-start;">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                            </div>
-                            <div class="nano-card-content">
-                                <div id="nano-card-display">
-                                    <div class="nano-card-field"><label>No. Kartu</label><span id="nano-card-number"></span></div>
-                                    <div class="nano-card-field"><label>Nama Pemilik</label><span id="nano-owner-name-display"></span></div>
-                                    <div class="nano-card-field"><label>No. Polisi Mobil</label><span id="nano-plate-number-display"></span></div>
-                                    <div class="nano-card-field"><label>Tanggal Coating</label><span id="nano-coating-date"></span></div>
-                                    <div class="nano-card-field"><label>Berlaku Hingga</label><span id="nano-expires-at"></span></div>
-                                </div>
-                                </div>
-                            <div class="nano-card-footer">
-                                <h6>Keterangan Maintenance:</h6>
-                                <ul>
-                                    <li>Kartu ini berlaku 1 tahun sejak tanggal coating.</li>
-                                    <li>Pemilik berhak melakukan maintenance (1 layer) seharga Rp 500.000.</li>
-                                    <li>Maintenance menjaga kilap & proteksi hydrophobic.</li>
-                                    <li>Tidak mencakup kerusakan akibat kecelakaan atau goresan kasar.</li>
-                                    <li>Disarankan pencucian di Auto Hidrolik untuk hasil terbaik.</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item"><strong>Username:</strong> <span id="profile-username"></span></li>
+                        <li class="list-group-item"><strong>Email:</strong> <span id="profile-email"></span></li>
+                        <li class="list-group-item"><strong>No. WhatsApp:</strong> <span id="profile-phone"></span></li>
+                    </ul>
                 </div>
             </div>
 
-            <div class="col-lg-5">
-                <div class="card mb-4">
-                    <div class="card-header text-white text-center"><h5>Kode Member</h5></div>
-                    <div class="card-body text-center" id="member-code-section"></div>
+            <h4 class="mt-5 mb-3" style="color: var(--purple-accent);">Paket & Layanan Anda</h4>
+            <div id="memberships-container">
                 </div>
-                <div class="card">
-                    <div class="card-header"><h5>Status Keanggotaan</h5></div>
-                    <div class="card-body" id="membership-status"></div>
-                </div>
-            </div>
         </div>
+
         <div class="text-center mt-4">
             <a href="/" class="btn btn-secondary">Kembali ke Home</a>
         </div>
     </div>
 
     <div class="modal fade" id="editProfileModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
+         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header"><h5 class="modal-title">Edit Data Diri</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
                 <div class="modal-body">
@@ -124,32 +78,33 @@
                         <div class="mb-3"><label for="edit-profile-username" class="form-label">Username</label><input type="text" class="form-control" id="edit-profile-username" required></div>
                         <div class="mb-3"><label for="edit-profile-email" class="form-label">Email</label><input type="email" class="form-control" id="edit-profile-email"></div>
                         <div class="mb-3"><label for="edit-profile-phone" class="form-label">No. WhatsApp</label><input type="tel" class="form-control" id="edit-profile-phone" required></div>
-                        <button type="submit" class="btn w-100" style="background-color: var(--purple-accent); color: white;" id="save-profile-button">Simpan Perubahan</button>
+                        <button type="submit" class="btn w-100" style="background-color: var(--purple-accent); color: white;">Simpan Perubahan</button>
                     </form>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="modal fade" id="editNanoCardModal" tabindex="-1">
+    <div class="modal fade" id="editPackageDetailModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Edit Detail Kartu Nano</h5>
+                    <h5 class="modal-title">Edit Detail Paket</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="edit-nanocard-form">
-                        <div id="edit-nanocard-message" class="mb-3"></div>
+                    <form id="edit-package-detail-form">
+                        <input type="hidden" id="edit-package-id">
+                        <div id="edit-package-detail-message" class="mb-3"></div>
                         <div class="mb-3">
-                            <label for="edit-nanocard-owner" class="form-label">Nama Pemilik</label>
-                            <input type="text" class="form-control" id="edit-nanocard-owner" required>
+                            <label for="edit-package-owner" class="form-label">Nama Pemilik</label>
+                            <input type="text" class="form-control" id="edit-package-owner" required>
                         </div>
                         <div class="mb-3">
-                            <label for="edit-nanocard-plate" class="form-label">No. Polisi Mobil</label>
-                            <input type="text" class="form-control" id="edit-nanocard-plate" required placeholder="Contoh: B 1234 ABC">
+                            <label for="edit-package-plate" class="form-label">No. Polisi Mobil</label>
+                            <input type="text" class="form-control" id="edit-package-plate" required placeholder="Contoh: B 1234 ABC">
                         </div>
-                        <button type="submit" class="btn w-100" style="background-color: var(--purple-accent); color: white;" id="save-nanocard-button">Simpan Perubahan</button>
+                        <button type="submit" class="btn w-100" style="background-color: var(--purple-accent); color: white;">Simpan Perubahan</button>
                     </form>
                 </div>
             </div>
@@ -166,7 +121,7 @@
                         <div class="mb-3"><label for="current-password" class="form-label">Password Saat Ini</label><input type="password" class="form-control" id="current-password" required></div>
                         <div class="mb-3"><label for="new-password" class="form-label">Password Baru</label><input type="password" class="form-control" id="new-password" required></div>
                         <div class="mb-3"><label for="confirm-new-password" class="form-label">Konfirmasi Password Baru</label><input type="password" class="form-control" id="confirm-new-password" required></div>
-                        <button type="submit" class="btn w-100" style="background-color: var(--purple-accent); color: white;" id="change-password-button">Simpan Perubahan</button>
+                        <button type="submit" class="btn w-100" style="background-color: var(--purple-accent); color: white;">Simpan Perubahan</button>
                     </form>
                 </div>
             </div>
