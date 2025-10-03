@@ -332,7 +332,6 @@ document.addEventListener('DOMContentLoaded', () => {
         form.addEventListener('submit', function(e) {
             e.preventDefault();
             const modal = bootstrap.Modal.getInstance(this.closest('.modal'));
-            // Dapatkan pesan sukses dari atribut data jika ada, jika tidak, gunakan pesan default
             const successMessage = this.dataset.successMessage || 'Aksi berhasil dijalankan.'; 
             handleFormSubmit(this, successMessage, modal);
         });
@@ -365,13 +364,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     // Hubungkan select dengan input tersembunyi untuk totalWashes
-    const packageNameSelect = document.getElementById('package-name-select');
-    if(packageNameSelect) {
-        packageNameSelect.addEventListener('change', function() {
-            const selectedOption = this.options[this.selectedIndex];
-            document.getElementById('total-washes-input').value = selectedOption.dataset.washes || 0;
-        });
-    }
+    document.getElementById('package-name-select')?.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        document.getElementById('total-washes-input').value = selectedOption.dataset.washes || 0;
+    });
 
     initialize();
 });
