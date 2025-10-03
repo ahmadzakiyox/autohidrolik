@@ -94,14 +94,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-// Ganti dengan fungsi fetchUsers yang baru
 const fetchUsers = async () => {
     try {
         const response = await fetch('/api/users', { headers: getHeaders(false) });
         if (!response.ok) throw new Error('Gagal mengambil data pengguna.');
         cachedUsers = await response.json();
 
-        // --- LOGIKA KLASIFIKASI BARU ---
+        // --- LOGIKA KLASIFIKASI BARU YANG BENAR ---
         const today = new Date();
         const activeMembers = [];
         const pendingUsers = []; // Pengguna dengan paket yang belum lunas
@@ -109,22 +108,35 @@ const fetchUsers = async () => {
         const nonMembers = [];
 
         cachedUsers.forEach(user => {
+            // 1. Jika tidak ada array 'memberships' atau array-nya kosong, dia adalah Non-Member.
             if (!user.memberships || user.memberships.length === 0) {
                 nonMembers.push(user);
-                return;
+                return; // Lanjut ke user berikutnya
             }
 
+            // 2. Cek status paket yang dimiliki
             const hasActivePackage = user.memberships.some(p => p.isPaid && new Date(p.expiresAt) >= today);
             const hasPendingPackage = user.memberships.some(p => !p.isPaid);
 
-            if (hasActivePackage) activeMembers.push(user);
-            if (hasPendingPackage) pendingUsers.push(user);
-            if (!hasActivePackage && !hasPendingPackage) expiredMembers.push(user);
+            // 3. Masukkan user ke kategori yang sesuai
+            if (hasActivePackage) {
+                activeMembers.push(user);
+            }
+            
+            if (hasPendingPackage) {
+                // User ini juga akan muncul di daftar pending
+                pendingUsers.push(user);
+            }
+            
+            // 4. Jika tidak punya paket aktif atau pending, berarti semua paketnya sudah kedaluwarsa.
+            if (!hasActivePackage && !hasPendingPackage) {
+                expiredMembers.push(user);
+            }
         });
         
-        // Panggil fungsi-fungsi display
+        // Panggil fungsi-fungsi untuk menampilkan data ke tabel
         displayMembers(activeMembers);
-        displayPendingPayments(pendingUsers); // Ini fungsi baru
+        displayPendingPayments(pendingUsers); // Ini fungsi baru untuk konfirmasi
         displayExpiredMembers(expiredMembers);
         displayNonMembers(nonMembers);
 
@@ -132,6 +144,7 @@ const fetchUsers = async () => {
         showAlert(error.message, 'danger');
     }
 };
+
     const fetchReviews = async () => {
         try {
             const response = await fetch('/api/reviews/all', { headers: getHeaders(false) });
@@ -143,7 +156,6 @@ const fetchUsers = async () => {
         }
     };
 
-// Ganti dengan fungsi displayMembers yang baru
 const displayMembers = (members) => {
     memberTableBody.innerHTML = '';
     if (members.length === 0) {
@@ -155,20 +167,23 @@ const displayMembers = (members) => {
         const row = document.createElement('tr');
         row.dataset.userId = user._id;
 
+        // Ambil SEMUA paket yang aktif
         const activePackages = user.memberships.filter(p => p.isPaid && new Date(p.expiresAt) >= new Date());
         
-        // Gabungkan semua paket aktif menjadi satu tampilan HTML
+        // Gabungkan detail dari setiap paket aktif menjadi satu tampilan
         const membershipStatus = activePackages.map(p => {
             return `<div>${p.packageName} (Sisa: ${p.remainingWashes}x)</div>`;
         }).join('');
 
+        // Cari tanggal kedaluwarsa terdekat dari semua paket aktif
         const closestExpiry = new Date(Math.min(...activePackages.map(p => new Date(p.expiresAt))));
 
+        // Tombol aksi
         const actionButtons = `<button class="btn btn-sm btn-outline-info view-barcode-btn" title="QR Code"><i class="bi bi-qr-code"></i></button>
                              <button class="btn btn-sm btn-warning edit-user-btn" title="Edit User"><i class="bi bi-pencil-square"></i></button>
                              <button class="btn btn-sm btn-info set-package-btn" title="Tambah Paket Baru"><i class="bi bi-plus-circle"></i></button>`;
 
-        row.innerHTML = `<td>${String(counter++)}</td>
+        row.innerHTML = `<td>${counter++}</td>
                          <td>${user.username}</td>
                          <td>${user.email || '-'}</td>
                          <td>${user.phone || '-'}</td>
@@ -182,7 +197,7 @@ const displayMembers = (members) => {
 
 // TAMBAHKAN FUNGSI BARU INI
 const displayPendingPayments = (users) => {
-    // Pastikan Anda sudah menambahkan const pendingPaymentTableBody di atas
+    // Pastikan Anda sudah menambahkan const ini di bagian atas file
     const pendingPaymentTableBody = document.getElementById('pending-payment-table-body');
     
     pendingPaymentTableBody.innerHTML = '';
@@ -190,6 +205,7 @@ const displayPendingPayments = (users) => {
         pendingPaymentTableBody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Tidak ada pembayaran yang tertunda.</td></tr>`;
         return;
     }
+
     let html = '';
     users.forEach(user => {
         // Buat baris terpisah untuk SETIAP paket yang belum lunas
@@ -258,7 +274,6 @@ const displayPendingPayments = (users) => {
         });
     };
 
-    // --- FUNGSI-FUNGSI AKSI (OPERASI CRUD) ---
 const handleConfirmPayment = async (userId, packageId) => {
     if (!confirm('Anda yakin ingin mengonfirmasi pembayaran untuk paket ini?')) return;
     try {
@@ -408,12 +423,13 @@ const handleConfirmPayment = async (userId, packageId) => {
             const userId = userRow.dataset.userId;
             const user = cachedUsers.find(u => u._id === userId);
             if (user) {
-                if (button.classList.contains('confirm-payment-btn')) {
+               if (button.classList.contains('confirm-payment-btn')) {
     const row = button.closest('tr');
+    // Pastikan kita mendapatkan kedua ID dari baris tabel
     if (row && row.dataset.userId && row.dataset.packageId) {
         handleConfirmPayment(row.dataset.userId, row.dataset.packageId);
     }
-    return; // Hentikan proses setelah ini
+    return;
 }
                 if (button.classList.contains('delete-user-btn')) return deleteUser(userId);
                 if (button.classList.contains('edit-user-btn')) return openEditModal(user);
