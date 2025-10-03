@@ -1,4 +1,4 @@
-// File: models/User.js (Versi Sederhana)
+// File: models/User.js
 
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
@@ -15,7 +15,11 @@ const MembershipSchema = new Schema({
     washes: { // Khusus untuk paket kombinasi
         bodywash: { type: Number, default: 0 },
         hidrolik: { type: Number, default: 0 }
-    }
+    },
+    // KHUSUS untuk paket Nano Coating
+    ownerName: { type: String, default: '' },
+    plateNumber: { type: String, default: '' },
+    coatingDate: { type: Date }
 });
 
 // Skema Utama Pengguna
@@ -28,9 +32,20 @@ const UserSchema = new Schema({
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
     isVerified: { type: Boolean, default: true },
     
-    // PERUBAHAN UTAMA: 'membership' sekarang menjadi satu objek, bukan array
-    membership: MembershipSchema,
+    // --- PERUBAHAN UTAMA DI SINI ---
+    // 'membership' diubah menjadi 'memberships' dan menjadi array dari skema di atas
+    memberships: [MembershipSchema],
     
+    // Tambahkan referensi ke kartu nano coating jika masih ingin menyimpannya di level user
+    nanoCoatingCard: {
+      cardNumber: String,
+      ownerName: String,
+      plateNumber: String,
+      coatingDate: Date,
+      expiresAt: Date,
+      isActive: Boolean,
+    },
+
     date: { type: Date, default: Date.now }
 });
 
