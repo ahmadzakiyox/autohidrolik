@@ -1,3 +1,5 @@
+// File: public/js/profile.js
+
 document.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -32,25 +34,30 @@ document.addEventListener('DOMContentLoaded', () => {
         const membershipsContainer = document.getElementById('memberships-container');
         membershipsContainer.innerHTML = '';
 
+        // --- PERUBAHAN UTAMA: Cek array 'memberships' ---
         if (!user.memberships || user.memberships.length === 0) {
             membershipsContainer.innerHTML = `<div class="card card-body text-center"><p>Anda belum memiliki paket aktif.</p><a href="/" class="btn btn-primary">Lihat Pilihan Paket</a></div>`;
             return;
         }
 
+        // Urutkan paket: yang belum lunas di atas, lalu berdasarkan tanggal kedaluwarsa
         user.memberships.sort((a, b) => {
-            if (a.isPaid !== b.isPaid) return a.isPaid ? 1 : -1;
+            if (a.isPaid !== b.isPaid) return a.isPaid ? 1 : -1; // Tampilkan yg belum lunas dulu
             return new Date(b.expiresAt) - new Date(a.expiresAt);
         });
 
+        // Iterasi melalui setiap paket dalam array
         user.memberships.forEach(pkg => {
-            const card = createPackageCard(pkg);
+            const card = createPackageCard(pkg, user.memberId); // Kirim memberId ke fungsi
             membershipsContainer.appendChild(card);
             
+            // Generate QR Code jika paket aktif dan valid
             if (pkg.isPaid && new Date() < new Date(pkg.expiresAt)) {
                 const qrContainer = document.getElementById(`qrcode-container-${pkg._id}`);
                 const isNano = pkg.packageName.toLowerCase().includes('nano');
                 
                 if (qrContainer && (pkg.remainingWashes > 0 || isNano)) {
+                     // Data QR sekarang berisi memberId dan packageId unik
                      const qrData = `${user.memberId};${pkg.packageId}`;
                      console.log(`Generating QR for packageId: ${pkg.packageId}`);
                      new QRCode(qrContainer, {
@@ -63,6 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
+    // Fungsi untuk membuat kartu paket
     const createPackageCard = (pkg) => {
         const card = document.createElement('div');
         card.className = 'card mb-4';
