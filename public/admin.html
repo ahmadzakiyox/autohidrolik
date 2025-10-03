@@ -15,457 +15,73 @@
             --text-primary: #212529;
             --purple-accent: #6f42c1;
         }
-        body { 
-            background-color: var(--bg-color); 
-            font-family: 'Poppins', sans-serif;
-        }
-        .card { 
-            background-color: var(--card-bg-color); 
-            border: 1px solid var(--border-color); 
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
-        thead.table-light th { 
-            background-color: #e9ecef; 
-        }
-        .btn-primary {
-            background-color: var(--purple-accent);
-            border-color: var(--purple-accent);
-        }
-        .btn-scanner {
-            background-color: #17a2b8;
-            border-color: #17a2b8;
-            color: white;
-        }
+        body { background-color: var(--bg-color); font-family: 'Poppins', sans-serif; }
+        .card { background-color: var(--card-bg-color); border: 1px solid var(--border-color); box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        thead.table-light th { background-color: #e9ecef; }
+        .btn-primary { background-color: var(--purple-accent); border-color: var(--purple-accent); }
+        .btn-scanner { background-color: #17a2b8; border-color: #17a2b8; color: white; }
+        .nav-tabs .nav-link { color: var(--purple-accent); }
+        .nav-tabs .nav-link.active { color: #495057; }
         .rating-stars { color: #ffc107; }
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom sticky-top">
         <div class="container">
             <a class="navbar-brand fw-bold" href="/">AUTOHIDROLIK ADMIN</a>
             <div class="ms-auto d-flex align-items-center">
-                <a href="/Server-Status" class="btn btn-secondary me-3"><i class="bi bi-hdd-stack"></i> Server Status</a>
-                <a href="/Scanner-QRCODE" class="btn btn-scanner me-3"><i class="bi bi-qr-code-scan"></i> Buka Scanner</a>
+                <a href="/Server-Status" class="btn btn-secondary me-2"><i class="bi bi-hdd-stack"></i> Status</a>
+                <a href="/Scanner-QRCODE" class="btn btn-scanner me-3"><i class="bi bi-qr-code-scan"></i> Scanner</a>
                 <button id="logout-button" class="btn btn-outline-danger"><i class="bi bi-box-arrow-right"></i> Logout</button>
             </div>
         </div>
     </nav>
 
-    <main class="container my-5">
-        <div class="row mb-4">
-            <div class="col-md-4 mb-3">
-                <div class="card p-3">
-                    <div class="d-flex align-items-center">
-                        <i class="bi bi-people-fill fs-1 me-3" style="color: var(--purple-accent);"></i>
-                        <div>
-                            <h6 class="text-muted">Total Member Aktif</h6>
-                            <h2 class="fw-bold" id="member-count">0</h2>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4 mb-3">
-                <div class="card p-3">
-                    <div class="d-flex align-items-center">
-                        <i class="bi bi-eye-fill fs-1 me-3" style="color: #17a2b8;"></i>
-                        <div>
-                            <h6 class="text-muted">Total Pengunjung Website</h6>
-                            <h2 class="fw-bold" id="visitor-count">0</h2>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4 mb-3">
-                <div class="card p-3">
-                    <div class="d-flex align-items-center">
-                        <i class="bi bi-cash-coin fs-1 me-3" style="color: #28a745;"></i>
-                        <div>
-                            <h6 class="text-muted">Total Transaksi Member</h6>
-                            <h2 class="fw-bold" id="transaction-total">Rp 0</h2>
-                        </div>
-                        <button class="btn btn-sm btn-outline-secondary ms-auto" data-bs-toggle="modal" data-bs-target="#editTransactionModal" title="Koreksi Pemasukan">
-                            <i class="bi bi-pencil-square"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="row mb-5">
-            <div class="col-12">
-                <div class="card shadow-sm">
-                    <div class="card-body">
-                        <h5 class="card-title">Tren Pendapatan (7 Hari Terakhir)</h5>
-                        <canvas id="revenueChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
+    <main class="container my-4">
         <div id="alert-placeholder" class="mb-4"></div>
+
+        <div class="row mb-4">
+            <div class="col-md-4 mb-3"><div class="card p-3 h-100"><div class="d-flex align-items-center"><i class="bi bi-people-fill fs-1 me-3 text-primary"></i><div><h6 class="text-muted">Total Member Aktif</h6><h2 class="fw-bold" id="member-count">0</h2></div></div></div></div>
+            <div class="col-md-4 mb-3"><div class="card p-3 h-100"><div class="d-flex align-items-center"><i class="bi bi-eye-fill fs-1 me-3" style="color: #17a2b8;"></i><div><h6 class="text-muted">Total Pengunjung Website</h6><h2 class="fw-bold" id="visitor-count">0</h2></div></div></div></div>
+            <div class="col-md-4 mb-3"><div class="card p-3 h-100"><div class="d-flex align-items-center"><i class="bi bi-cash-coin fs-1 me-3" style="color: #28a745;"></i><div><h6 class="text-muted">Total Transaksi</h6><h2 class="fw-bold" id="transaction-total">Rp 0</h2></div><button class="btn btn-sm btn-outline-secondary ms-auto" data-bs-toggle="modal" data-bs-target="#editTransactionModal" title="Koreksi Pemasukan"><i class="bi bi-pencil-square"></i></button></div></div></div>
+        </div>
         
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1>Manajemen Pengguna</h1>
             <div>
-                <button class="btn btn-success" id="download-data-btn">
-                    <i class="bi bi-download"></i> Download Data
-                </button>
-                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
-                    <i class="bi bi-plus-circle"></i> Tambah User Baru
-                </button>
+                <button class="btn btn-success" id="download-data-btn"><i class="bi bi-download"></i> Download Data</button>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal"><i class="bi bi-plus-circle"></i> Tambah User</button>
             </div>
         </div>
-
-      <h3 class="mt-5 mb-3">Menunggu Konfirmasi Pembayaran</h3>
-<div class="card shadow-sm mb-5">
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th>Username</th>
-                        <th>No. WhatsApp</th>
-                        <th>Nama Paket</th>
-                        <th>Tanggal Beli</th>
-                        <th>Aksi</th>
-                    </tr>
-                </thead>
-                <tbody id="pending-payment-table-body">
-                    </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-        <h3 class="mt-5 mb-3">Data Member Aktif (Lunas)</h3>
-        <div class="card shadow-sm mb-5">
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th>No.</th>
-                                <th>Username</th>
-                                <th>Email</th>
-                                <th>No. WhatsApp</th>
-                                <th>Paket & Sisa Cuci</th>
-                                <th>Status</th>
-                                <th>Tgl. Kedaluwarsa</th> 
-                                <th>Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="member-table-body"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <h3 class="mt-5 mb-3">Data Member Kedaluwarsa</h3>
-        <div class="card shadow-sm mb-5">
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th>No.</th>
-                                <th>Username</th>
-                                <th>Email</th>
-                                <th>Paket Terakhir</th>
-                                <th>Tgl. Kedaluwarsa</th>
-                                <th>Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="expired-member-table-body"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <h3 class="mt-5 mb-3">Data Pengguna (Non-Member)</h3>
-        <div class="card shadow-sm mb-5">
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th>No.</th>
-                                <th>Username</th>
-                                <th>Email</th>
-                                <th>No. WhatsApp</th>
-                                <th>Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="non-member-table-body"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <h1 class="mb-4">Manajemen Ulasan</h1>
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Username</th>
-                                <th>Rating</th>
-                                <th style="width: 50%;">Ulasan</th>
-                                <th>Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="review-table-body"></tbody>
-                    </table>
-                </div>
-            </div>
+        
+        <div class="card">
+            <div class="card-header"><ul class="nav nav-tabs card-header-tabs">
+                <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#pending-tab">Menunggu Konfirmasi</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#active-tab">Member Aktif</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#expired-tab">Member Kedaluwarsa</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#non-member-tab">Non-Member</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#reviews-tab">Ulasan</a></li>
+            </ul></div>
+            <div class="card-body"><div class="tab-content">
+                <div class="tab-pane fade show active" id="pending-tab"><div class="table-responsive"><table class="table table-hover align-middle"><thead class="table-light"><tr><th>Username</th><th>No. WhatsApp</th><th>Paket</th><th>Tgl Beli</th><th>Aksi</th></tr></thead><tbody id="pending-payment-table-body"></tbody></table></div></div>
+                <div class="tab-pane fade" id="active-tab"><div class="table-responsive"><table class="table table-hover align-middle"><thead class="table-light"><tr><th>No.</th><th>Username</th><th>Email</th><th>No. WhatsApp</th><th>Jumlah Paket</th><th>Aksi</th></tr></thead><tbody id="member-table-body"></tbody></table></div></div>
+                <div class="tab-pane fade" id="expired-tab"><div class="table-responsive"><table class="table table-hover align-middle"><thead class="table-light"><tr><th>No.</th><th>Username</th><th>Paket Terakhir</th><th>Tgl Kedaluwarsa</th><th>Aksi</th></tr></thead><tbody id="expired-member-table-body"></tbody></table></div></div>
+                <div class="tab-pane fade" id="non-member-tab"><div class="table-responsive"><table class="table table-hover align-middle"><thead class="table-light"><tr><th>No.</th><th>Username</th><th>Email</th><th>No. WhatsApp</th><th>Aksi</th></tr></thead><tbody id="non-member-table-body"></tbody></table></div></div>
+                <div class="tab-pane fade" id="reviews-tab"><div class="table-responsive"><table class="table table-hover align-middle"><thead class="table-light"><tr><th>Username</th><th>Rating</th><th style="width: 50%;">Ulasan</th><th>Aksi</th></tr></thead><tbody id="review-table-body"></tbody></table></div></div>
+            </div></div>
         </div>
     </main>
     
-    <div class="modal fade" id="addUserModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header"><h5 class="modal-title">Tambah Pengguna Baru</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-                <div class="modal-body">
-                    <form id="add-user-form">
-                        <div class="mb-3"><label for="add-username" class="form-label">Username</label><input type="text" class="form-control" id="add-username" required></div>
-                        <div class="mb-3"><label for="add-email" class="form-label">Email</label><input type="email" class="form-control" id="add-email" required></div>
-                        <div class="mb-3"><label for="add-phone" class="form-label">No. WhatsApp</label><input type="tel" class="form-control" id="add-phone" required></div>
-                        <div class="mb-3"><label for="add-password" class="form-label">Password</label><input type="password" class="form-control" id="add-password" required></div>
-                        <div class="mb-3"><label for="add-role" class="form-label">Role</label><select class="form-select" id="add-role"><option value="user">User</option><option value="admin">Admin</option></select></div>
-                        <button type="submit" class="btn btn-primary w-100">Simpan</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade" id="editComboWashesModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Edit Jatah Paket Kombinasi untuk <span id="edit-combo-username"></span></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="edit-combo-washes-form">
-                        <input type="hidden" id="edit-combo-userid">
-                        <div class="mb-3">
-                            <label for="edit-bodywash-count" class="form-label">Jatah Body Wash</label>
-                            <input type="number" class="form-control" id="edit-bodywash-count" required min="0">
-                        </div>
-                        <div class="mb-3">
-                            <label for="edit-hidrolik-count" class="form-label">Jatah Hidrolik</label>
-                            <input type="number" class="form-control" id="edit-hidrolik-count" required min="0">
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">Simpan Perubahan Jatah</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade" id="editUserModal" tabindex="-1">
-         <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header"><h5 class="modal-title">Edit Pengguna</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-                <div class="modal-body">
-                    <form id="edit-user-form">
-                        <input type="hidden" id="edit-user-id">
-                        <div class="mb-3"><label for="edit-username" class="form-label">Username</label><input type="text" class="form-control" id="edit-username" required></div>
-                        <div class="mb-3"><label for="edit-email" class="form-label">Email</label><input type="email" class="form-control" id="edit-email" required></div>
-                        <div class="mb-3"><label for="edit-phone" class="form-label">No. WhatsApp</label><input type="tel" class="form-control" id="edit-phone" required></div>
-                        <div class="mb-3"><label for="edit-role" class="form-label">Role</label><select class="form-select" id="edit-role"><option value="user">User</option><option value="admin">Admin</option></select></div>
-                        <button type="submit" class="btn btn-primary w-100">Update</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade" id="editExpiryModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Edit Tgl. Kedaluwarsa untuk <span id="edit-expiry-username" class="fw-bold"></span></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="edit-expiry-form">
-                        <input type="hidden" id="edit-expiry-userid">
-                        <div class="mb-3">
-                            <label for="edit-expiry-date" class="form-label">Pilih Tanggal Kedaluwarsa Baru</label>
-                            <input type="date" class="form-control" id="edit-expiry-date" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">Simpan Tanggal</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade" id="viewBarcodeModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Kode Member untuk <span id="barcode-username"></span></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body text-center">
-                    <div id="barcode-container"></div>
-                    <p class="mt-2 small text-muted">Data: <code id="barcode-data"></code></p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade" id="setPackageModal" tabindex="-1">
-         <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header"><h5 class="modal-title">Atur Paket Member untuk <span id="package-username"></span></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-                <div class="modal-body">
-                    <form id="set-package-form">
-                        <input type="hidden" id="set-package-userid">
-                        <div class="mb-3">
-                            <label for="package-name" class="form-label">Pilih Paket</label>
-                            <select id="package-name" class="form-select" required>
-                                <option value="" selected disabled>-- Pilih Paket --</option>
-                                <option value="Body Wash" data-washes="12">Body Wash (12x)</option>
-                                <option value="Cuci Mobil Hidrolik" data-washes="10">Cuci Mobil Hidrolik (10x)</option>
-                                <option value="Cuci Motor Besar" data-washes="10">Cuci Motor Besar (10x)</option>
-                                <option value="Cuci Motor Kecil" data-washes="12">Cuci Motor Kecil (12x)</option>
-                                <option value="Paket Kombinasi" data-washes="12">Paket Kombinasi (12x)</option>
-                            </select>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">Simpan Paket</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade" id="editReviewModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header"><h5 class="modal-title">Edit Ulasan</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-                <div class="modal-body">
-                    <form id="edit-review-form">
-                        <input type="hidden" id="edit-review-id">
-                        <div class="mb-3">
-                            <label for="edit-rating" class="form-label">Rating</label>
-                            <select id="edit-rating" class="form-select" required>
-                                <option value="5">★★★★★</option>
-                                <option value="4">★★★★☆</option>
-                                <option value="3">★★★☆☆</option>
-                                <option value="2">★★☆☆☆</option>
-                                <option value="1">★☆☆☆☆</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="edit-comment" class="form-label">Ulasan</label>
-                            <textarea id="edit-comment" class="form-control" rows="4" required></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">Update Ulasan</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade" id="extendMembershipModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Perpanjang Masa Aktif</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <input type="hidden" id="extend-userid">
-                    <p>Perpanjang keanggotaan untuk: <strong id="extend-username"></strong></p>
-                    <p class="mb-4">Kedaluwarsa saat ini: <strong id="extend-current-expiry"></strong></p>
-                    <div class="d-grid gap-2">
-                        <button class="btn btn-primary extend-btn" data-months="1">+ 1 Bulan</button>
-                        <button class="btn btn-primary extend-btn" data-months="3">+ 3 Bulan</button>
-                        <button class="btn btn-primary extend-btn" data-months="6">+ 6 Bulan</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade" id="resetPasswordModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Reset Sandi untuk <span id="reset-password-username"></span></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="reset-password-form">
-                        <input type="hidden" id="reset-password-userid">
-                        <div class="mb-3">
-                            <label for="new-password-admin" class="form-label">Masukkan Sandi Baru</label>
-                            <input type="password" class="form-control" id="new-password-admin" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">Simpan Sandi Baru</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal fade" id="editTransactionModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Koreksi Total Pemasukan</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <p>Masukkan jumlah yang ingin ditambahkan atau dikurangi. Gunakan tanda minus (-) untuk mengurangi.</p>
-                    <form id="edit-transaction-form">
-                        <div class="mb-3">
-                            <label for="transaction-amount" class="form-label">Jumlah Koreksi (Rp)</label>
-                            <input type="number" class="form-control" id="transaction-amount" required placeholder="Contoh: 50000 atau -25000">
-                        </div>
-                        <div class="mb-3">
-                            <label for="transaction-note" class="form-label">Catatan (Wajib diisi)</label>
-                            <input type="text" class="form-control" id="transaction-note" required placeholder="Contoh: Pemasukan non-member, dll.">
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">Simpan Koreksi</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
+    <div class="modal fade" id="addUserModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Tambah Pengguna Baru</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="add-user-form" data-endpoint="/api/users" data-method="POST" data-success-message="Pengguna baru berhasil ditambahkan."><div class="mb-3"><label class="form-label">Username</label><input type="text" class="form-control" name="username" required></div><div class="mb-3"><label class="form-label">Email</label><input type="email" class="form-control" name="email"></div><div class="mb-3"><label class="form-label">No. WhatsApp</label><input type="tel" class="form-control" name="phone" required></div><div class="mb-3"><label class="form-label">Password</label><input type="password" class="form-control" name="password" required></div><button type="submit" class="btn btn-primary w-100">Simpan</button></form></div></div></div></div>
+    <div class="modal fade" id="editUserModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Edit Pengguna</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="edit-user-form" data-endpoint="/api/users/:id" data-method="PUT" data-success-message="Data pengguna berhasil diperbarui."><input type="hidden" name="id" id="edit-user-id"><div class="mb-3"><label class="form-label">Username</label><input type="text" class="form-control" name="username" id="edit-username" required></div><div class="mb-3"><label class="form-label">Email</label><input type="email" class="form-control" name="email" id="edit-email"></div><div class="mb-3"><label class="form-label">No. WhatsApp</label><input type="tel" class="form-control" name="phone" id="edit-phone" required></div><button type="submit" class="btn btn-primary w-100">Update</button></form></div></div></div></div>
+    <div class="modal fade" id="setPackageModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Tambah Paket untuk <span id="package-username" class="fw-bold"></span></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="set-package-form" data-endpoint="/api/purchase-membership-admin/:id" data-method="POST"><input type="hidden" name="id" id="set-package-userid"><div class="mb-3"><label class="form-label">Pilih Paket</label><select name="packageName" class="form-select" id="package-name-select" required><option value="" selected disabled>-- Pilih Paket --</option><optgroup label="Cuci Reguler"><option value="Body Wash" data-washes="12">Body Wash (12x)</option><option value="Cuci Mobil Hidrolik" data-washes="10">Cuci Mobil Hidrolik (10x)</option><option value="Cuci Motor Besar" data-washes="10">Cuci Motor Besar (10x)</option><option value="Cuci Motor Kecil" data-washes="12">Cuci Motor Kecil (12x)</option><option value="Paket Kombinasi" data-washes="12">Paket Kombinasi (12x)</option></optgroup><optgroup label="Body Poles"><option value="Body Poles Biasa - Mobil Kecil" data-washes="1">Poles Biasa - Kecil</option><option value="Body Poles Bundling - Mobil Kecil" data-washes="5">Poles Bundling - Kecil</option><option value="Body Poles Biasa - Mobil Medium" data-washes="1">Poles Biasa - Medium</option><option value="Body Poles Bundling - Mobil Medium" data-washes="5">Poles Bundling - Medium</option><option value="Body Poles Biasa - Mobil Besar" data-washes="1">Poles Biasa - Besar</option><option value="Body Poles Bundling - Mobil Besar" data-washes="5">Poles Bundling - Besar</option></optgroup><optgroup label="Nano Coating"><option value="Nano Coating - Mobil Kecil (2 Layer)" data-washes="2">Nano Coating - Kecil</option><option value="Nano Coating - Mobil Medium (2 Layer)" data-washes="2">Nano Coating - Medium</option><option value="Nano Coating - Mobil Besar (3 Layer)" data-washes="2">Nano Coating - Besar</option></optgroup></select></div><input type="hidden" name="totalWashes" id="total-washes-input"><button type="submit" class="btn btn-primary w-100">Tambahkan Paket</button></form></div></div></div></div>
+    <div class="modal fade" id="viewPackagesModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Daftar Paket Aktif untuk <span id="packages-modal-username" class="fw-bold"></span></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body" id="packages-list-container"></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button></div></div></div></div>
+    <div class="modal fade" id="editReviewModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Edit Ulasan</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="edit-review-form" data-endpoint="/api/reviews/:id" data-method="PUT" data-success-message="Ulasan berhasil diperbarui."><input type="hidden" name="id" id="edit-review-id"><div class="mb-3"><label class="form-label">Rating</label><select name="rating" class="form-select" id="edit-rating" required><option value="5">★★★★★</option><option value="4">★★★★☆</option><option value="3">★★★☆☆</option><option value="2">★★☆☆☆</option><option value="1">★☆☆☆☆</option></select></div><div class="mb-3"><label class="form-label">Ulasan</label><textarea name="comment" class="form-control" id="edit-comment" rows="4" required></textarea></div><button type="submit" class="btn btn-primary w-100">Update Ulasan</button></form></div></div></div></div>
+    <div class="modal fade" id="resetPasswordModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Reset Sandi untuk <span id="reset-password-username"></span></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="reset-password-form" data-endpoint="/api/users/:id/reset-password" data-method="POST" data-success-message="Password berhasil direset."><input type="hidden" name="id" id="reset-password-userid"><div class="mb-3"><label class="form-label">Sandi Baru</label><input type="password" class="form-control" name="newPassword" required></div><button type="submit" class="btn btn-primary w-100">Simpan Sandi</button></form></div></div></div></div>
+    <div class="modal fade" id="editTransactionModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Koreksi Pemasukan</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><p>Gunakan tanda minus (-) untuk mengurangi.</p><form id="edit-transaction-form" data-endpoint="/api/transactions/correction" data-method="POST" data-success-message="Transaksi berhasil dikoreksi."><div class="mb-3"><label class="form-label">Jumlah (Rp)</label><input type="number" class="form-control" name="amount" required></div><div class="mb-3"><label class="form-label">Catatan</label><input type="text" class="form-control" name="note" required></div><button type="submit" class="btn btn-primary w-100">Simpan Koreksi</button></form></div></div></div></div>
     
-    <div class="modal fade" id="editNanoCardModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Edit Kartu Nano untuk <span id="edit-nanocard-username"></span></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="edit-nanocard-form">
-                        <input type="hidden" id="edit-nanocard-userid">
-                        <div class="mb-3">
-                            <label for="edit-nanocard-owner" class="form-label">Nama Pemilik</label>
-                            <input type="text" class="form-control" id="edit-nanocard-owner" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="edit-nanocard-plate" class="form-label">No. Polisi Mobil</label>
-                            <input type="text" class="form-control" id="edit-nanocard-plate" placeholder="Contoh: B 1234 ABC" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">Simpan Perubahan</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/davidshimjs-qrcodejs@0.0.2/qrcode.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="/js/admin.js"></script>
 </body>
 </html>
