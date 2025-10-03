@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
         memberCount: document.getElementById('member-count'),
         visitorCount: document.getElementById('visitor-count'),
         transactionTotal: document.getElementById('transaction-total'),
+        downloadButton: document.getElementById('download-data-btn'),
         tables: {
             pending: document.getElementById('pending-payment-table-body'),
             active: document.getElementById('member-table-body'),
@@ -43,6 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const wrapper = document.createElement('div');
         wrapper.innerHTML = `<div class="alert alert-${type} alert-dismissible fade show" role="alert">${message}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>`;
         ui.alertPlaceholder.append(wrapper);
+        setTimeout(() => wrapper.remove(), 5000);
     };
 
     const apiRequest = async (endpoint, options = {}) => {
@@ -175,7 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </tr>`).join('');
     };
 
-    // --- PENGELOLA EVENT & AKSI ---
+    // --- FUNGSI MODAL & AKSI ---
     const openPackagesModal = (userId) => {
         const user = cachedData.users.find(u => u._id === userId);
         if (!user) return;
@@ -205,46 +207,42 @@ document.addEventListener('DOMContentLoaded', () => {
         
         modals.viewPackages.show();
         
-        // Render QR Code setelah modal terlihat
         setTimeout(() => {
             activePackages.forEach(pkg => {
                 const qrContainer = document.getElementById(`qr-container-${pkg._id}`);
                 if (qrContainer) {
                     qrContainer.innerHTML = '';
-                    new QRCode(qrContainer, { text: `${user.memberId};${pkg.packageId}`, width: 128, height: 128 });
+                    new QRCode(qrContainer, { text: `${user.memberId};${pkg.packageId}`, width: 128, height: 128, colorDark: "#000000", colorLight: "#ffffff" });
                 }
             });
         }, 300);
     };
 
-    const handleFormSubmit = (formId, endpoint, method, successMessage, modalToHide) => {
-        const form = document.getElementById(formId);
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const formData = new FormData(form);
-            const data = Object.fromEntries(formData.entries());
-            
-            // Khusus untuk form set-package, tambahkan data 'totalWashes'
-            if (formId === 'set-package-form') {
-                const select = document.getElementById('package-name');
-                data.totalWashes = select.options[select.selectedIndex].dataset.washes || 0;
-            }
+    const handleFormSubmit = async (form, successMessage, modalToHide) => {
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+        
+        if (form.id === 'set-package-form') {
+            const select = document.getElementById('package-name-select');
+            data.totalWashes = select.options[select.selectedIndex].dataset.washes || 0;
+        }
 
-            const finalEndpoint = endpoint.replace(':id', data.id);
-            if (endpoint.includes(':id')) delete data.id;
+        const endpoint = form.dataset.endpoint.replace(':id', data.id);
+        const method = form.dataset.method;
+        if (form.dataset.endpoint.includes(':id')) delete data.id;
 
-            try {
-                const result = await apiRequest(finalEndpoint, { method, body: data });
-                showAlert(successMessage || result.msg);
-                modalToHide.hide();
-                form.reset();
-                initialize(); // Refresh semua data
-            } catch (error) {
-                showAlert(error.message, 'danger');
-            }
-        });
+        try {
+            const result = await apiRequest(endpoint, { method, body: data });
+            showAlert(successMessage || result.msg);
+            modalToHide.hide();
+            form.reset();
+            initialize();
+        } catch (error) {
+            showAlert(error.message, 'danger');
+        }
     };
     
+    // --- PENGELOLA EVENT ---
     document.body.addEventListener('click', async (e) => {
         const button = e.target.closest('button, a.dropdown-item');
         if (!button) return;
@@ -255,8 +253,8 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             if (button.classList.contains('confirm-payment-btn')) {
                 if (confirm('Anda yakin ingin mengonfirmasi pembayaran ini?')) {
-                    await apiRequest(`/api/confirm-payment/${button.dataset.userId}/${button.dataset.packageId}`, { method: 'POST' });
-                    showAlert('Pembayaran berhasil dikonfirmasi.');
+                    const result = await apiRequest(`/api/confirm-payment/${button.dataset.userId}/${button.dataset.packageId}`, { method: 'POST' });
+                    showAlert(result.msg);
                     initialize();
                 }
             } else if (button.classList.contains('view-packages-btn')) {
@@ -264,15 +262,15 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (button.classList.contains('edit-user-btn')) {
                 const user = cachedData.users.find(u => u._id === userId);
                 if (user) {
-                    document.getElementById('edit-user-id').value = user._id;
-                    document.getElementById('edit-username').value = user.username;
-                    document.getElementById('edit-email').value = user.email;
-                    document.getElementById('edit-phone').value = user.phone;
-                    document.getElementById('edit-role').value = user.role;
+                    const form = document.getElementById('edit-user-form');
+                    form.querySelector('#edit-user-id').value = user._id;
+                    form.querySelector('#edit-username').value = user.username;
+                    form.querySelector('#edit-email').value = user.email || '';
+                    form.querySelector('#edit-phone').value = user.phone;
                     modals.editUser.show();
                 }
             } else if (button.classList.contains('set-package-btn')) {
-                const user = cachedData.users.find(u => u._id === userId);
+                 const user = cachedData.users.find(u => u._id === userId);
                 if (user) {
                     document.getElementById('package-username').textContent = user.username;
                     document.getElementById('set-package-userid').value = user._id;
@@ -280,8 +278,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } else if (button.classList.contains('delete-user-btn')) {
                 if (confirm('Anda yakin ingin menghapus pengguna ini?')) {
-                    await apiRequest(`/api/users/${userId}`, { method: 'DELETE' });
-                    showAlert('Pengguna berhasil dihapus.');
+                    const result = await apiRequest(`/api/users/${userId}`, { method: 'DELETE' });
+                    showAlert(result.msg);
                     initialize();
                 }
             } else if (button.classList.contains('reset-password-btn')) {
@@ -293,16 +291,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } else if (button.classList.contains('delete-review-btn')) {
                  if (confirm('Anda yakin ingin menghapus ulasan ini?')) {
-                    await apiRequest(`/api/reviews/${reviewId}`, { method: 'DELETE' });
-                    showAlert('Ulasan berhasil dihapus.');
+                    const result = await apiRequest(`/api/reviews/${reviewId}`, { method: 'DELETE' });
+                    showAlert(result.msg);
                     initialize();
                 }
             } else if (button.classList.contains('edit-review-btn')) {
                 const review = cachedData.reviews.find(r => r._id === reviewId);
                 if (review) {
-                    document.getElementById('edit-review-id').value = review._id;
-                    document.getElementById('edit-rating').value = review.rating;
-                    document.getElementById('edit-comment').value = review.comment;
+                    const form = document.getElementById('edit-review-form');
+                    form.querySelector('#edit-review-id').value = review._id;
+                    form.querySelector('#edit-rating').value = review.rating;
+                    form.querySelector('#edit-comment').value = review.comment;
                     modals.editReview.show();
                 }
             }
@@ -328,23 +327,23 @@ document.addEventListener('DOMContentLoaded', () => {
             showAlert(error.message, 'danger');
         }
     };
-
-    // Setup form handlers
-    handleFormSubmit('add-user-form', '/api/users', 'POST', 'Pengguna baru berhasil ditambahkan.', modals.addUser);
-    handleFormSubmit('edit-user-form', '/api/users/:id', 'PUT', 'Data pengguna berhasil diperbarui.', modals.editUser);
-    handleFormSubmit('set-package-form', '/api/purchase-membership-admin/:id', 'POST', 'Paket berhasil ditambahkan.', modals.setPackage);
-    handleFormSubmit('edit-review-form', '/api/reviews/:id', 'PUT', 'Ulasan berhasil diperbarui.', modals.editReview);
-    handleFormSubmit('reset-password-form', '/api/users/:id/reset-password', 'POST', 'Password berhasil direset.', modals.resetPassword);
-    handleFormSubmit('edit-transaction-form', '/api/transactions/correction', 'POST', 'Transaksi berhasil dikoreksi.', modals.editTransaction);
-
-    // Logout
+    
+    document.querySelectorAll('form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const modal = bootstrap.Modal.getInstance(this.closest('.modal'));
+            // Dapatkan pesan sukses dari atribut data jika ada, jika tidak, gunakan pesan default
+            const successMessage = this.dataset.successMessage || 'Aksi berhasil dijalankan.'; 
+            handleFormSubmit(this, successMessage, modal);
+        });
+    });
+    
     document.getElementById('logout-button').addEventListener('click', () => {
         localStorage.removeItem('token');
         localStorage.removeItem('userRole');
         window.location.href = '/login.html';
     });
     
-    // Download Data
     ui.downloadButton.addEventListener('click', async () => {
         ui.downloadButton.disabled = true;
         ui.downloadButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Mengunduh...';
@@ -356,10 +355,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const a = document.createElement('a');
             a.href = url;
             a.download = `data_autohidrolik_${new Date().toISOString().slice(0,10)}.xlsx`;
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            window.URL.revokeObjectURL(url);
+            document.body.appendChild(a); a.click(); a.remove(); window.URL.revokeObjectURL(url);
         } catch (error) {
             showAlert(error.message, 'danger');
         } finally {
@@ -367,6 +363,15 @@ document.addEventListener('DOMContentLoaded', () => {
             ui.downloadButton.innerHTML = '<i class="bi bi-download"></i> Download Data';
         }
     });
+    
+    // Hubungkan select dengan input tersembunyi untuk totalWashes
+    const packageNameSelect = document.getElementById('package-name-select');
+    if(packageNameSelect) {
+        packageNameSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            document.getElementById('total-washes-input').value = selectedOption.dataset.washes || 0;
+        });
+    }
 
     initialize();
 });
