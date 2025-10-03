@@ -1,7 +1,22 @@
-// File: models/User.js
+// File: models/User.js (Versi Sederhana)
 
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
+
+// Skema untuk data membership yang akan ditempel langsung di User
+const MembershipSchema = new Schema({
+    packageName: { type: String, required: true },
+    isPaid: { type: Boolean, default: false },
+    purchaseDate: { type: Date, default: Date.now },
+    expiresAt: { type: Date },
+    packageId: { type: String, unique: true, sparse: true }, // ID unik untuk QR Code
+    totalWashes: { type: Number, default: 0 },
+    remainingWashes: { type: Number, default: 0 },
+    washes: { // Khusus untuk paket kombinasi
+        bodywash: { type: Number, default: 0 },
+        hidrolik: { type: Number, default: 0 }
+    }
+});
 
 // Skema Utama Pengguna
 const UserSchema = new Schema({
@@ -13,12 +28,8 @@ const UserSchema = new Schema({
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
     isVerified: { type: Boolean, default: true },
     
-    // INI BAGIAN YANG DIPERBAIKI
-    // Kita definisikan 'memberships' sebagai array yang merujuk ke model 'Membership'
-    memberships: [{
-        type: Schema.Types.ObjectId,
-        ref: 'Membership' // 'ref' ini memberitahu Mongoose untuk mencari di koleksi 'Membership'
-    }],
+    // PERUBAHAN UTAMA: 'membership' sekarang menjadi satu objek, bukan array
+    membership: MembershipSchema,
     
     date: { type: Date, default: Date.now }
 });
