@@ -845,7 +845,6 @@ app.delete('/api/reviews/:id', auth, adminAuth, async (req, res) => {
     }
 });
 
-
 // Rute Pembelian Paket oleh User (Diperbarui)
 app.post('/api/purchase-membership', auth, async (req, res) => {
     const { packageName, totalWashes } = req.body;
@@ -917,8 +916,7 @@ app.post('/api/purchase-membership-admin/:userId', auth, adminAuth, async (req, 
     }
 });
 
-// Rute Penggunaan Jatah Cuci / Scanner (DIREVISI TOTAL)
-// server.js
+
 app.post('/api/use-wash', auth, adminAuth, async (req, res) => {
     // QR code akan berisi: "memberId;packageId"
     const { qrData, washType } = req.body;
