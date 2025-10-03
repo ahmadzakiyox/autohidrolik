@@ -1,29 +1,10 @@
+// File: models/User.js (Versi Final setelah penyesuaian)
+
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-// Skema untuk SETIAP paket yang dibeli
-const MembershipSchema = new Schema({
-    packageName: { type: String, required: true },
-    isPaid: { type: Boolean, default: false },
-    purchaseDate: { type: Date, default: Date.now },
-    expiresAt: { type: Date },
-    packageId: { type: String, unique: true, sparse: true },
-
-    // Untuk paket cuci biasa
-    totalWashes: { type: Number, default: 0 },
-    remainingWashes: { type: Number, default: 0 },
-
-    // Untuk paket kombinasi
-    washes: {
-        bodywash: { type: Number, default: 0 },
-        hidrolik: { type: Number, default: 0 }
-    },
-
-    // KHUSUS untuk paket Nano Coating
-    ownerName: { type: String, default: '' },
-    plateNumber: { type: String, default: '' },
-    coatingDate: { type: Date }
-});
+// Skema MembershipSchema yang sebelumnya ada di sini telah dihapus
+// dan dipindahkan ke file models/Membership.js
 
 // Skema Utama Pengguna
 const UserSchema = new Schema({
@@ -35,8 +16,7 @@ const UserSchema = new Schema({
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
     isVerified: { type: Boolean, default: true },
     
-    // Semua paket akan disimpan di sini dalam bentuk array
-    memberships: [MembershipSchema],
+    // Array 'memberships' [MembershipSchema] sudah dihapus dari sini.
     
     date: { type: Date, default: Date.now }
 });
