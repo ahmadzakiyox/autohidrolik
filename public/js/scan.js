@@ -12,133 +12,123 @@ document.addEventListener('DOMContentLoaded', function () {
     
     let isCameraScanning = false;
     const html5QrCode = new Html5Qrcode("camera-reader");
-    let currentScannedId = null; // Menyimpan ID yang sedang diproses
+    let currentQrData = null; // Menyimpan seluruh data QR yang di-scan
 
     // --- FUNGSI UTAMA ---
 
-    // Keamanan: Hanya admin yang boleh mengakses halaman ini
     if (!token || userRole !== 'admin') {
         alert('Akses ditolak. Anda harus login sebagai admin.');
         window.location.href = '/login';
         return;
     }
 
-    // Pastikan input selalu dalam keadaan aktif (fokus)
     const focusInput = () => {
         setTimeout(() => barcodeInput.focus(), 100);
     };
     focusInput();
     document.body.addEventListener('click', (e) => {
-        if (e.target.closest('.btn')) return; // Jangan re-focus jika klik tombol
+        if (e.target.closest('.btn')) return;
         focusInput();
     });
 
-    // Event listener untuk input dari scanner fisik
     barcodeInput.addEventListener('keyup', function(event) {
         if (event.key === 'Enter') {
-            const userId = barcodeInput.value.trim();
-            if (userId) {
-                processScannedUser(userId);
+            const qrData = barcodeInput.value.trim();
+            if (qrData) {
+                processScannedQr(qrData);
             }
         }
     });
     
-    /**
-     * Langkah 1: Memproses ID yang berhasil di-scan.
-     * Mengambil data user dari API.
-     */
-    async function processScannedUser(userId) {
-        currentScannedId = userId; // Simpan ID saat ini
-        resultContainer.innerHTML = `<div class="alert alert-info">Memeriksa data member: ${userId}...</div>`;
+    // ================== PERUBAHAN LOGIKA UTAMA DI SINI ==================
+    async function processScannedQr(qrData) {
+        currentQrData = qrData;
+        resultContainer.innerHTML = `<div class="alert alert-info">Memeriksa data dari QR Code...</div>`;
         barcodeInput.disabled = true;
 
+        // 1. Pisahkan Member ID dan Package ID dari data QR
+        if (!qrData.includes(';')) {
+            showError('Format QR Code tidak valid. Pastikan QR Code berasal dari sistem yang benar.');
+            return;
+        }
+        const [memberId, packageId] = qrData.split(';');
+
         try {
-            const response = await fetch(`/api/user-by-memberid/${userId}`, {
+            // 2. Ambil data user HANYA menggunakan Member ID
+            const response = await fetch(`/api/user-by-memberid/${memberId}`, {
                 headers: { 'x-auth-token': token }
             });
             const user = await response.json();
             if (!response.ok) throw new Error(user.msg || 'Gagal mengambil data member.');
             
-            displayUserInfoWithOptions(user);
+            // 3. Cari paket spesifik berdasarkan Package ID yang didapat dari QR
+            const targetPackage = user.memberships.find(pkg => pkg.packageId === packageId);
+            if (!targetPackage) {
+                throw new Error('Paket spesifik tidak ditemukan untuk member ini. Mungkin paket sudah lama atau tidak valid.');
+            }
+
+            displayUserInfoWithOptions(user, targetPackage);
 
         } catch (error) {
             showError(error.message);
         }
     }
     
-    /**
-     * Langkah 2: Menampilkan informasi user dan opsi penggunaan jatah.
-     */
-    function displayUserInfoWithOptions(user) {
-        if (!user.membership || !user.membership.isPaid) {
-             showError('Member ini tidak memiliki paket aktif atau belum lunas.');
+    function displayUserInfoWithOptions(user, pkg) {
+        if (!pkg.isPaid) {
+             showError('Paket member ini belum lunas.');
              return;
+        }
+        if (new Date(pkg.expiresAt) < new Date()) {
+            showError('Paket member ini sudah kedaluwarsa.');
+            return;
         }
 
         let optionsHtml = '';
-        // Jika Paket Kombinasi, tampilkan dua tombol pilihan
-        if (user.membership.packageName === 'Paket Kombinasi') {
+        if (pkg.packageName.toLowerCase().includes('kombinasi')) {
             optionsHtml = `
                 <p class="mt-4">Pilih jatah yang akan digunakan:</p>
                 <div class="d-grid gap-2 d-md-flex justify-content-md-center">
-                    <button class="btn btn-primary btn-lg use-wash-btn" data-type="bodywash">
-                        Gunakan Body Wash (${user.membership.washes.bodywash}x)
-                    </button>
-                    <button class="btn btn-success btn-lg use-wash-btn" data-type="hidrolik">
-                        Gunakan Hidrolik (${user.membership.washes.hidrolik}x)
-                    </button>
-                </div>
-            `;
+                    <button class="btn btn-primary btn-lg use-wash-btn" data-type="bodywash">Gunakan Body Wash (${pkg.washes.bodywash}x)</button>
+                    <button class="btn btn-success btn-lg use-wash-btn" data-type="hidrolik">Gunakan Hidrolik (${pkg.washes.hidrolik}x)</button>
+                </div>`;
         } else {
-            // Jika paket biasa, tampilkan satu tombol
             optionsHtml = `
                 <div class="d-grid gap-2 col-6 mx-auto mt-4">
-                    <button class="btn btn-primary btn-lg use-wash-btn" data-type="normal">
-                        Gunakan 1 Jatah Cuci
-                    </button>
-                </div>
-            `;
+                    <button class="btn btn-primary btn-lg use-wash-btn" data-type="normal">Gunakan 1 Jatah Cuci (${pkg.remainingWashes}x)</button>
+                </div>`;
         }
         
         resultContainer.innerHTML = `
             <div class="alert alert-secondary text-center">
                 <h4 class="alert-heading">Member Ditemukan!</h4>
                 <p>Nama: <strong>${user.username}</strong></p>
-                <p>Paket: <strong>${user.membership.packageName}</strong></p>
+                <p>Paket: <strong>${pkg.packageName}</strong></p>
                 <hr>
                 ${optionsHtml}
-            </div>
-        `;
+            </div>`;
     }
 
-    /**
-     * Langkah 3: Mengirim permintaan penggunaan jatah ke API.
-     * Dipanggil saat tombol pilihan di klik.
-     */
     async function useWash(washType) {
         resultContainer.innerHTML = `<div class="alert alert-info">Memproses permintaan...</div>`;
-
-        const bodyData = { userId: currentScannedId };
-        if (washType !== 'normal') {
-            bodyData.washType = washType;
-        }
 
         try {
             const response = await fetch(`/api/use-wash`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
-                body: JSON.stringify(bodyData)
+                body: JSON.stringify({ qrData: currentQrData, washType: washType === 'normal' ? undefined : washType })
             });
             const result = await response.json();
             if (!response.ok) throw new Error(result.msg || 'Gagal memproses permintaan.');
 
-            // Tampilkan sisa jatah yang baru
-            const user = result.user;
+            const updatedUser = result.user;
+            const updatedPackage = updatedUser.memberships.find(p => p.packageId === currentQrData.split(';')[1]);
+            
             let remainingText = '';
-            if (user.membership.packageName === 'Paket Kombinasi') {
-                remainingText = `Body Wash: <strong>${user.membership.washes.bodywash}x</strong>, Hidrolik: <strong>${user.membership.washes.hidrolik}x</strong>`;
+            if (updatedPackage.packageName.toLowerCase().includes('kombinasi')) {
+                remainingText = `Sisa jatah -> Body Wash: <strong>${updatedPackage.washes.bodywash}x</strong>, Hidrolik: <strong>${updatedPackage.washes.hidrolik}x</strong>`;
             } else {
-                remainingText = `Sisa jatah cuci: <strong>${user.membership.remainingWashes}x</strong>`;
+                remainingText = `Sisa jatah cuci: <strong>${updatedPackage.remainingWashes}x</strong>`;
             }
 
             resultContainer.innerHTML = `
@@ -150,17 +140,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>`;
 
         } catch (error) {
-            resultContainer.innerHTML = `
-                <div class="alert alert-danger">
-                    <h5 class="alert-heading">Error!</h5>
-                    <p>${error.message}</p>
-                </div>`;
+            resultContainer.innerHTML = `<div class="alert alert-danger"><h5 class="alert-heading">Error!</h5><p>${error.message}</p></div>`;
         } finally {
             resetScannerState();
         }
     }
+    // ================== AKHIR PERUBAHAN ==================
 
-    // Event delegation untuk tombol "Gunakan Jatah"
     resultContainer.addEventListener('click', function(e) {
         if (e.target.classList.contains('use-wash-btn')) {
             const washType = e.target.dataset.type;
@@ -168,7 +154,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // --- FUNGSI BANTU & KAMERA (TIDAK BANYAK BERUBAH) ---
     function showError(message) {
         resultContainer.innerHTML = `<div class="alert alert-danger"><h5 class="alert-heading">Error!</h5><p>${message}</p></div>`;
         resetScannerState();
@@ -176,7 +161,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function resetScannerState() {
         setTimeout(() => {
-            currentScannedId = null;
+            currentQrData = null;
             barcodeInput.value = '';
             barcodeInput.disabled = false;
             resultContainer.innerHTML = '';
@@ -186,7 +171,7 @@ document.addEventListener('DOMContentLoaded', function () {
     
     const onScanSuccess = (decodedText, decodedResult) => {
         stopCameraScan();
-        processScannedUser(decodedText);
+        processScannedQr(decodedText);
     };
 
     const startCameraScan = () => {
