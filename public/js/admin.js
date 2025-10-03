@@ -32,7 +32,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // --- Variabel Global ---
     let cachedUsers = [];
-    let cachedReviews = [];
 
     // --- Fungsi Helper ---
     function showAlert(message, type = 'danger') {
@@ -76,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // --- Fungsi Render Tampilan ---
+    // --- FUNGSI RENDER TAMPILAN (DIPERBARUI TOTAL) ---
     const renderTables = (users) => {
         const today = new Date();
         
@@ -84,77 +83,107 @@ document.addEventListener('DOMContentLoaded', () => {
         let pendingHtml = '';
         let expiredHtml = '';
         let nonMemberHtml = '';
+        
         let activeCounter = 1;
+        let expiredCounter = 1;
         let nonMemberCounter = 1;
 
         users.forEach(user => {
             if (user.memberships && user.memberships.length > 0) {
                 let hasActiveOrPendingPackage = false;
+
+                // Proses setiap paket yang dimiliki user
                 user.memberships.forEach(pkg => {
                     const expiryDate = new Date(pkg.expiresAt);
                     
                     if (!pkg.isPaid) {
                         hasActiveOrPendingPackage = true;
-                        // --- RENDER TABEL PENDING ---
-                        pendingHtml += `
-                            <tr data-user-id="${user._id}" data-package-id="${pkg._id}">
-                                <td>${user.username}</td>
-                                <td>${user.phone || '-'}</td>
-                                <td>${pkg.packageName}</td>
-                                <td>${new Date(pkg.purchaseDate).toLocaleDateString('id-ID')}</td>
-                                <td>
-                                    <button class="btn btn-sm btn-success confirm-payment-btn">
-                                        <i class="bi bi-check-circle"></i> Konfirmasi
-                                    </button>
-                                </td>
-                            </tr>
-                        `;
+                        // RENDER TABEL PENDING
+                        pendingHtml += renderPendingRow(user, pkg);
                     } else if (expiryDate >= today) {
                         hasActiveOrPendingPackage = true;
-                        // --- RENDER TABEL AKTIF ---
-                        let membershipStatus = '';
-                        if (pkg.packageName.toLowerCase().includes('nano')) {
-                            membershipStatus = `<div>${pkg.packageName}</div><small class="text-muted">Kartu Aktif</small>`;
-                        } else if (pkg.packageName === 'Paket Kombinasi') {
-                            membershipStatus = `<div>Paket Kombinasi</div><small class="text-muted">Bodywash: <strong>${pkg.washes.bodywash}x</strong>, Hidrolik: <strong>${pkg.washes.hidrolik}x</strong></small>`;
-                        } else {
-                            membershipStatus = `${pkg.packageName} (${pkg.remainingWashes}x)`;
-                        }
-
-                        const actionButtons = `
-                            <button class="btn btn-sm btn-outline-info view-barcode-btn" title="QR Code" data-user-id="${user._id}" data-package-id="${pkg.packageId}"><i class="bi bi-qr-code"></i></button>
-                            <button class="btn btn-sm btn-outline-warning edit-user-btn" title="Edit User" data-user-id="${user._id}"><i class="bi bi-pencil-square"></i></button>
-                            <button class="btn btn-sm btn-outline-danger delete-user-btn" title="Hapus User" data-user-id="${user._id}"><i class="bi bi-trash3"></i></button>
-                        `;
-
-                        activeHtml += `
-                            <tr>
-                                <td>${activeCounter++}</td>
-                                <td>${user.username}</td>
-                                <td>${user.email || '-'}</td>
-                                <td>${user.phone || '-'}</td>
-                                <td>${membershipStatus}</td>
-                                <td><span class="badge bg-success">Lunas</span></td>
-                                <td>${expiryDate.toLocaleDateString('id-ID')}</td>
-                                <td><div class="btn-group">${actionButtons}</div></td>
-                            </tr>
-                        `;
+                        // RENDER TABEL AKTIF
+                        activeHtml += renderActiveRow(user, pkg, activeCounter++);
+                    } else {
+                        // RENDER TABEL KEDALUWARSA
+                        expiredHtml += renderExpiredRow(user, pkg, expiredCounter++);
                     }
                 });
 
-                if (!hasActiveOrPendingPackage) {
-                    // Jika semua paketnya sudah kedaluwarsa, tampilkan di tabel non-member juga
-                    nonMemberHtml += renderNonMemberRow(user, nonMemberCounter++);
-                }
+                // Jika user punya paket tapi semuanya sudah kedaluwarsa, dia tidak akan muncul sebagai non-member.
+                // Dia hanya akan muncul di tabel kedaluwarsa.
+
             } else {
-                 // --- RENDER TABEL NON-MEMBER ---
+                 // RENDER TABEL NON-MEMBER (Hanya jika tidak punya paket sama sekali)
                  nonMemberHtml += renderNonMemberRow(user, nonMemberCounter++);
             }
         });
 
         memberTableBody.innerHTML = activeHtml || `<tr><td colspan="8" class="text-center text-muted">Belum ada member aktif.</td></tr>`;
         pendingPaymentTableBody.innerHTML = pendingHtml || `<tr><td colspan="5" class="text-center text-muted">Tidak ada pembayaran yang tertunda.</td></tr>`;
+        expiredMemberTableBody.innerHTML = expiredHtml || `<tr><td colspan="6" class="text-center text-muted">Tidak ada member yang kedaluwarsa.</td></tr>`;
         nonMemberTableBody.innerHTML = nonMemberHtml || `<tr><td colspan="5" class="text-center text-muted">Tidak ada pengguna non-member.</td></tr>`;
+    };
+    
+    const renderPendingRow = (user, pkg) => {
+        return `
+            <tr data-user-id="${user._id}" data-package-id="${pkg._id}">
+                <td>${user.username}</td>
+                <td>${user.phone || '-'}</td>
+                <td>${pkg.packageName}</td>
+                <td>${new Date(pkg.purchaseDate).toLocaleDateString('id-ID')}</td>
+                <td>
+                    <button class="btn btn-sm btn-success confirm-payment-btn" title="Konfirmasi Pembayaran">
+                        <i class="bi bi-check-circle"></i> Konfirmasi
+                    </button>
+                </td>
+            </tr>
+        `;
+    };
+
+    const renderActiveRow = (user, pkg, counter) => {
+        let membershipStatus = '';
+        if (pkg.packageName.toLowerCase().includes('nano')) {
+            membershipStatus = `<div>${pkg.packageName}</div><small class="text-muted">Kartu Aktif</small>`;
+        } else if (pkg.packageName === 'Paket Kombinasi') {
+            membershipStatus = `<div>Paket Kombinasi</div><small class="text-muted">Bodywash: <strong>${pkg.washes.bodywash}x</strong>, Hidrolik: <strong>${pkg.washes.hidrolik}x</strong></small>`;
+        } else {
+            membershipStatus = `${pkg.packageName} (${pkg.remainingWashes}x)`;
+        }
+
+        const actionButtons = `
+            <button class="btn btn-sm btn-outline-info view-barcode-btn" title="QR Code" data-user-id="${user._id}" data-package-id="${pkg.packageId}"><i class="bi bi-qr-code"></i></button>
+            <button class="btn btn-sm btn-outline-warning edit-user-btn" title="Edit Info User" data-user-id="${user._id}"><i class="bi bi-pencil-square"></i></button>
+            <button class="btn btn-sm btn-outline-danger delete-user-btn" title="Hapus User" data-user-id="${user._id}"><i class="bi bi-trash3"></i></button>
+        `;
+
+        return `
+            <tr data-user-id="${user._id}" data-package-id="${pkg._id}">
+                <td>${counter}</td>
+                <td>${user.username}</td>
+                <td>${user.email || '-'}</td>
+                <td>${user.phone || '-'}</td>
+                <td>${membershipStatus}</td>
+                <td><span class="badge bg-success">Lunas</span></td>
+                <td>${new Date(pkg.expiresAt).toLocaleDateString('id-ID')}</td>
+                <td><div class="btn-group">${actionButtons}</div></td>
+            </tr>
+        `;
+    };
+
+    const renderExpiredRow = (user, pkg, counter) => {
+        return `
+            <tr data-user-id="${user._id}">
+                <td>${counter}</td>
+                <td>${user.username}</td>
+                <td>${user.email || '-'}</td>
+                <td>${pkg.packageName}</td>
+                <td><span class="text-danger fw-bold">${new Date(pkg.expiresAt).toLocaleDateString('id-ID')}</span></td>
+                <td>
+                     <button class="btn btn-sm btn-success set-package-btn" title="Perbarui Paket Member"><i class="bi bi-arrow-clockwise"></i> Perbarui</button>
+                </td>
+            </tr>
+        `;
     };
     
     const renderNonMemberRow = (user, counter) => {
@@ -166,9 +195,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td>${user.phone || '-'}</td>
                 <td>
                     <div class="btn-group">
-                        <button class="btn btn-sm btn-outline-success set-package-btn"><i class="bi bi-gem"></i> Jadikan Member</button>
-                        <button class="btn btn-sm btn-outline-warning edit-user-btn"><i class="bi bi-pencil-square"></i> Edit</button>
-                        <button class="btn btn-sm btn-outline-danger delete-user-btn"><i class="bi bi-trash3"></i> Hapus</button>
+                        <button class="btn btn-sm btn-success set-package-btn"><i class="bi bi-gem"></i> Jadikan Member</button>
+                        <button class="btn btn-sm btn-warning edit-user-btn"><i class="bi bi-pencil-square"></i> Edit</button>
+                        <button class="btn btn-sm btn-danger delete-user-btn"><i class="bi bi-trash3"></i> Hapus</button>
                     </div>
                 </td>
             </tr>
@@ -245,27 +274,29 @@ document.addEventListener('DOMContentLoaded', () => {
         const button = e.target.closest('button');
         if (!button) return;
 
+        const row = button.closest('tr');
+        if (!row) return;
+        
+        const userId = row.dataset.userId;
+        const packageId = row.dataset.packageId;
+
         if (button.classList.contains('confirm-payment-btn')) {
-            const row = button.closest('tr');
-            if (row && row.dataset.userId && row.dataset.packageId) {
-                handleConfirmPayment(row.dataset.userId, row.dataset.packageId);
+            if (userId && packageId) {
+                handleConfirmPayment(userId, packageId);
             }
             return;
         }
 
         if (button.classList.contains('view-barcode-btn')) {
-            const userId = button.dataset.userId;
-            const packageId = button.dataset.packageId;
             const user = cachedUsers.find(u => u._id === userId);
-            if(user) {
-                openBarcodeModal(user, packageId);
+            const pkgIdFromBtn = button.dataset.packageId;
+            if(user && pkgIdFromBtn) {
+                openBarcodeModal(user, pkgIdFromBtn);
             }
             return;
         }
         
-        const userRow = button.closest('tr[data-user-id]');
-        if (userRow) {
-            const userId = userRow.dataset.userId;
+        if (userId) {
             const user = cachedUsers.find(u => u._id === userId);
             if (user) {
                 if (button.classList.contains('edit-user-btn')) return openEditModal(user);
@@ -301,7 +332,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const selectedOption = select.options[select.selectedIndex];
         const packageData = {
             packageName: selectedOption.value,
-            totalWashes: parseInt(selectedOption.dataset.washes)
+            totalWashes: parseInt(selectedOption.dataset.washes, 10) || 0
         };
         try {
             const response = await fetch(`/api/purchase-membership-admin/${userId}`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(packageData) });
