@@ -1,10 +1,7 @@
-// File: models/User.js (Versi Final setelah penyesuaian)
+// File: models/User.js
 
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
-
-// Skema MembershipSchema yang sebelumnya ada di sini telah dihapus
-// dan dipindahkan ke file models/Membership.js
 
 // Skema Utama Pengguna
 const UserSchema = new Schema({
@@ -16,7 +13,12 @@ const UserSchema = new Schema({
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
     isVerified: { type: Boolean, default: true },
     
-    // Array 'memberships' [MembershipSchema] sudah dihapus dari sini.
+    // INI BAGIAN YANG DIPERBAIKI
+    // Kita definisikan 'memberships' sebagai array yang merujuk ke model 'Membership'
+    memberships: [{
+        type: Schema.Types.ObjectId,
+        ref: 'Membership' // 'ref' ini memberitahu Mongoose untuk mencari di koleksi 'Membership'
+    }],
     
     date: { type: Date, default: Date.now }
 });
