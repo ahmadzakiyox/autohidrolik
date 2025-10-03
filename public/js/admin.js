@@ -144,7 +144,6 @@ const fetchUsers = async () => {
         showAlert(error.message, 'danger');
     }
 };
-
     const fetchReviews = async () => {
         try {
             const response = await fetch('/api/reviews/all', { headers: getHeaders(false) });
@@ -195,6 +194,7 @@ const displayMembers = (members) => {
     });
 };
 
+// TAMBAHKAN FUNGSI BARU INI
 // TAMBAHKAN FUNGSI BARU INI
 const displayPendingPayments = (users) => {
     // Pastikan Anda sudah menambahkan const ini di bagian atas file
