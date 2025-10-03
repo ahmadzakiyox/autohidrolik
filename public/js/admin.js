@@ -134,34 +134,60 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         let counter = 1;
         members.forEach(user => {
-            const row = document.createElement('tr');
-            row.dataset.userId = user._id;
-            let membershipStatus = '';
-            if (user.membership.packageName === 'Paket Kombinasi') {
-                membershipStatus = `<div>Paket Kombinasi</div><small class="text-muted">Bodywash: <strong>${user.membership.washes.bodywash}x</strong>, Hidrolik: <strong>${user.membership.washes.hidrolik}x</strong></small>`;
-            } else {
-                membershipStatus = `${user.membership.packageName} (${user.membership.remainingWashes}x)`;
+            // --- PERUBAHAN UTAMA: Iterasi melalui setiap paket member ---
+            if (user.memberships && user.memberships.length > 0) {
+                user.memberships.forEach(pkg => {
+                    // Hanya tampilkan paket yang sudah lunas di tabel ini
+                    if (!pkg.isPaid) return;
+
+                    const row = document.createElement('tr');
+                    // Tambahkan data-user-id dan data-package-id untuk identifikasi
+                    row.dataset.userId = user._id;
+                    row.dataset.packageId = pkg._id; 
+
+                    let membershipStatus = '';
+                    if (pkg.packageName === 'Paket Kombinasi') {
+                        membershipStatus = `<div>Paket Kombinasi</div><small class="text-muted">Bodywash: <strong>${pkg.washes.bodywash}x</strong>, Hidrolik: <strong>${pkg.washes.hidrolik}x</strong></small>`;
+                    } else {
+                        membershipStatus = `${pkg.packageName} (${pkg.remainingWashes}x)`;
+                    }
+
+                    const paymentStatus = '<span class="badge bg-success">Lunas</span>';
+                    
+                    let expiryDateHtml = '-';
+                    if (pkg.expiresAt) {
+                        const expiryDate = new Date(pkg.expiresAt);
+                        const isExpired = expiryDate < new Date();
+                        const formattedDate = expiryDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+                        const editButton = `<button class="btn btn-sm btn-link p-0 ms-2 edit-expiry-btn" title="Edit Tanggal"><i class="bi bi-pencil"></i></button>`;
+                        expiryDateHtml = (isExpired ? `<span class="text-danger fw-bold">${formattedDate}</span>` : formattedDate) + editButton;
+                    }
+                    
+                    let actionButtons = `
+                        <button class="btn btn-sm btn-info extend-membership-btn" title="Perpanjang"><i class="bi bi-calendar-plus"></i></button>
+                        <button class="btn btn-sm btn-outline-secondary reset-password-btn" title="Reset Sandi"><i class="bi bi-key-fill"></i></button>
+                        <button class="btn btn-sm btn-outline-success edit-user-btn" title="Edit User"><i class="bi bi-pencil-square"></i></button>
+                        <button class="btn btn-sm btn-outline-danger delete-user-btn" title="Hapus User"><i class="bi bi-trash3"></i></button>
+                    `;
+                    
+                    if (pkg.packageName === 'Paket Kombinasi') {
+                        actionButtons = `<button class="btn btn-sm btn-outline-primary edit-combo-btn" title="Edit Jatah Kombinasi"><i class="bi bi-sliders"></i></button>` + actionButtons;
+                    }
+                    
+                    actionButtons = `<button class="btn btn-sm btn-outline-info view-barcode-btn" title="QR Code"><i class="bi bi-qr-code"></i></button>` + actionButtons;
+                    
+                    row.innerHTML = `
+                        <td>${String(counter++).padStart(3, '0')}</td>
+                        <td>${user.username}</td>
+                        <td>${user.email}</td>
+                        <td>${user.phone || '-'}</td>
+                        <td>${membershipStatus}</td>
+                        <td>${paymentStatus}</td>
+                        <td>${expiryDateHtml}</td>
+                        <td><div class="btn-group">${actionButtons}</div></td>`;
+                    memberTableBody.appendChild(row);
+                });
             }
-            const paymentStatus = user.membership.isPaid ? '<span class="badge bg-success">Lunas</span>' : '<span class="badge bg-warning text-dark">Belum Bayar</span>';
-            let expiryDateHtml = '-';
-            if (user.membership.expiresAt) {
-                const expiryDate = new Date(user.membership.expiresAt);
-                const isExpired = expiryDate < new Date();
-                const formattedDate = expiryDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-                const editButton = `<button class="btn btn-sm btn-link p-0 ms-2 edit-expiry-btn" title="Edit Tanggal"><i class="bi bi-pencil"></i></button>`;
-                expiryDateHtml = (isExpired ? `<span class="text-danger fw-bold">${formattedDate}</span>` : formattedDate) + editButton;
-            }
-            let actionButtons = `<button class="btn btn-sm btn-info extend-membership-btn" title="Perpanjang"><i class="bi bi-calendar-plus"></i></button><button class="btn btn-sm btn-outline-secondary reset-password-btn" title="Reset Sandi"><i class="bi bi-key-fill"></i></button><button class="btn btn-sm btn-outline-success edit-user-btn" title="Edit"><i class="bi bi-pencil-square"></i></button><button class="btn btn-sm btn-outline-danger delete-user-btn" title="Hapus"><i class="bi bi-trash3"></i></button><button class="btn btn-sm btn-outline-info set-package-btn" title="Atur/Ganti Paket"><i class="bi bi-gem"></i></button>`;
-            if (user.membership.packageName === 'Paket Kombinasi') {
-                actionButtons = `<button class="btn btn-sm btn-outline-primary edit-combo-btn" title="Edit Jatah Kombinasi"><i class="bi bi-sliders"></i></button>` + actionButtons;
-            }
-            if (user.membership.isPaid) {
-                actionButtons = `<button class="btn btn-sm btn-outline-info view-barcode-btn" title="QR Code"><i class="bi bi-qr-code"></i></button>` + actionButtons;
-            } else {
-                actionButtons = `<button class="btn btn-sm btn-info confirm-payment-btn" title="Konfirmasi Bayar"><i class="bi bi-check-circle"></i></button>` + actionButtons;
-            }
-            row.innerHTML = `<td>${String(counter++).padStart(3, '0')}</td><td>${user.username}</td><td>${user.email}</td><td>${user.phone || '-'}</td><td>${membershipStatus}</td><td>${paymentStatus}</td><td>${expiryDateHtml}</td><td><div class="btn-group">${actionButtons}</div></td>`;
-            memberTableBody.appendChild(row);
         });
     };
 
@@ -213,14 +239,15 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- FUNGSI-FUNGSI AKSI (OPERASI CRUD) ---
-    const handleConfirmPayment = async (userId) => {
-        if (!confirm('Anda yakin ingin mengonfirmasi pembayaran untuk pengguna ini?')) return;
+   const handleConfirmPayment = async (userId, packageId) => { // Terima packageId
+        if (!confirm('Anda yakin ingin mengonfirmasi pembayaran untuk paket ini?')) return;
         try {
-            const response = await fetch(`/api/confirm-payment/${userId}`, { method: 'POST', headers: getHeaders(false) });
+            // Kirim userId dan packageId ke API
+            const response = await fetch(`/api/confirm-payment/${userId}/${packageId}`, { method: 'POST', headers: getHeaders(false) });
             const result = await response.json();
             if (!response.ok) throw new Error(result.msg || 'Gagal konfirmasi.');
             showAlert(`Pembayaran untuk ${result.user.username} berhasil dikonfirmasi.`, 'success');
-            fetchUsers();
+            fetchUsers(); // Muat ulang semua data
             fetchDashboardStats();
         } catch (error) { showAlert(error.message); }
     };
@@ -320,44 +347,30 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // --- EVENT LISTENER UTAMA ---
 
-    document.body.addEventListener('click', async (e) => {
+document.body.addEventListener('click', async (e) => {
         const button = e.target.closest('button');
         if (!button) return;
+        
+        // Dapatkan baris 'tr' terdekat untuk mengambil data-id
+        const tableRow = button.closest('tr');
+        if (!tableRow) return;
 
-        if (button.classList.contains('extend-btn')) {
-            const userId = document.getElementById('extend-userid').value;
-            const months = button.dataset.months;
-            button.disabled = true;
-            button.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
-            try {
-                const response = await fetch(`/api/users/${userId}/extend-membership`, {
-                    method: 'POST',
-                    headers: getHeaders(),
-                    body: JSON.stringify({ months })
-                });
-                const result = await response.json();
-                if (!response.ok) throw new Error(result.msg);
-                showAlert(result.msg, 'success');
-                extendMembershipModal.hide();
-                fetchUsers();
-            } catch (error) {
-                showAlert(error.message);
-            } finally {
-                document.querySelectorAll('.extend-btn').forEach((btn, index) => {
-                    btn.disabled = false;
-                    const durations = [1, 3, 6];
-                    btn.innerHTML = `+ ${durations[index]} Bulan`;
-                });
-            }
-            return;
+        // Ambil ID dari baris
+        const userId = tableRow.dataset.userId;
+        const packageId = tableRow.dataset.packageId; // ID paket baru
+        
+        // Cari user dan paket yang sesuai dari cache
+        const user = cachedUsers.find(u => u._id === userId);
+        const userPackage = user && user.memberships ? user.memberships.find(p => p._id === packageId) : null;
+
+        // Logika untuk tombol konfirmasi pembayaran
+        if (button.classList.contains('confirm-payment-btn')) {
+            if(userId && packageId) return handleConfirmPayment(userId, packageId);
         }
 
-        const userRow = button.closest('tr[data-user-id]');
-        if (userRow) {
-            const userId = userRow.dataset.userId;
-            const user = cachedUsers.find(u => u._id === userId);
-            if (user) {
-                if (button.classList.contains('confirm-payment-btn')) return handleConfirmPayment(userId);
+        // Logika untuk tombol lain yang beroperasi pada user atau paket
+        if (user) {
+           if (button.classList.contains('confirm-payment-btn')) return handleConfirmPayment(userId);
                 if (button.classList.contains('delete-user-btn')) return deleteUser(userId);
                 if (button.classList.contains('edit-user-btn')) return openEditModal(user);
                 if (button.classList.contains('view-barcode-btn')) return openBarcodeModal(user);
@@ -366,15 +379,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (button.classList.contains('edit-combo-btn')) return openEditComboWashesModal(user);
                 if (button.classList.contains('edit-expiry-btn')) return openEditExpiryModal(user);
                 if (button.classList.contains('extend-membership-btn')) return openExtendMembershipModal(user);
-            }
-        }
 
-        const reviewRow = button.closest('tr[data-review-id]');
-        if (reviewRow) {
-            const reviewId = reviewRow.dataset.reviewId;
-            const review = cachedReviews.find(r => r._id === reviewId);
-            if (button.classList.contains('delete-review-btn')) return deleteReview(reviewId);
-            if (review && button.classList.contains('edit-review-btn')) return openEditReviewModal(review);
+            // Aksi yang memerlukan data paket
+            if (userPackage) {
+                if (button.classList.contains('view-barcode-btn')) return openBarcodeModal(user, userPackage);
+                if (button.classList.contains('edit-combo-btn')) return openEditComboWashesModal(user, userPackage);
+                if (button.classList.contains('edit-expiry-btn')) return openEditExpiryModal(user, userPackage);
+                if (button.classList.contains('extend-membership-btn')) return openExtendMembershipModal(user, userPackage);
+            }
         }
     });
 
