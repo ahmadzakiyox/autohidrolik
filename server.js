@@ -595,11 +595,9 @@ app.put('/api/profile/update-nanocard', auth, async (req, res) => {
 // --- RUTE ADMIN: MANAJEMEN PENGGUNA ---
 app.get('/api/users', auth, adminAuth, async (req, res) => {
     try {
-        // PERUBAHAN DI SINI: Kita tambahkan .populate('memberships')
-        // Ini akan memberitahu database untuk menyertakan semua data detail 
-        // dari setiap paket yang ada di dalam array 'memberships'.
+        // Kode ini sudah benar, pastikan tidak ada yang terlewat
         const users = await User.find({ role: { $ne: 'admin' } })
-            .populate('memberships') // <-- TAMBAHKAN BARIS INI
+            .populate('memberships') // Baris ini akan bekerja setelah skema diperbaiki
             .select('-password')
             .sort({ date: 1 });
       
