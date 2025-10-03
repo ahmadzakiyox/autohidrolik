@@ -172,39 +172,48 @@ document.addEventListener('DOMContentLoaded', () => {
     const displayActiveMembers = (items) => {
         memberTableBody.innerHTML = '';
         if (items.length === 0) {
-            memberTableBody.innerHTML = `<tr><td colspan="8" class="text-center text-muted">Belum ada member aktif.</td></tr>`;
+            memberTableBody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">Belum ada member aktif.</td></tr>`;
             return;
         }
-        let counter = 1;
-        items.forEach(({ user, pkg }) => {
-            const row = document.createElement('tr');
-            let sisaCuci = `${pkg.remainingWashes}x`;
-            if (pkg.packageName.toLowerCase().includes('kombinasi')) {
-                sisaCuci = `<small>Bodywash: <strong>${pkg.washes.bodywash}x</strong>, Hidrolik: <strong>${pkg.washes.hidrolik}x</strong></small>`;
+
+        const usersWithPackages = items.reduce((acc, { user, pkg }) => {
+            if (!acc[user._id]) {
+                acc[user._id] = { ...user, packages: [] };
             }
-            const expiryDate = new Date(pkg.expiresAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+            acc[user._id].packages.push(pkg);
+            return acc;
+        }, {});
+
+        let counter = 1;
+        for (const userId in usersWithPackages) {
+            const user = usersWithPackages[userId];
+            const row = document.createElement('tr');
+
+            const actionButtons = `
+                <div class="btn-group">
+                    <button class="btn btn-sm btn-primary view-packages-btn" data-user-id="${user._id}" title="Lihat Semua Paket & QR Code">
+                        <i class="bi bi-card-list"></i> Lihat Paket
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle dropdown-toggle-split" type="button" data-bs-toggle="dropdown" aria-expanded="false"></button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item edit-user-btn" href="#" data-user-id="${user._id}"><i class="bi bi-pencil-square me-2"></i>Edit User</a></li>
+                        <li><a class="dropdown-item set-package-btn" href="#" data-user-id="${user._id}"><i class="bi bi-gem me-2"></i>Tambah Paket</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger delete-user-btn" href="#" data-user-id="${user._id}"><i class="bi bi-trash3 me-2"></i>Hapus User</a></li>
+                    </ul>
+                </div>
+            `;
 
             row.innerHTML = `
                 <td>${counter++}</td>
                 <td>${user.username}</td>
                 <td>${user.email || '-'}</td>
                 <td>${user.phone || '-'}</td>
-                <td><strong>${pkg.packageName}</strong><br>${sisaCuci}</td>
-                <td><span class="badge bg-success">Lunas</span></td>
-                <td>${expiryDate}</td>
-                <td>
-                    <button class="btn btn-sm btn-outline-primary view-barcode-btn" 
-                            data-member-id="${user.memberId}" 
-                            data-package-id="${pkg.packageId}"
-                            data-username="${user.username}"
-                            title="Lihat QR Code Paket Ini">
-                        <i class="bi bi-qr-code"></i>
-                    </button>
-                     <button class="btn btn-sm btn-outline-warning edit-user-btn" data-user-id="${user._id}" title="Edit Data User"><i class="bi bi-person-fill"></i></button>
-                </td>
+                <td><span class="badge bg-info">${user.packages.length} Paket Aktif</span></td>
+                <td>${actionButtons}</td>
             `;
             memberTableBody.appendChild(row);
-        });
+        }
     };
 
     const displayExpiredMembers = (items) => {
