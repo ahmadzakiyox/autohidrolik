@@ -1,14 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // ======================= PERBAIKAN UTAMA DI SINI =======================
-    // "Penjaga" untuk memastikan kode ini hanya berjalan di halaman admin.
-    // Kita gunakan 'member-table-body' sebagai penanda unik halaman admin.
+    // Penjaga untuk memastikan skrip hanya berjalan di halaman admin
     const adminPageMarker = document.getElementById('member-table-body');
-    if (!adminPageMarker) {
-        return; // Jika bukan di halaman admin, hentikan eksekusi seluruh script ini.
-    }
-    // ===================== AKHIR DARI PERBAIKAN =====================
+    if (!adminPageMarker) return;
 
-    // --- KONFIGURASI & INISIALISASI (Hanya berjalan jika di halaman admin) ---
+    // --- KONFIGURASI & OTENTIKASI ---
     const token = localStorage.getItem('token');
     if (!token || localStorage.getItem('userRole') !== 'admin') {
         alert('Akses ditolak. Silakan login sebagai admin.');
@@ -16,535 +11,363 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    // --- Elemen UI ---
-    const alertPlaceholder = document.getElementById('alert-placeholder');
-    const reviewTableBody = document.getElementById('review-table-body');
-    const memberCountElement = document.getElementById('member-count');
-    const visitorCountElement = document.getElementById('visitor-count');
-    const transactionTotalElement = document.getElementById('transaction-total');
-    const downloadButton = document.getElementById('download-data-btn');
-    const memberTableBody = document.getElementById('member-table-body');
-    const nonMemberTableBody = document.getElementById('non-member-table-body');
-    const expiredMemberTableBody = document.getElementById('expired-member-table-body');
-    
-    // Inisialisasi semua modal (pop-up)
-    const addUserModal = new bootstrap.Modal(document.getElementById('addUserModal'));
-    const editUserModal = new bootstrap.Modal(document.getElementById('editUserModal'));
-    const editComboWashesModal = new bootstrap.Modal(document.getElementById('editComboWashesModal'));
-    const editTransactionModal = new bootstrap.Modal(document.getElementById('editTransactionModal'));
-    const editExpiryModal = new bootstrap.Modal(document.getElementById('editExpiryModal'));
-    const viewBarcodeModal = new bootstrap.Modal(document.getElementById('viewBarcodeModal'));
-    const setPackageModal = new bootstrap.Modal(document.getElementById('setPackageModal'));
-    const editReviewModal = new bootstrap.Modal(document.getElementById('editReviewModal'));
-    const resetPasswordModal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
-    const extendMembershipModal = new bootstrap.Modal(document.getElementById('extendMembershipModal'));
-
-    let cachedUsers = [];
-    let cachedReviews = [];
-
-    // --- FUNGSI HELPER (PEMBANTU) ---
-    function showAlert(message, type = 'danger') {
-        if (alertPlaceholder) {
-            alertPlaceholder.innerHTML = `<div class="alert alert-${type} alert-dismissible fade show" role="alert">${message}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>`;
+    // --- ELEMEN UI & MODAL---
+    const ui = {
+        alertPlaceholder: document.getElementById('alert-placeholder'),
+        memberCount: document.getElementById('member-count'),
+        visitorCount: document.getElementById('visitor-count'),
+        transactionTotal: document.getElementById('transaction-total'),
+        downloadButton: document.getElementById('download-data-btn'),
+        tables: {
+            pending: document.getElementById('pending-payment-table-body'),
+            active: document.getElementById('member-table-body'),
+            expired: document.getElementById('expired-member-table-body'),
+            nonMember: document.getElementById('non-member-table-body'),
+            reviews: document.getElementById('review-table-body'),
         }
-    }
-
-    const getHeaders = (includeContentType = true) => {
-        const headers = { 'x-auth-token': token };
-        if (includeContentType) headers['Content-Type'] = 'application/json';
-        return headers;
     };
 
-    // --- FUNGSI PENGAMBILAN DATA (FETCH) ---
-    const fetchRevenueTrend = async () => {
-        try {
-            const response = await fetch('/api/revenue-trend', { headers: getHeaders(false) });
-            if (!response.ok) throw new Error('Gagal mengambil data grafik.');
-            const trendData = await response.json();
-            const ctx = document.getElementById('revenueChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: trendData.labels,
-                    datasets: [{
-                        label: 'Pendapatan (Rp)',
-                        data: trendData.data,
-                        backgroundColor: 'rgba(111, 66, 193, 0.6)',
-                        borderColor: 'rgba(111, 66, 193, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: { scales: { y: { beginAtZero: true } } }
+    const modals = {
+        addUser: new bootstrap.Modal(document.getElementById('addUserModal')),
+        editUser: new bootstrap.Modal(document.getElementById('editUserModal')),
+        setPackage: new bootstrap.Modal(document.getElementById('setPackageModal')),
+        viewPackages: new bootstrap.Modal(document.getElementById('viewPackagesModal')),
+        editReview: new bootstrap.Modal(document.getElementById('editReviewModal')),
+        resetPassword: new bootstrap.Modal(document.getElementById('resetPasswordModal')),
+        editTransaction: new bootstrap.Modal(document.getElementById('editTransactionModal')),
+    };
+
+    let cachedData = { users: [], reviews: [] };
+
+    // --- FUNGSI HELPER & API ---
+    const showAlert = (message, type = 'success') => {
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = `<div class="alert alert-${type} alert-dismissible fade show" role="alert">${message}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>`;
+        ui.alertPlaceholder.append(wrapper);
+        setTimeout(() => wrapper.remove(), 5000);
+    };
+
+    const apiRequest = async (endpoint, options = {}) => {
+        options.headers = { ...options.headers, 'x-auth-token': token };
+        if (options.body && typeof options.body !== 'string') {
+            options.headers['Content-Type'] = 'application/json';
+            options.body = JSON.stringify(options.body);
+        }
+        const response = await fetch(endpoint, options);
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.msg || 'Terjadi kesalahan pada server.');
+        return result;
+    };
+
+    // --- FUNGSI RENDER TAMPILAN ---
+    const render = () => {
+        const data = { pending: [], active: [], expired: [], nonMembers: [] };
+        cachedData.users.forEach(user => {
+            if (user.memberships && user.memberships.length > 0) {
+                user.memberships.forEach(pkg => {
+                    const item = { user, pkg };
+                    if (!pkg.isPaid) data.pending.push(item);
+                    else if (new Date(pkg.expiresAt) < new Date()) data.expired.push(item);
+                    else data.active.push(item);
+                });
+            } else {
+                data.nonMembers.push(user);
+            }
+        });
+
+        renderPending(data.pending);
+        renderActive(data.active);
+        renderExpired(data.expired);
+        renderNonMembers(data.nonMembers);
+        renderReviews(cachedData.reviews);
+    };
+
+    const renderPending = (items) => {
+        ui.tables.pending.innerHTML = items.length === 0
+            ? `<tr><td colspan="5" class="text-center text-muted">Tidak ada pembayaran menunggu.</td></tr>`
+            : items.map(({ user, pkg }) => `
+                <tr>
+                    <td>${user.username}</td>
+                    <td>${user.phone || '-'}</td>
+                    <td>${pkg.packageName}</td>
+                    <td>${new Date(pkg.purchaseDate).toLocaleDateString('id-ID')}</td>
+                    <td><button class="btn btn-sm btn-success confirm-payment-btn" data-user-id="${user._id}" data-package-id="${pkg._id}"><i class="bi bi-check-circle"></i> Konfirmasi</button></td>
+                </tr>`).join('');
+    };
+
+    const renderActive = (items) => {
+        const usersMap = items.reduce((acc, { user, pkg }) => {
+            if (!acc[user._id]) acc[user._id] = { ...user, packages: [] };
+            acc[user._id].packages.push(pkg);
+            return acc;
+        }, {});
+
+        ui.tables.active.innerHTML = Object.keys(usersMap).length === 0
+            ? `<tr><td colspan="6" class="text-center text-muted">Tidak ada member aktif.</td></tr>`
+            : Object.values(usersMap).map((user, index) => `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${user.username}</td>
+                    <td>${user.email || '-'}</td>
+                    <td>${user.phone || '-'}</td>
+                    <td><span class="badge bg-info">${user.packages.length} Paket Aktif</span></td>
+                    <td>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-primary view-packages-btn" data-user-id="${user._id}"><i class="bi bi-card-list"></i> Lihat Paket</button>
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown"></button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item edit-user-btn" href="#" data-user-id="${user._id}"><i class="bi bi-pencil-square me-2"></i>Edit User</a></li>
+                                <li><a class="dropdown-item set-package-btn" href="#" data-user-id="${user._id}"><i class="bi bi-gem me-2"></i>Tambah Paket</a></li>
+                                <li><a class="dropdown-item reset-password-btn" href="#" data-user-id="${user._id}"><i class="bi bi-key-fill me-2"></i>Reset Password</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-danger delete-user-btn" href="#" data-user-id="${user._id}"><i class="bi bi-trash3 me-2"></i>Hapus User</a></li>
+                            </ul>
+                        </div>
+                    </td>
+                </tr>`).join('');
+    };
+    
+    const renderExpired = (items) => {
+        ui.tables.expired.innerHTML = items.length === 0
+            ? `<tr><td colspan="6" class="text-center text-muted">Tidak ada member kedaluwarsa.</td></tr>`
+            : items.map(({ user, pkg }, index) => `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${user.username}</td>
+                    <td>${user.email || '-'}</td>
+                    <td>${pkg.packageName}</td>
+                    <td><span class="text-danger fw-bold">${new Date(pkg.expiresAt).toLocaleDateString('id-ID')}</span></td>
+                    <td><button class="btn btn-sm btn-success set-package-btn" data-user-id="${user._id}"><i class="bi bi-arrow-clockwise"></i> Perbarui</button></td>
+                </tr>`).join('');
+    };
+
+    const renderNonMembers = (users) => {
+        ui.tables.nonMember.innerHTML = users.length === 0
+            ? `<tr><td colspan="5" class="text-center text-muted">Tidak ada non-member.</td></tr>`
+            : users.map((user, index) => `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${user.username}</td>
+                    <td>${user.email || '-'}</td>
+                    <td>${user.phone || '-'}</td>
+                    <td>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-outline-success set-package-btn" data-user-id="${user._id}"><i class="bi bi-gem"></i> Jadikan Member</button>
+                            <button class="btn btn-sm btn-outline-warning edit-user-btn" data-user-id="${user._id}"><i class="bi bi-pencil-square"></i></button>
+                            <button class="btn btn-sm btn-outline-danger delete-user-btn" data-user-id="${user._id}"><i class="bi bi-trash3"></i></button>
+                        </div>
+                    </td>
+                </tr>`).join('');
+    };
+    
+    const renderReviews = (reviews) => {
+        ui.tables.reviews.innerHTML = reviews.length === 0
+            ? `<tr><td colspan="4" class="text-center text-muted">Belum ada ulasan.</td></tr>`
+            : reviews.map(review => `
+                <tr data-review-id="${review._id}">
+                    <td>${review.user ? review.user.username : '<em>Dihapus</em>'}</td>
+                    <td><span class="rating-stars">${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}</span></td>
+                    <td>${review.comment}</td>
+                    <td>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-outline-warning edit-review-btn"><i class="bi bi-pencil-square"></i></button>
+                            <button class="btn btn-sm btn-outline-danger delete-review-btn"><i class="bi bi-trash3"></i></button>
+                        </div>
+                    </td>
+                </tr>`).join('');
+    };
+
+    // --- FUNGSI MODAL & AKSI ---
+    const openPackagesModal = (userId) => {
+        const user = cachedData.users.find(u => u._id === userId);
+        if (!user) return;
+        
+        document.getElementById('packages-modal-username').textContent = user.username;
+        const container = document.getElementById('packages-list-container');
+        const activePackages = user.memberships.filter(pkg => pkg.isPaid && new Date(pkg.expiresAt) > new Date());
+
+        container.innerHTML = activePackages.length === 0
+            ? '<p class="text-center text-muted">Pengguna ini tidak memiliki paket aktif.</p>'
+            : activePackages.map(pkg => {
+                const sisaCuci = pkg.packageName.toLowerCase().includes('kombinasi')
+                    ? `Bodywash: <strong>${pkg.washes.bodywash}x</strong>, Hidrolik: <strong>${pkg.washes.hidrolik}x</strong>`
+                    : `${pkg.remainingWashes}x`;
+                return `
+                    <div class="card mb-3"><div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-7">
+                                <h5 class="card-title">${pkg.packageName}</h5>
+                                <p class="card-text mb-1">Sisa Jatah: ${sisaCuci}</p>
+                                <p class="card-text"><small class="text-muted">Berlaku hingga: ${new Date(pkg.expiresAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</small></p>
+                            </div>
+                            <div class="col-md-5 text-center" id="qr-container-${pkg._id}"></div>
+                        </div>
+                    </div></div>`;
+            }).join('');
+        
+        modals.viewPackages.show();
+        
+        setTimeout(() => {
+            activePackages.forEach(pkg => {
+                const qrContainer = document.getElementById(`qr-container-${pkg._id}`);
+                if (qrContainer) {
+                    qrContainer.innerHTML = '';
+                    new QRCode(qrContainer, { text: `${user.memberId};${pkg.packageId}`, width: 128, height: 128, colorDark: "#000000", colorLight: "#ffffff" });
+                }
             });
+        }, 300);
+    };
+
+    const handleFormSubmit = async (form, successMessage, modalToHide) => {
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+        
+        if (form.id === 'set-package-form') {
+            const select = document.getElementById('package-name-select');
+            data.totalWashes = select.options[select.selectedIndex].dataset.washes || 0;
+        }
+
+        const endpoint = form.dataset.endpoint.replace(':id', data.id);
+        const method = form.dataset.method;
+        if (form.dataset.endpoint.includes(':id')) delete data.id;
+
+        try {
+            const result = await apiRequest(endpoint, { method, body: data });
+            showAlert(successMessage || result.msg);
+            modalToHide.hide();
+            form.reset();
+            initialize();
         } catch (error) {
-            showAlert(error.message);
+            showAlert(error.message, 'danger');
         }
     };
     
-    const fetchDashboardStats = async () => {
-        try {
-            const response = await fetch('/api/dashboard-stats', { headers: getHeaders(false) });
-            if (!response.ok) throw new Error('Gagal mengambil data statistik.');
-            const stats = await response.json();
-            memberCountElement.textContent = stats.activeMembers;
-            visitorCountElement.textContent = stats.totalVisitors;
-            transactionTotalElement.textContent = `Rp ${stats.totalTransactions.toLocaleString('id-ID')}`;
-        } catch (error) {
-            showAlert(error.message);
-        }
-    };
-
-    const fetchUsers = async () => {
-        try {
-            const response = await fetch('/api/users', { headers: getHeaders(false) });
-            if (!response.ok) throw new Error('Gagal mengambil data pengguna.');
-            cachedUsers = await response.json();
-            const today = new Date();
-            const activeMembers = cachedUsers.filter(user => user.membership && user.membership.expiresAt && new Date(user.membership.expiresAt) >= today);
-            const expiredMembers = cachedUsers.filter(user => user.membership && user.membership.expiresAt && new Date(user.membership.expiresAt) < today);
-            const nonMembers = cachedUsers.filter(user => !user.membership);
-            displayMembers(activeMembers);
-            displayExpiredMembers(expiredMembers);
-            displayNonMembers(nonMembers);
-        } catch (error) {
-            const errorMsg = `<tr><td colspan="8" class="text-center text-danger">${error.message}</td></tr>`;
-            memberTableBody.innerHTML = errorMsg;
-            expiredMemberTableBody.innerHTML = errorMsg;
-            nonMemberTableBody.innerHTML = errorMsg;
-        }
-    };
-
-    const fetchReviews = async () => {
-        try {
-            const response = await fetch('/api/reviews/all', { headers: getHeaders(false) });
-            if (!response.ok) throw new Error('Gagal mengambil data ulasan.');
-            cachedReviews = await response.json();
-            displayReviews(cachedReviews);
-        } catch (error) {
-            reviewTableBody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">${error.message}</td></tr>`;
-        }
-    };
-
-    // --- FUNGSI TAMPILAN (DISPLAY) ---
-    const displayMembers = (members) => {
-        memberTableBody.innerHTML = '';
-        if (members.length === 0) {
-            memberTableBody.innerHTML = `<tr><td colspan="8" class="text-center text-muted">Belum ada member aktif.</td></tr>`;
-            return;
-        }
-        let counter = 1;
-        members.forEach(user => {
-            const row = document.createElement('tr');
-            row.dataset.userId = user._id;
-            let membershipStatus = '';
-            if (user.membership.packageName === 'Paket Kombinasi') {
-                membershipStatus = `<div>Paket Kombinasi</div><small class="text-muted">Bodywash: <strong>${user.membership.washes.bodywash}x</strong>, Hidrolik: <strong>${user.membership.washes.hidrolik}x</strong></small>`;
-            } else {
-                membershipStatus = `${user.membership.packageName} (${user.membership.remainingWashes}x)`;
-            }
-            const paymentStatus = user.membership.isPaid ? '<span class="badge bg-success">Lunas</span>' : '<span class="badge bg-warning text-dark">Belum Bayar</span>';
-            let expiryDateHtml = '-';
-            if (user.membership.expiresAt) {
-                const expiryDate = new Date(user.membership.expiresAt);
-                const isExpired = expiryDate < new Date();
-                const formattedDate = expiryDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-                const editButton = `<button class="btn btn-sm btn-link p-0 ms-2 edit-expiry-btn" title="Edit Tanggal"><i class="bi bi-pencil"></i></button>`;
-                expiryDateHtml = (isExpired ? `<span class="text-danger fw-bold">${formattedDate}</span>` : formattedDate) + editButton;
-            }
-            let actionButtons = `<button class="btn btn-sm btn-info extend-membership-btn" title="Perpanjang"><i class="bi bi-calendar-plus"></i></button><button class="btn btn-sm btn-outline-secondary reset-password-btn" title="Reset Sandi"><i class="bi bi-key-fill"></i></button><button class="btn btn-sm btn-outline-success edit-user-btn" title="Edit"><i class="bi bi-pencil-square"></i></button><button class="btn btn-sm btn-outline-danger delete-user-btn" title="Hapus"><i class="bi bi-trash3"></i></button><button class="btn btn-sm btn-outline-info set-package-btn" title="Atur/Ganti Paket"><i class="bi bi-gem"></i></button>`;
-            if (user.membership.packageName === 'Paket Kombinasi') {
-                actionButtons = `<button class="btn btn-sm btn-outline-primary edit-combo-btn" title="Edit Jatah Kombinasi"><i class="bi bi-sliders"></i></button>` + actionButtons;
-            }
-            if (user.membership.isPaid) {
-                actionButtons = `<button class="btn btn-sm btn-outline-info view-barcode-btn" title="QR Code"><i class="bi bi-qr-code"></i></button>` + actionButtons;
-            } else {
-                actionButtons = `<button class="btn btn-sm btn-info confirm-payment-btn" title="Konfirmasi Bayar"><i class="bi bi-check-circle"></i></button>` + actionButtons;
-            }
-            row.innerHTML = `<td>${String(counter++).padStart(3, '0')}</td><td>${user.username}</td><td>${user.email}</td><td>${user.phone || '-'}</td><td>${membershipStatus}</td><td>${paymentStatus}</td><td>${expiryDateHtml}</td><td><div class="btn-group">${actionButtons}</div></td>`;
-            memberTableBody.appendChild(row);
-        });
-    };
-
-    const displayExpiredMembers = (members) => {
-        expiredMemberTableBody.innerHTML = '';
-        if (members.length === 0) {
-            expiredMemberTableBody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">Tidak ada member yang kedaluwarsa.</td></tr>`;
-            return;
-        }
-        let counter = 1;
-        members.forEach(user => {
-            const row = document.createElement('tr');
-            row.dataset.userId = user._id;
-            const lastPackage = `${user.membership.packageName}`;
-            const expiryDate = new Date(user.membership.expiresAt);
-            const formattedDate = expiryDate.toLocaleString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-            const actionButtons = `<button class="btn btn-sm btn-success set-package-btn" title="Perbarui Paket Member"><i class="bi bi-arrow-clockwise"></i> Perbarui Paket</button>`;
-            row.innerHTML = `<td>${String(counter++)}</td><td>${user.username}</td><td>${user.email || '-'}</td><td>${lastPackage}</td><td><span class="text-danger fw-bold">${formattedDate}</span></td><td><div class="btn-group">${actionButtons}</div></td>`;
-            expiredMemberTableBody.appendChild(row);
-        });
-    };
-
-    const displayNonMembers = (nonMembers) => {
-        nonMemberTableBody.innerHTML = '';
-        if (nonMembers.length === 0) {
-            nonMemberTableBody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Tidak ada pengguna non-member.</td></tr>`;
-            return;
-        }
-        let counter = 1;
-        nonMembers.forEach(user => {
-            const row = document.createElement('tr');
-            row.dataset.userId = user._id;
-            let actionButtons = `<button class="btn btn-sm btn-outline-success set-package-btn" title="Jadikan Member"><i class="bi bi-gem"></i></button><button class="btn btn-sm btn-outline-warning edit-user-btn" title="Edit"><i class="bi bi-pencil-square"></i></button><button class="btn btn-sm btn-outline-danger delete-user-btn" title="Hapus"><i class="bi bi-trash3"></i></button>`;
-            row.innerHTML = `<td>${String(counter++)}</td><td>${user.username}</td><td>${user.email}</td><td>${user.phone || '-'}</td><td><div class="btn-group">${actionButtons}</div></td>`;
-            nonMemberTableBody.appendChild(row);
-        });
-    };
-
-    const displayReviews = (reviews) => {
-        reviewTableBody.innerHTML = '';
-        reviews.forEach(review => {
-            const row = document.createElement('tr');
-            row.dataset.reviewId = review._id;
-            const ratingStars = '<span class="rating-stars">' + '★'.repeat(review.rating) + '☆'.repeat(5 - review.rating) + '</span>';
-            const username = review.user ? review.user.username : '<em class="text-muted">Pengguna Dihapus</em>';
-            row.innerHTML = `<td>${username}</td><td>${ratingStars}</td><td>${review.comment}</td><td><div class="btn-group"><button class="btn btn-sm btn-outline-warning edit-review-btn"><i class="bi bi-pencil-square"></i></button><button class="btn btn-sm btn-outline-danger delete-review-btn"><i class="bi bi-trash3"></i></button></div></td>`;
-            reviewTableBody.appendChild(row);
-        });
-    };
-
-    // --- FUNGSI-FUNGSI AKSI (OPERASI CRUD) ---
-    const handleConfirmPayment = async (userId) => {
-        if (!confirm('Anda yakin ingin mengonfirmasi pembayaran untuk pengguna ini?')) return;
-        try {
-            const response = await fetch(`/api/confirm-payment/${userId}`, { method: 'POST', headers: getHeaders(false) });
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.msg || 'Gagal konfirmasi.');
-            showAlert(`Pembayaran untuk ${result.user.username} berhasil dikonfirmasi.`, 'success');
-            fetchUsers();
-            fetchDashboardStats();
-        } catch (error) { showAlert(error.message); }
-    };
-
-    const deleteUser = async (userId) => {
-        if (!confirm('Anda yakin ingin menghapus pengguna ini? Tindakan ini tidak dapat dibatalkan.')) return;
-        try {
-            const response = await fetch(`/api/users/${userId}`, { method: 'DELETE', headers: getHeaders(false) });
-            if (!response.ok) throw new Error('Gagal menghapus pengguna.');
-            showAlert('Pengguna berhasil dihapus.', 'success');
-            fetchUsers();
-            fetchDashboardStats();
-        } catch (error) { showAlert(error.message); }
-    };
-
-    const deleteReview = async (reviewId) => {
-        if (!confirm('Anda yakin ingin menghapus ulasan ini?')) return;
-        try {
-            const response = await fetch(`/api/reviews/${reviewId}`, { method: 'DELETE', headers: getHeaders(false) });
-            if (!response.ok) throw new Error('Gagal menghapus ulasan.');
-            showAlert('Ulasan berhasil dihapus.', 'success');
-            fetchReviews();
-        } catch (error) { showAlert(error.message); }
-    };
-
-    // --- FUNGSI-FUNGSI MODAL (POP-UP) ---
-    const openEditModal = (user) => {
-        document.getElementById('edit-user-id').value = user._id;
-        document.getElementById('edit-username').value = user.username;
-        document.getElementById('edit-email').value = user.email;
-        document.getElementById('edit-phone').value = user.phone;
-        document.getElementById('edit-role').value = user.role;
-        editUserModal.show();
-    };
-
-    const openBarcodeModal = (user) => {
-        document.getElementById('barcode-username').textContent = user.username;
-        const qrCodeContainer = document.getElementById('barcode-container');
-        qrCodeContainer.innerHTML = '';
-        if (user.memberId) {
-            new QRCode(qrCodeContainer, { text: user.memberId, width: 200, height: 200 });
-        } else {
-            qrCodeContainer.innerHTML = '<p class="text-danger">Member ID tidak ditemukan.</p>';
-        }
-        viewBarcodeModal.show();
-    };
-
-    const openSetPackageModal = (user) => {
-        document.getElementById('package-username').textContent = user.username;
-        document.getElementById('set-package-userid').value = user._id;
-        document.getElementById('set-package-form').reset();
-        setPackageModal.show();
-    };
-
-    const openResetPasswordModal = (user) => {
-        document.getElementById('reset-password-username').textContent = user.username;
-        document.getElementById('reset-password-userid').value = user._id;
-        document.getElementById('reset-password-form').reset();
-        resetPasswordModal.show();
-    };
-
-    const openEditReviewModal = (review) => {
-        document.getElementById('edit-review-id').value = review._id;
-        document.getElementById('edit-rating').value = review.rating;
-        document.getElementById('edit-comment').value = review.comment;
-        editReviewModal.show();
-    };
-
-    const openEditComboWashesModal = (user) => {
-        document.getElementById('edit-combo-userid').value = user._id;
-        document.getElementById('edit-combo-username').textContent = user.username;
-        document.getElementById('edit-bodywash-count').value = user.membership.washes.bodywash;
-        document.getElementById('edit-hidrolik-count').value = user.membership.washes.hidrolik;
-        editComboWashesModal.show();
-    };
-
-    const openEditExpiryModal = (user) => {
-        document.getElementById('edit-expiry-userid').value = user._id;
-        document.getElementById('edit-expiry-username').textContent = user.username;
-        if (user.membership.expiresAt) {
-            const currentDate = new Date(user.membership.expiresAt);
-            const year = currentDate.getFullYear();
-            const month = String(currentDate.getMonth() + 1).padStart(2, '0');
-            const day = String(currentDate.getDate()).padStart(2, '0');
-            document.getElementById('edit-expiry-date').value = `${year}-${month}-${day}`;
-        }
-        editExpiryModal.show();
-    };
-
-    const openExtendMembershipModal = (user) => {
-        document.getElementById('extend-userid').value = user._id;
-        document.getElementById('extend-username').textContent = user.username;
-        const currentExpiry = new Date(user.membership.expiresAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-        document.getElementById('extend-current-expiry').textContent = currentExpiry;
-        extendMembershipModal.show();
-    };
-    
-    // --- EVENT LISTENER UTAMA ---
-
+    // --- PENGELOLA EVENT ---
     document.body.addEventListener('click', async (e) => {
-        const button = e.target.closest('button');
+        const button = e.target.closest('button, a.dropdown-item');
         if (!button) return;
 
-        if (button.classList.contains('extend-btn')) {
-            const userId = document.getElementById('extend-userid').value;
-            const months = button.dataset.months;
-            button.disabled = true;
-            button.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
-            try {
-                const response = await fetch(`/api/users/${userId}/extend-membership`, {
-                    method: 'POST',
-                    headers: getHeaders(),
-                    body: JSON.stringify({ months })
-                });
-                const result = await response.json();
-                if (!response.ok) throw new Error(result.msg);
-                showAlert(result.msg, 'success');
-                extendMembershipModal.hide();
-                fetchUsers();
-            } catch (error) {
-                showAlert(error.message);
-            } finally {
-                document.querySelectorAll('.extend-btn').forEach((btn, index) => {
-                    btn.disabled = false;
-                    const durations = [1, 3, 6];
-                    btn.innerHTML = `+ ${durations[index]} Bulan`;
-                });
+        const userId = button.dataset.userId;
+        const reviewId = button.closest('tr')?.dataset.reviewId;
+
+        try {
+            if (button.classList.contains('confirm-payment-btn')) {
+                if (confirm('Anda yakin ingin mengonfirmasi pembayaran ini?')) {
+                    const result = await apiRequest(`/api/confirm-payment/${button.dataset.userId}/${button.dataset.packageId}`, { method: 'POST' });
+                    showAlert(result.msg);
+                    initialize();
+                }
+            } else if (button.classList.contains('view-packages-btn')) {
+                openPackagesModal(userId);
+            } else if (button.classList.contains('edit-user-btn')) {
+                const user = cachedData.users.find(u => u._id === userId);
+                if (user) {
+                    const form = document.getElementById('edit-user-form');
+                    form.querySelector('#edit-user-id').value = user._id;
+                    form.querySelector('#edit-username').value = user.username;
+                    form.querySelector('#edit-email').value = user.email || '';
+                    form.querySelector('#edit-phone').value = user.phone;
+                    modals.editUser.show();
+                }
+            } else if (button.classList.contains('set-package-btn')) {
+                 const user = cachedData.users.find(u => u._id === userId);
+                if (user) {
+                    document.getElementById('package-username').textContent = user.username;
+                    document.getElementById('set-package-userid').value = user._id;
+                    modals.setPackage.show();
+                }
+            } else if (button.classList.contains('delete-user-btn')) {
+                if (confirm('Anda yakin ingin menghapus pengguna ini?')) {
+                    const result = await apiRequest(`/api/users/${userId}`, { method: 'DELETE' });
+                    showAlert(result.msg);
+                    initialize();
+                }
+            } else if (button.classList.contains('reset-password-btn')) {
+                const user = cachedData.users.find(u => u._id === userId);
+                if(user) {
+                    document.getElementById('reset-password-username').textContent = user.username;
+                    document.getElementById('reset-password-userid').value = user._id;
+                    modals.resetPassword.show();
+                }
+            } else if (button.classList.contains('delete-review-btn')) {
+                 if (confirm('Anda yakin ingin menghapus ulasan ini?')) {
+                    const result = await apiRequest(`/api/reviews/${reviewId}`, { method: 'DELETE' });
+                    showAlert(result.msg);
+                    initialize();
+                }
+            } else if (button.classList.contains('edit-review-btn')) {
+                const review = cachedData.reviews.find(r => r._id === reviewId);
+                if (review) {
+                    const form = document.getElementById('edit-review-form');
+                    form.querySelector('#edit-review-id').value = review._id;
+                    form.querySelector('#edit-rating').value = review.rating;
+                    form.querySelector('#edit-comment').value = review.comment;
+                    modals.editReview.show();
+                }
             }
-            return;
-        }
-
-        const userRow = button.closest('tr[data-user-id]');
-        if (userRow) {
-            const userId = userRow.dataset.userId;
-            const user = cachedUsers.find(u => u._id === userId);
-            if (user) {
-                if (button.classList.contains('confirm-payment-btn')) return handleConfirmPayment(userId);
-                if (button.classList.contains('delete-user-btn')) return deleteUser(userId);
-                if (button.classList.contains('edit-user-btn')) return openEditModal(user);
-                if (button.classList.contains('view-barcode-btn')) return openBarcodeModal(user);
-                if (button.classList.contains('set-package-btn')) return openSetPackageModal(user);
-                if (button.classList.contains('reset-password-btn')) return openResetPasswordModal(user);
-                if (button.classList.contains('edit-combo-btn')) return openEditComboWashesModal(user);
-                if (button.classList.contains('edit-expiry-btn')) return openEditExpiryModal(user);
-                if (button.classList.contains('extend-membership-btn')) return openExtendMembershipModal(user);
-            }
-        }
-
-        const reviewRow = button.closest('tr[data-review-id]');
-        if (reviewRow) {
-            const reviewId = reviewRow.dataset.reviewId;
-            const review = cachedReviews.find(r => r._id === reviewId);
-            if (button.classList.contains('delete-review-btn')) return deleteReview(reviewId);
-            if (review && button.classList.contains('edit-review-btn')) return openEditReviewModal(review);
+        } catch (error) {
+            showAlert(error.message, 'danger');
         }
     });
 
-    // --- EVENT LISTENER UNTUK FORM SUBMISSIONS ---
-    document.getElementById('add-user-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const userData = {
-            username: document.getElementById('add-username').value,
-            email: document.getElementById('add-email').value,
-            phone: document.getElementById('add-phone').value,
-            password: document.getElementById('add-password').value,
-            role: document.getElementById('add-role').value,
-        };
+    // --- INISIALISASI ---
+    const initialize = async () => {
         try {
-            const response = await fetch('/api/users', { method: 'POST', headers: getHeaders(), body: JSON.stringify(userData) });
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.msg);
-            showAlert('Pengguna baru berhasil ditambahkan.', 'success');
-            addUserModal.hide();
-            fetchUsers();
-            fetchDashboardStats();
-        } catch (error) { showAlert(error.message); }
-    });
-
-    document.getElementById('edit-user-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const userId = document.getElementById('edit-user-id').value;
-        const userData = {
-            username: document.getElementById('edit-username').value,
-            email: document.getElementById('edit-email').value,
-            phone: document.getElementById('edit-phone').value,
-            role: document.getElementById('edit-role').value,
-        };
-        try {
-            const response = await fetch(`/api/users/${userId}`, { method: 'PUT', headers: getHeaders(), body: JSON.stringify(userData) });
-            if (!response.ok) throw new Error('Gagal mengupdate user.');
-            showAlert('Data pengguna berhasil diperbarui.', 'success');
-            editUserModal.hide();
-            fetchUsers();
-        } catch (error) { showAlert(error.message); }
-    });
-
-    document.getElementById('edit-transaction-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const amount = document.getElementById('transaction-amount').value;
-        const note = document.getElementById('transaction-note').value;
-        try {
-            const response = await fetch('/api/transactions/correction', { method: 'POST', headers: getHeaders(), body: JSON.stringify({ amount, note }) });
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.msg);
-            showAlert('Transaksi koreksi berhasil disimpan.', 'success');
-            editTransactionModal.hide();
-            document.getElementById('edit-transaction-form').reset();
-            fetchDashboardStats();
-            fetchRevenueTrend();
-        } catch (error) { showAlert(error.message); }
-    });
-
-    document.getElementById('reset-password-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const userId = document.getElementById('reset-password-userid').value;
-        const newPassword = document.getElementById('new-password-admin').value;
-        try {
-            const response = await fetch(`/api/users/${userId}/reset-password`, { method: 'POST', headers: getHeaders(), body: JSON.stringify({ newPassword }) });
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.msg);
-            showAlert(result.msg, 'success');
-            resetPasswordModal.hide();
-        } catch (error) { showAlert(error.message); }
-    });
-
-    document.getElementById('edit-expiry-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const userId = document.getElementById('edit-expiry-userid').value;
-        const newExpiryDate = document.getElementById('edit-expiry-date').value;
-        try {
-            const response = await fetch(`/api/users/${userId}/update-expiry`, { method: 'PUT', headers: getHeaders(), body: JSON.stringify({ newExpiryDate }) });
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.msg);
-            showAlert(result.msg, 'success');
-            editExpiryModal.hide();
-            fetchUsers();
-        } catch (error) { showAlert(error.message); }
-    });
-
-    document.getElementById('set-package-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const userId = document.getElementById('set-package-userid').value;
-        const select = document.getElementById('package-name');
-        const selectedOption = select.options[select.selectedIndex];
-        const packageData = {
-            packageName: selectedOption.value,
-            totalWashes: parseInt(selectedOption.dataset.washes)
-        };
-        try {
-            const response = await fetch(`/api/purchase-membership-admin/${userId}`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(packageData) });
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.msg);
-            showAlert(result.msg, 'success');
-            setPackageModal.hide();
-            fetchUsers();
-        } catch (error) { showAlert(error.message); }
-    });
-
-    document.getElementById('edit-review-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const reviewId = document.getElementById('edit-review-id').value;
-        const reviewData = {
-            rating: document.getElementById('edit-rating').value,
-            comment: document.getElementById('edit-comment').value,
-        };
-        try {
-            const response = await fetch(`/api/reviews/${reviewId}`, { method: 'PUT', headers: getHeaders(), body: JSON.stringify(reviewData) });
-            if (!response.ok) throw new Error('Gagal mengupdate ulasan.');
-            showAlert('Ulasan berhasil diperbarui.', 'success');
-            editReviewModal.hide();
-            fetchReviews();
-        } catch (error) { showAlert(error.message); }
-    });
-
-    document.getElementById('edit-combo-washes-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const userId = document.getElementById('edit-combo-userid').value;
-        const comboData = {
-            bodywash: document.getElementById('edit-bodywash-count').value,
-            hidrolik: document.getElementById('edit-hidrolik-count').value,
-        };
-        try {
-            const response = await fetch(`/api/users/${userId}/update-combo-washes`, { method: 'PUT', headers: getHeaders(), body: JSON.stringify(comboData) });
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.msg);
-            showAlert(result.msg, 'success');
-            editComboWashesModal.hide();
-            fetchUsers();
-        } catch (error) { showAlert(error.message); }
+            const [users, stats, reviews] = await Promise.all([
+                apiRequest('/api/users'),
+                apiRequest('/api/dashboard-stats'),
+                apiRequest('/api/reviews/all')
+            ]);
+            cachedData = { users, reviews };
+            ui.memberCount.textContent = stats.activeMembers;
+            ui.visitorCount.textContent = stats.totalVisitors;
+            ui.transactionTotal.textContent = `Rp ${stats.totalTransactions.toLocaleString('id-ID')}`;
+            render();
+        } catch (error) {
+            showAlert(error.message, 'danger');
+        }
+    };
+    
+    document.querySelectorAll('form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const modal = bootstrap.Modal.getInstance(this.closest('.modal'));
+            const successMessage = this.dataset.successMessage || 'Aksi berhasil dijalankan.'; 
+            handleFormSubmit(this, successMessage, modal);
+        });
     });
     
-    downloadButton.addEventListener('click', async () => {
-        downloadButton.disabled = true;
-        downloadButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Mengunduh...';
-        try {
-            const response = await fetch('/api/download-data', { headers: getHeaders(false) });
-            if (!response.ok) throw new Error('Gagal mengunduh data.');
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.style.display = 'none';
-            a.href = url;
-            a.download = `data_autohidrolik_${new Date().toISOString().slice(0,10)}.xlsx`;
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            a.remove();
-        } catch (error) {
-            showAlert(error.message);
-        } finally {
-            downloadButton.disabled = false;
-            downloadButton.innerHTML = '<i class="bi bi-download"></i> Download Data';
-        }
-    });
-
     document.getElementById('logout-button').addEventListener('click', () => {
         localStorage.removeItem('token');
         localStorage.removeItem('userRole');
         window.location.href = '/login.html';
     });
+    
+    ui.downloadButton.addEventListener('click', async () => {
+        ui.downloadButton.disabled = true;
+        ui.downloadButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Mengunduh...';
+        try {
+            const response = await fetch('/api/download-data', { headers: { 'x-auth-token': token } });
+            if (!response.ok) throw new Error('Gagal mengunduh data.');
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `data_autohidrolik_${new Date().toISOString().slice(0,10)}.xlsx`;
+            document.body.appendChild(a); a.click(); a.remove(); window.URL.revokeObjectURL(url);
+        } catch (error) {
+            showAlert(error.message, 'danger');
+        } finally {
+            ui.downloadButton.disabled = false;
+            ui.downloadButton.innerHTML = '<i class="bi bi-download"></i> Download Data';
+        }
+    });
+    
+    // Hubungkan select dengan input tersembunyi untuk totalWashes
+    document.getElementById('package-name-select')?.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        document.getElementById('total-washes-input').value = selectedOption.dataset.washes || 0;
+    });
 
-    // --- INISIALISASI SAAT HALAMAN DIMUAT ---
-    fetchDashboardStats();
-    fetchUsers();
-    fetchReviews();
-    fetchRevenueTrend();
+    initialize();
 });
