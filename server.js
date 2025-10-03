@@ -1,1375 +1,614 @@
-
-// Import dependensi
-const express = require('express');
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const cors = require('cors');
-const exceljs = require('exceljs');
-const nodemailer = require('nodemailer');
-const os = require('os'); // Diperlukan untuk status server
-const path = require('path'); // Modul 'path' diperlukan
-require('dotenv').config();
-
-// Inisialisasi Aplikasi Express
-const app = express();
-
-// ================== PENANGKAP LOG (DIPERBARUI) ==================
-const serverLogs = [];
-const originalConsoleLog = console.log;
-console.log = (...args) => {
-    originalConsoleLog.apply(console, args);
-    const logMessage = args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : arg).join(' ');
-    // Tambahkan timestamp ke setiap log
-    serverLogs.push({
-        message: logMessage,
-        timestamp: new Date().toLocaleString('id-ID', { hour12: false })
-    });
-    if (serverLogs.length > 100) {
-        serverLogs.shift();
+document.addEventListener('DOMContentLoaded', () => {
+    // ======================= PERBAIKAN UTAMA DI SINI =======================
+    // "Penjaga" untuk memastikan kode ini hanya berjalan di halaman admin.
+    // Kita gunakan 'member-table-body' sebagai penanda unik halaman admin.
+    const adminPageMarker = document.getElementById('member-table-body');
+    if (!adminPageMarker) {
+        return; // Jika bukan di halaman admin, hentikan eksekusi seluruh script ini.
     }
-};
-// ================== AKHIR PENANGKAP LOG ==================
+    // ===================== AKHIR DARI PERBAIKAN =====================
 
-// Import Model
-const User = require('./models/User');
-const Review = require('./models/Review'); // Pastikan model Review diimpor
-const Visitor = require('./models/Visitor');
-const Transaction = require('./models/Transaction');
-
-// --- Middleware ---
-const whitelist = ['https://autohidrolik.com', 'www.autohidrolik.com'];
-const corsOptions = {
-  origin: function (origin, callback) {
-    if (whitelist.indexOf(origin) !== -1 || !origin) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
+    // --- KONFIGURASI & INISIALISASI (Hanya berjalan jika di halaman admin) ---
+    const token = localStorage.getItem('token');
+    if (!token || localStorage.getItem('userRole') !== 'admin') {
+        alert('Akses ditolak. Silakan login sebagai admin.');
+        window.location.href = '/login.html';
+        return;
     }
-  },
-  optionsSuccessStatus: 200 
-};
-app.use(cors());
-app.use(express.json());
 
+    // --- Elemen UI ---
+    const alertPlaceholder = document.getElementById('alert-placeholder');
+    const reviewTableBody = document.getElementById('review-table-body');
+    const memberCountElement = document.getElementById('member-count');
+    const visitorCountElement = document.getElementById('visitor-count');
+    const transactionTotalElement = document.getElementById('transaction-total');
+    const downloadButton = document.getElementById('download-data-btn');
+    const memberTableBody = document.getElementById('member-table-body');
+    const nonMemberTableBody = document.getElementById('non-member-table-body');
+    const expiredMemberTableBody = document.getElementById('expired-member-table-body');
+    
+    // Inisialisasi semua modal (pop-up)
+    const addUserModal = new bootstrap.Modal(document.getElementById('addUserModal'));
+    const editUserModal = new bootstrap.Modal(document.getElementById('editUserModal'));
+    const editComboWashesModal = new bootstrap.Modal(document.getElementById('editComboWashesModal'));
+    const editTransactionModal = new bootstrap.Modal(document.getElementById('editTransactionModal'));
+    const editExpiryModal = new bootstrap.Modal(document.getElementById('editExpiryModal'));
+    const viewBarcodeModal = new bootstrap.Modal(document.getElementById('viewBarcodeModal'));
+    const setPackageModal = new bootstrap.Modal(document.getElementById('setPackageModal'));
+    const editReviewModal = new bootstrap.Modal(document.getElementById('editReviewModal'));
+    const resetPasswordModal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
+    const extendMembershipModal = new bootstrap.Modal(document.getElementById('extendMembershipModal'));
 
-// --- Inisialisasi Layanan ---
-// Nodemailer (Email)
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASSWORD
+    let cachedUsers = [];
+    let cachedReviews = [];
+
+    // --- FUNGSI HELPER (PEMBANTU) ---
+    function showAlert(message, type = 'danger') {
+        if (alertPlaceholder) {
+            alertPlaceholder.innerHTML = `<div class="alert alert-${type} alert-dismissible fade show" role="alert">${message}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>`;
+        }
     }
-});
-// Twilio (SMS)
 
-// --- Koneksi ke MongoDB ---
-mongoose.connect(process.env.MONGO_URI, {})
-  .then(() => console.log('Berhasil terhubung ke MongoDB Atlas'))
-  .catch(err => console.log('Koneksi MongoDB gagal:', err));
+    const getHeaders = (includeContentType = true) => {
+        const headers = { 'x-auth-token': token };
+        if (includeContentType) headers['Content-Type'] = 'application/json';
+        return headers;
+    };
 
-// --- Middleware Otentikasi ---
-// Di dalam file server.js
+    // --- FUNGSI PENGAMBILAN DATA (FETCH) ---
+    const fetchRevenueTrend = async () => {
+        try {
+            const response = await fetch('/api/revenue-trend', { headers: getHeaders(false) });
+            if (!response.ok) throw new Error('Gagal mengambil data grafik.');
+            const trendData = await response.json();
+            const ctx = document.getElementById('revenueChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: trendData.labels,
+                    datasets: [{
+                        label: 'Pendapatan (Rp)',
+                        data: trendData.data,
+                        backgroundColor: 'rgba(111, 66, 193, 0.6)',
+                        borderColor: 'rgba(111, 66, 193, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: { scales: { y: { beginAtZero: true } } }
+            });
+        } catch (error) {
+            showAlert(error.message);
+        }
+    };
+    
+    const fetchDashboardStats = async () => {
+        try {
+            const response = await fetch('/api/dashboard-stats', { headers: getHeaders(false) });
+            if (!response.ok) throw new Error('Gagal mengambil data statistik.');
+            const stats = await response.json();
+            memberCountElement.textContent = stats.activeMembers;
+            visitorCountElement.textContent = stats.totalVisitors;
+            transactionTotalElement.textContent = `Rp ${stats.totalTransactions.toLocaleString('id-ID')}`;
+        } catch (error) {
+            showAlert(error.message);
+        }
+    };
 
-// --- GANTI SELURUH BLOK INI ---
-const auth = (req, res, next) => {
-    const token = req.header('x-auth-token');
-    if (!token) return res.status(401).json({ msg: 'Tidak ada token, otorisasi ditolak' });
+const fetchUsers = async () => {
     try {
-        // Membaca dari environment variable yang diatur di hosting
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        req.user = decoded;
-        next();
-    } catch (e) {
-        res.status(400).json({ msg: 'Token tidak valid' });
-    }
-};
-
-const adminAuth = async (req, res, next) => {
-    try {
-        const user = await User.findById(req.user.id);
-        if (user.role !== 'admin') {
-            return res.status(403).json({ msg: 'Akses ditolak. Hanya untuk Admin.' });
-        }
-        next();
-    } catch (error) {
-        res.status(500).send('Server error');
-    }
-};
-
-// Fungsi untuk membuat ID member unik acak
-async function generateUniqueMemberId() {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    const idLength = 6;
-    let newId;
-    let isUnique = false;
-
-    while (!isUnique) {
-        let randomPart = '';
-        for (let i = 0; i < idLength; i++) {
-            randomPart += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        newId = `AH-${randomPart}`;
-        const existingUser = await User.findOne({ memberId: newId });
-        if (!existingUser) {
-            isUnique = true;
-        }
-    }
-    return newId;
-}
-
-// --- Fungsi Helper Baru ---
-function generateOTP() {
-    return Math.floor(100000 + Math.random() * 900000).toString(); // 6 digit OTP
-}
-
-// --- Fungsi Helper untuk Menghitung Tanggal Kedaluwarsa ---
-function calculateExpiryDate(months = 6) { // Default 3 bulan
-    const expiryDate = new Date();
-    expiryDate.setMonth(expiryDate.getMonth() + months);
-    return expiryDate;
-}
-
-
-app.get('/api/server-status', auth, adminAuth, (req, res) => {
-    try {
-        const cpus = os.cpus();
-        const cpuModel = cpus.length > 0 ? cpus[0].model : 'N/A';
-        const cpuCores = cpus.length;
-
-        const specs = {
-            hostname: os.hostname(),
-            osType: os.type(),
-            platform: os.platform(),
-            arch: os.arch(),
-            cpuModel: cpuModel,
-            cpuCores: cpuCores,
-            totalMemory: os.totalmem(),
-            freeMemory: os.freemem(),
-            uptime: os.uptime(),
-        };
-        res.json({
-            specs,
-            logs: serverLogs.slice().reverse()
-        });
-    } catch (error) {
-        console.log('Error saat mengambil status server:', error.message);
-        res.status(500).json({ msg: 'Gagal mengambil status server.' });
-    }
-});
-// ================== AKHIR RUTE BARU ==================
-
-
-// ======================================================
-// --- API ROUTES ---
-// ======================================================
-
-app.post('/api/register', async (req, res) => {
-    try {
-        const { username, email, phone, password } = req.body;
-
-        // 1. Validasi Input Wajib
-        if (!username || !phone || !password) {
-            return res.status(400).json({ msg: 'Username, Nomor WhatsApp, dan Password wajib diisi.' });
-        }
-
-        // 2. Validasi Format
-        if (password.length < 6) {
-            return res.status(400).json({ msg: 'Password minimal harus 6 karakter.' });
-        }
-        if (email && !/\S+@\S+\.\S+$/.test(email)) {
-            return res.status(400).json({ msg: 'Format email tidak valid.' });
-        }
-
-        // 3. Pengecekan Duplikasi
-        const queryConditions = [{ username }, { phone }];
-        if (email) {
-            queryConditions.push({ email: email.toLowerCase() });
-        }
-        
-        const existingUser = await User.findOne({ $or: queryConditions });
-
-        if (existingUser) {
-            if (existingUser.username === username) return res.status(400).json({ msg: 'Username sudah terdaftar.' });
-            if (existingUser.phone === phone) return res.status(400).json({ msg: 'Nomor WhatsApp sudah terdaftar.' });
-            if (email && existingUser.email === email.toLowerCase()) return res.status(400).json({ msg: 'Email sudah terdaftar.' });
-        }
-
-        // 4. Proses Pembuatan User
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const memberId = await generateUniqueMemberId();
-
-        // --- PERUBAHAN UTAMA DI SINI ---
-        // Kita buat objek data user terlebih dahulu
-        const userData = {
-            username,
-            phone,
-            password: hashedPassword,
-            isVerified: true,
-            memberId: memberId
-        };
-
-        // Tambahkan email ke objek HANYA JIKA email diisi
-        if (email) {
-            userData.email = email.toLowerCase();
-        }
-
-        // Buat user baru dari objek data yang sudah disiapkan
-        const newUser = new User(userData);
-        // --- AKHIR PERUBAHAN ---
-        
-        await newUser.save();
-        
-        res.status(201).json({ msg: 'Registrasi berhasil! Anda akan dialihkan ke halaman login.' });
-
-    } catch (error) {
-        console.error("Error di /api/register:", error);
-        if (error.code === 11000) {
-            return res.status(400).json({ msg: 'Username, email, atau nomor HP ini baru saja didaftarkan.' });
-        }
-        res.status(500).send('Terjadi kesalahan pada server');
-    }
-});
-
-// Rute Verifikasi OTP dengan Logging
-app.post('/api/verify-otp', async (req, res) => {
-    const { email, otp } = req.body;
-    try {
-        console.log(`[Verifikasi] Menerima permintaan untuk email: ${email} dengan OTP: ${otp}`);
-
-        const user = await User.findOne({ email: email });
-
-        if (!user) {
-            console.log(`[Verifikasi Gagal] User dengan email ${email} tidak ditemukan.`);
-            return res.status(400).json({ msg: 'Pengguna tidak ditemukan.' });
-        }
-
-        console.log(`[Verifikasi] OTP di database untuk ${email} adalah: ${user.otp}`);
-
-        if (user.otp !== otp) {
-            console.log(`[Verifikasi Gagal] OTP tidak cocok. Diterima: ${otp}, Seharusnya: ${user.otp}`);
-            return res.status(400).json({ msg: 'Kode OTP tidak cocok.' });
-        }
-
-        if (user.otpExpires < Date.now()) {
-            console.log(`[Verifikasi Gagal] OTP sudah kedaluwarsa.`);
-            return res.status(400).json({ msg: 'Kode OTP sudah kedaluwarsa.' });
-        }
-
-        user.isVerified = true;
-        user.otp = null;
-        user.otpExpires = null;
-        await user.save();
-        
-        console.log(`[Verifikasi Sukses] Akun untuk ${email} berhasil diverifikasi.`);
-        res.json({ msg: 'Akun Anda berhasil diverifikasi! Silakan login.' });
-    } catch (error) {
-        console.error("Error di /api/verify-otp:", error);
-        res.status(500).send('Server error');
-    }
-});
-
-// ### PENAMBAHAN BARU: Rute untuk memperpanjang masa aktif member ###
-app.post('/api/users/:id/extend', auth, adminAuth, async (req, res) => {
-    const { months } = req.body;
-    const userId = req.params.id;
-
-    // Validasi input
-    const duration = parseInt(months);
-    if (!duration || ![1, 3, 6].includes(duration)) {
-        return res.status(400).json({ msg: 'Durasi perpanjangan tidak valid. Harap pilih 1, 3, atau 6 bulan.' });
-    }
-
-    try {
-        const user = await User.findById(userId);
-        if (!user || !user.membership) {
-            return res.status(404).json({ msg: 'Member tidak ditemukan atau tidak memiliki paket.' });
-        }
+        const response = await fetch('/api/users', { headers: getHeaders(false) });
+        if (!response.ok) throw new Error('Gagal mengambil data pengguna.');
+        cachedUsers = await response.json();
 
         const today = new Date();
-        // Tentukan tanggal dasar: tanggal kedaluwarsa saat ini jika masih aktif, atau hari ini jika sudah lewat.
-        const baseDate = (user.membership.expiresAt && new Date(user.membership.expiresAt) > today)
-            ? new Date(user.membership.expiresAt)
-            : new Date();
+        const activeMembers = [];
+        const expiredMembers = [];
+        const nonMembers = [];
 
-        // Tambahkan bulan sesuai durasi
-        baseDate.setMonth(baseDate.getMonth() + duration);
-        user.membership.expiresAt = baseDate;
-
-        await user.save();
-        
-        res.json({ msg: `Masa aktif untuk ${user.username} berhasil diperpanjang selama ${duration} bulan.` });
-
-    } catch (error) {
-        console.error("Error saat memperpanjang masa aktif:", error);
-        res.status(500).send('Server error');
-    }
-});
-
-app.post('/api/profile/change-password', auth, async (req, res) => {
-    const { currentPassword, newPassword } = req.body;
-    
-    try {
-        // 1. Validasi input
-        if (!currentPassword || !newPassword) {
-            return res.status(400).json({ msg: 'Semua kolom wajib diisi.' });
-        }
-        if (newPassword.length < 6) {
-            return res.status(400).json({ msg: 'Password baru minimal harus 6 karakter.' });
-        }
-
-        // 2. Ambil data user dari database
-        const user = await User.findById(req.user.id);
-        if (!user) {
-            return res.status(404).json({ msg: 'User tidak ditemukan.' });
-        }
-
-        // 3. Verifikasi password saat ini
-        const isMatch = await bcrypt.compare(currentPassword, user.password);
-        if (!isMatch) {
-            return res.status(400).json({ msg: 'Password saat ini salah.' });
-        }
-
-        // 4. Hash dan simpan password baru
-        const salt = await bcrypt.genSalt(10);
-        user.password = await bcrypt.hash(newPassword, salt);
-        await user.save();
-
-        res.json({ msg: 'Password berhasil diperbarui.' });
-
-    } catch (error) {
-        console.error("Error di /api/profile/change-password:", error);
-        res.status(500).send('Server error');
-    }
-});
-
-// --- RUTE BARU: ADMIN MENGUPDATE TANGGAL KEDALUWARSA MEMBER ---
-app.put('/api/users/:id/update-expiry', auth, adminAuth, async (req, res) => {
-    const { newExpiryDate } = req.body;
-
-    // Validasi input
-    if (!newExpiryDate) {
-        return res.status(400).json({ msg: 'Tanggal kedaluwarsa baru wajib diisi.' });
-    }
-
-    try {
-        const user = await User.findById(req.params.id);
-        if (!user || !user.membership) {
-            return res.status(404).json({ msg: 'Data member tidak ditemukan.' });
-        }
-
-        // Update tanggal kedaluwarsa
-        user.membership.expiresAt = new Date(newExpiryDate);
-        user.markModified('membership'); // Penting saat mengubah sub-dokumen
-        await user.save();
-
-        res.json({ msg: `Tanggal kedaluwarsa untuk ${user.username} berhasil diperbarui.` });
-
-    } catch (error) {
-        console.error("Error di /api/users/:id/update-expiry:", error);
-        res.status(500).send('Server error');
-    }
-});
-
-// --- RUTE STATISTIK DASHBOARD (DIPERBARUI) ---
-app.get('/api/dashboard-stats', auth, adminAuth, async (req, res) => {
-    try {
-        const activeMembers = await User.countDocuments({ 'membership.isPaid': true });
-
-        const visitorData = await Visitor.findOne({ identifier: 'global-visitor-count' });
-        const totalVisitors = visitorData ? visitorData.count : 0;
-
-        // --- LOGIKA BARU: HITUNG TOTAL DARI KOLEKSI TRANSAKSI ---
-        const transactionAggregation = await Transaction.aggregate([
-            {
-                $group: {
-                    _id: null, // Mengelompokkan semua dokumen menjadi satu
-                    totalAmount: { $sum: "$amount" } // Menjumlahkan semua nilai dari field 'amount'
-                }
+        cachedUsers.forEach(user => {
+            if (!user.memberships || user.memberships.length === 0) {
+                nonMembers.push(user);
+                return;
             }
-        ]);
-        
-        const totalTransactions = transactionAggregation.length > 0 ? transactionAggregation[0].totalAmount : 0;
-        // --- AKHIR LOGIKA BARU ---
 
-        res.json({
-            activeMembers,
-            totalVisitors,
-            totalTransactions
-        });
+            const hasActivePackage = user.memberships.some(
+                pkg => pkg.isPaid && new Date(pkg.expiresAt) >= today
+            );
 
-    } catch (error) {
-        console.error("Error mengambil statistik dashboard:", error);
-        res.status(500).send('Server error');
-    }
-});
-
-// Rute Login (Diperbaiki)
-// --- RUTE LOGIN (DIPERBAIKI) ---
-app.post('/api/login', async (req, res) => {
-    try {
-        // 1. Ambil 'identifier' (email/nomor hp) dan password dari body request
-        const { identifier, password } = req.body;
-
-        // 2. Validasi input dasar
-        if (!identifier || !password) {
-            return res.status(400).json({ msg: 'Silakan isi semua kolom.' });
-        }
-
-        // 3. Cari pengguna di database berdasarkan email ATAU nomor hp
-        const user = await User.findOne({
-            $or: [{ email: identifier }, { phone: identifier }]
-        });
-
-        // 4. Jika pengguna tidak ditemukan, kirim pesan error yang sama
-        if (!user) {
-            return res.status(400).json({ msg: 'Email/Nomor WhatsApp atau password salah.' });
-        }
-
-        // 5. Verifikasi password yang dienkripsi
-        // Bandingkan password yang dikirim pengguna dengan hash yang ada di database
-        const isMatch = await bcrypt.compare(password, user.password);
-
-        // Jika password tidak cocok, kirim pesan error yang sama
-        if (!isMatch) {
-            return res.status(400).json({ msg: 'Email/Nomor WhatsApp atau password salah.' });
-        }
-
-        // 6. Jika semua verifikasi berhasil, buat payload untuk token
-        const payload = {
-            id: user._id,
-            role: user.role,
-            username: user.username
-        };
-        
-        // 7. Buat token JWT
-        const token = jwt.sign(
-            payload,
-            process.env.JWT_SECRET || 'your_super_secret_key', // Gunakan secret key dari .env
-            { expiresIn: '1h' } // Token akan kedaluwarsa dalam 1 jam
-        );
-        
-        // 8. Kirim respons sukses beserta token dan data pengguna
-        res.json({
-            msg: 'Login berhasil!',
-            token, // Token ini akan disimpan oleh frontend
-            user: { 
-                id: user._id, 
-                username: user.username,
-                role: user.role // Kirim role agar frontend tahu harus mengarahkan ke mana
-            }
-        });
-
-    } catch (error) {
-        // Tangani jika ada error tak terduga di server
-        console.error("Error di /api/login:", error);
-        res.status(500).json({ msg: 'Terjadi kesalahan pada server.' });
-    }
-});
-
-// server.js
-
-// RUTE BARU: Admin mengupdate jatah cuci Paket Kombinasi
-app.put('/api/users/:id/update-combo-washes', auth, adminAuth, async (req, res) => {
-    const { bodywash, hidrolik } = req.body;
-
-    try {
-        const user = await User.findById(req.params.id);
-
-        // Validasi
-        if (!user) {
-            return res.status(404).json({ msg: 'User tidak ditemukan' });
-        }
-        if (!user.membership || user.membership.packageName !== 'Paket Kombinasi') {
-            return res.status(400).json({ msg: 'User ini tidak memiliki Paket Kombinasi aktif.' });
-        }
-
-        // Update jatah
-        user.membership.washes.bodywash = parseInt(bodywash, 10);
-        user.membership.washes.hidrolik = parseInt(hidrolik, 10);
-
-        user.markModified('membership'); // Penting untuk menyimpan sub-dokumen
-        await user.save();
-
-        res.json({ msg: `Jatah cuci untuk ${user.username} berhasil diperbarui.`, user });
-
-    } catch (error) {
-        console.error("Error di update-combo-washes:", error.message);
-        res.status(500).send('Server error');
-    }
-});
-
-// RUTE BARU: Admin membuat transaksi koreksi manual
-app.post('/api/transactions/correction', auth, adminAuth, async (req, res) => {
-    const { amount, note } = req.body;
-
-    // Validasi input
-    if (!amount || !note || isNaN(parseInt(amount))) {
-        return res.status(400).json({ msg: 'Jumlah dan catatan wajib diisi dengan benar.' });
-    }
-
-    try {
-        const adminUser = await User.findById(req.user.id);
-
-        const newTransaction = new Transaction({
-            user: req.user.id,
-            username: adminUser.username, // atau bisa juga 'ADMIN'
-            packageName: note, // Gunakan field ini untuk menyimpan catatan koreksi
-            amount: parseInt(amount)
-        });
-
-        await newTransaction.save();
-        res.status(201).json({ msg: 'Transaksi koreksi berhasil ditambahkan.' });
-
-    } catch (error) {
-        console.error("Error saat membuat transaksi koreksi:", error);
-        res.status(500).send('Server error');
-    }
-});
-
-// Rute Profil (GET)
-app.get('/api/profile', auth, async (req, res) => {
-    try {
-        const user = await User.findById(req.user.id).select('-password');
-        res.json(user);
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server error');
-    }
-});
-
-// Rute Update Profil
-app.put('/api/profile', auth, async (req, res) => {
-    const { username, email, fullName, phone, address, vehicles } = req.body;
-    const profileFields = {};
-    if (username) profileFields.username = username;
-    if (email) profileFields.email = email;
-    if (fullName) profileFields.fullName = fullName;
-    if (phone) profileFields.phone = phone;
-    if (address) profileFields.address = address;
-    if (vehicles) profileFields.vehicles = vehicles;
-    try {
-        let user = await User.findByIdAndUpdate(req.user.id, { $set: profileFields }, { new: true }).select('-password');
-        if (!user) return res.status(404).json({ msg: 'User tidak ditemukan' });
-        res.json(user);
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server error');
-    }
-});
-
-// --- RUTE BARU: USER MENGUPDATE KARTU NANO MILIKNYA ---
-app.put('/api/profile/update-nanocard', auth, async (req, res) => {
-    const { ownerName, plateNumber } = req.body;
-
-    // Validasi dasar
-    if (!ownerName || !plateNumber) {
-        return res.status(400).json({ msg: 'Nama Pemilik dan No. Polisi wajib diisi.' });
-    }
-
-    try {
-        // Cari user berdasarkan token yang login
-        const user = await User.findById(req.user.id);
-        
-        if (!user || !user.nanoCoatingCard) {
-            return res.status(404).json({ msg: 'Kartu maintenance untuk user ini tidak ditemukan.' });
-        }
-
-        // Update data kartu nano
-        user.nanoCoatingCard.ownerName = ownerName;
-        user.nanoCoatingCard.plateNumber = plateNumber;
-        user.markModified('nanoCoatingCard'); // Tandai bahwa sub-dokumen ini diubah
-        
-        await user.save(); // Simpan perubahan
-
-        res.json({ msg: `Data kartu untuk ${user.username} berhasil diperbarui.` });
-
-    } catch (error) {
-        console.error("Error di /api/profile/update-nanocard:", error);
-        res.status(500).send('Server error');
-    }
-});
-
-// --- RUTE ADMIN: MANAJEMEN PENGGUNA ---
-app.get('/api/users', auth, adminAuth, async (req, res) => {
-    try {
-        const users = await User.find({ role: { $ne: 'admin' } })
-            .select('-password')
-            .sort({ date: 1 }); // Mengurutkan dari terlama ke terbaru
-      
-        res.json(users);
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server error');
-    }
-});
-
-// POST: Menambah pengguna baru (oleh Admin)
-app.post('/api/users', auth, adminAuth, async (req, res) => {
-    const { username, email, phone, password, role } = req.body;
-    try {
-        if (await User.findOne({ email })) {
-            return res.status(400).json({ msg: 'Email sudah ada' });
-        }
-
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-
-        const memberId = await generateUniqueMemberId();
-        
-        const newUser = new User({ 
-            username, 
-            email, 
-            phone, 
-            password: hashedPassword, 
-            role, 
-            isVerified: true,
-            memberId: memberId
-        });
-        
-        await newUser.save();
-        res.status(201).json(newUser);
-    } catch (err) {
-        console.error("Error di /api/users (POST):", err.message);
-        res.status(500).send('Server error');
-    }
-});
-
-app.put('/api/users/:id', auth, adminAuth, async (req, res) => {
-    // --- PERBAIKAN DI SINI ---
-    const { username, email, phone, role } = req.body; // Tambahkan 'phone'
-    try {
-        // Buat objek field yang akan diupdate
-        const updateFields = { username, email, phone, role };
-
-        let user = await User.findByIdAndUpdate(
-            req.params.id,
-            { $set: updateFields }, // Gunakan objek yang baru
-            { new: true }
-        ).select('-password');
-        
-        if (!user) {
-            return res.status(404).json({ msg: 'User tidak ditemukan' });
-        }
-        
-        res.json(user);
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server error');
-    }
-});
-
-app.delete('/api/users/:id', auth, adminAuth, async (req, res) => {
-    try {
-        const user = await User.findById(req.params.id);
-        if (!user) return res.status(404).json({ msg: 'User tidak ditemukan' });
-        await user.deleteOne();
-        res.json({ msg: 'User berhasil dihapus' });
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server error');
-    }
-});
-
-app.post('/api/users/:id/reset-password', auth, adminAuth, async (req, res) => {
-    const { newPassword } = req.body;
-    try {
-        const user = await User.findById(req.params.id);
-        if (!user) {
-            return res.status(404).json({ msg: 'Pengguna tidak ditemukan.' });
-        }
-
-        const salt = await bcrypt.genSalt(10);
-        user.password = await bcrypt.hash(newPassword, salt);
-        await user.save();
-
-        res.json({ msg: `Kata sandi untuk ${user.username} berhasil direset.` });
-    } catch (err) {
-        console.error("Error di reset-password:", err.message);
-        res.status(500).send('Server error');
-    }
-});
-
-// --- RUTE LUPA & RESET SANDI ---
-
-app.post('/api/forgot-password', async (req, res) => {
-    // Sekarang kita hanya butuh email, bukan 'contact' atau 'method'
-    const { email } = req.body; 
-    try {
-        // Cari pengguna hanya berdasarkan email
-        const user = await User.findOne({ email: email });
-        if (!user) {
-            return res.status(404).json({ msg: 'Pengguna dengan email tersebut tidak ditemukan.' });
-        }
-
-        const otp = generateOTP();
-        user.otp = otp;
-        user.otpExpires = new Date(Date.now() + 10 * 60 * 1000); // OTP berlaku 10 menit
-        await user.save();
-
-        // Kirim OTP hanya melalui email
-        await transporter.sendMail({
-            from: `"AUTOHIDROLIK" <${process.env.GMAIL_USER}>`,
-            to: user.email,
-            subject: 'Kode Reset Kata Sandi',
-            text: `Gunakan kode ini untuk mereset kata sandi Anda: ${otp}`
-        });
-        
-        res.json({ msg: `Kode OTP telah dikirim ke ${email}.` });
-    } catch (error) {
-        console.error("Error di /api/forgot-password:", error);
-        res.status(500).send('Server error');
-    }
-});
-
-
-// 5. Rute Baru: Reset Sandi (Verifikasi OTP & Set Sandi Baru)
-app.post('/api/forgot-password', async (req, res) => {
-    // 1. Log saat permintaan diterima
-    console.log('\n--- Menerima Permintaan Lupa Sandi ---');
-    console.log('Data yang diterima:', req.body);
-
-    const { email } = req.body; 
-    try {
-        const user = await User.findOne({ email: email });
-
-        // 2. Log hasil pencarian pengguna
-        if (!user) {
-            console.log(`Pencarian Pengguna: Tidak ditemukan pengguna dengan email ${email}.`);
-            return res.status(404).json({ msg: 'Pengguna dengan email tersebut tidak ditemukan.' });
-        }
-        console.log(`Pencarian Pengguna: Ditemukan pengguna -> ${user.username}`);
-
-        // 3. Log OTP yang dibuat
-        const otp = generateOTP();
-        console.log(`OTP Dibuat: Kode OTP baru adalah ${otp}`);
-        
-        user.otp = otp;
-        user.otpExpires = Date.now() + 10 * 60 * 1000; // 10 menit
-        await user.save();
-
-        // 4. Log konfirmasi bahwa OTP sudah disimpan di database
-        console.log(`Penyimpanan: OTP untuk ${user.username} berhasil disimpan ke database.`);
-
-        // 5. Log simulasi pengiriman email (ini akan tetap menjadi cara Anda melihat OTP)
-        console.log(`============================================`);
-        console.log(`KODE OTP UNTUK RESET SANDI ${user.username} ADALAH: ${otp}`);
-        console.log(`============================================`);
-
-        // Kirim email sungguhan
-        await transporter.sendMail({
-            from: `"AUTOHIDROLIK" <${process.env.GMAIL_USER}>`,
-            to: user.email,
-            subject: 'Kode Reset Kata Sandi',
-            text: `Gunakan kode ini untuk mereset kata sandi Anda: ${otp}`
-        });
-        
-        console.log(`Pengiriman: Email OTP berhasil dikirim ke ${user.email}.`);
-        console.log('--- Permintaan Lupa Sandi Selesai ---');
-        res.json({ msg: `Kode OTP telah dikirim ke ${email}.` });
-
-    } catch (error) {
-        // 6. Log jika terjadi error di server
-        console.error("!!! ERROR di /api/forgot-password:", error);
-        res.status(500).send('Server error');
-    }
-});
-
-// --- RUTE REVIEW ---
-app.get('/api/reviews', async (req, res) => {
-    try {
-        const reviews = await Review.find().sort({ date: -1 }).limit(6).populate('user', 'username');
-        res.json(reviews);
-    } catch (err) {
-        res.status(500).send('Server error');
-    }
-});
-
-app.post('/api/reviews', auth, async (req, res) => {
-    const { rating, comment } = req.body;
-    try {
-        // --- PERBAIKAN DI SINI ---
-        // 1. Cari pengguna yang sedang login untuk mendapatkan username-nya
-        const user = await User.findById(req.user.id);
-        if (!user) {
-            return res.status(404).json({ msg: 'Pengguna tidak ditemukan.' });
-        }
-
-        // 2. Sertakan username saat membuat ulasan baru
-        const newReview = new Review({
-            rating,
-            comment,
-            user: req.user.id,
-            username: user.username // <-- Tambahkan baris ini
-        });
-
-        const review = await newReview.save();
-        res.status(201).json(review);
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server error');
-    }
-});
-
-app.get('/api/reviews/all', auth, adminAuth, async (req, res) => {
-    try {
-        const reviews = await Review.find().sort({ date: -1 }).populate('user', 'username');
-        res.json(reviews);
-    } catch (err) {
-        res.status(500).send('Server error');
-    }
-});
-
-app.put('/api/reviews/:id', auth, adminAuth, async (req, res) => {
-    const { rating, comment } = req.body;
-    try {
-        let review = await Review.findByIdAndUpdate(req.params.id, { $set: { rating, comment } }, { new: true });
-        if (!review) return res.status(404).json({ msg: 'Ulasan tidak ditemukan' });
-        res.json(review);
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server error');
-    }
-});
-
-app.delete('/api/reviews/:id', auth, adminAuth, async (req, res) => {
-    try {
-        const review = await Review.findById(req.params.id);
-        if (!review) return res.status(404).json({ msg: 'Ulasan tidak ditemukan' });
-        await review.deleteOne();
-        res.json({ msg: 'Ulasan berhasil dihapus' });
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server error');
-    }
-});
-
-
-// Rute Pembelian Paket oleh User (Diperbarui)
-app.post('/api/purchase-membership', auth, async (req, res) => {
-    const { packageName, totalWashes } = req.body;
-    try {
-        const user = await User.findById(req.user.id);
-        if (!user) return res.status(404).json({ msg: 'Pengguna tidak ditemukan.' });
-
-        // Buat ID unik untuk paket baru ini
-        const packageId = `PKG-${Date.now()}`;
-
-        const newMembership = {
-            packageName: packageName,
-            totalWashes: totalWashes,
-            remainingWashes: totalWashes,
-            isPaid: false,
-            expiresAt: calculateExpiryDate(), // Menggunakan fungsi helper
-            packageId: packageId
-        };
-        
-        // ================== PERUBAHAN LOGIKA DI SINI ==================
-        // Tambahkan paket baru ke dalam array 'memberships'
-        user.memberships.push(newMembership);
-        // ================= AKHIR PERUBAHAN =================
-
-        await user.save();
-        res.json({ msg: 'Paket berhasil ditambahkan! Menunggu konfirmasi pembayaran.', user });
-    } catch (error) {
-        console.error("Error di purchase-membership:", error);
-        res.status(500).send('Server error');
-    }
-});
-
-// Di dalam file server.js Anda
-// Rute Pengaturan Paket oleh Admin (DIREVISI TOTAL)
-// server.js
-app.post('/api/purchase-membership-admin/:userId', auth, adminAuth, async (req, res) => {
-    const { packageName, totalWashes } = req.body;
-    try {
-        const user = await User.findById(req.params.userId);
-        if (!user) {
-            return res.status(404).json({ msg: 'Pengguna tidak ditemukan.' });
-        }
-
-        // PERBAIKAN UTAMA: Buat objek paket baru dan PUSH ke array
-        const newMembership = {
-            packageName: packageName,
-            totalWashes: totalWashes,
-            remainingWashes: totalWashes,
-            isPaid: false, // Paket yang ditambahkan admin defaultnya belum lunas
-            expiresAt: calculateExpiryDate(), // Menggunakan fungsi helper yang sudah ada
-            packageId: `PKG-${Date.now()}` // Buat ID unik untuk paket ini
-        };
-
-        // Jika user belum punya array memberships, buat dulu
-        if (!user.memberships) {
-            user.memberships = [];
-        }
-        
-        // Tambahkan paket baru ke array
-        user.memberships.push(newMembership);
-
-        await user.save();
-        
-        res.json({ msg: `Paket "${packageName}" berhasil ditambahkan untuk ${user.username}. Menunggu pembayaran.`, user });
-
-    } catch (error) {
-        console.error("Error di purchase-membership-admin:", error);
-        res.status(500).send('Server error');
-    }
-});
-
-// Rute Penggunaan Jatah Cuci / Scanner (DIREVISI TOTAL)
-// server.js
-app.post('/api/use-wash', auth, adminAuth, async (req, res) => {
-    // QR code akan berisi: "memberId;packageId"
-    const { qrData, washType } = req.body;
-    
-    if (!qrData || !qrData.includes(';')) {
-        return res.status(400).json({ msg: 'Format QR Code tidak valid.' });
-    }
-
-    const [memberId, packageId] = qrData.split(';');
-
-    try {
-        const user = await User.findOne({ memberId: memberId });
-        if (!user) return res.status(404).json({ msg: 'Data member tidak ditemukan.' });
-        
-        const membership = user.memberships.find(p => p.packageId === packageId);
-        if (!membership) return res.status(404).json({ msg: 'Paket member spesifik tidak ditemukan.' });
-
-        if (new Date() > new Date(membership.expiresAt)) return res.status(400).json({ msg: 'Paket member sudah kedaluwarsa.' });
-        if (!membership.isPaid) return res.status(400).json({ msg: 'Paket member belum lunas.' });
-
-        let successMessage = '';
-
-        if (membership.packageName === 'Paket Kombinasi') {
-            if (!washType) return res.status(400).json({ msg: 'Untuk Paket Kombinasi, jenis cucian harus dipilih.' });
-            if (membership.washes[washType] <= 0) return res.status(400).json({ msg: `Jatah cuci untuk tipe '${washType}' sudah habis.` });
-            membership.washes[washType] -= 1;
-            successMessage = `Berhasil menggunakan 1 jatah ${washType} untuk ${user.username}.`;
-        } else {
-            if (membership.remainingWashes <= 0) return res.status(400).json({ msg: 'Jatah cuci untuk paket ini sudah habis.' });
-            membership.remainingWashes -= 1;
-            successMessage = `Berhasil menggunakan 1 jatah cuci untuk ${user.username}.`;
-        }
-
-        await user.save();
-        const updatedUser = await User.findById(user._id).select('-password');
-        res.json({ msg: successMessage, user: updatedUser });
-
-    } catch (error) {
-        console.error("Error di use-wash:", error);
-        res.status(500).send('Server error');
-    }
-});
-
-// server.js
-// Rute API baru untuk mengambil detail user via scanner
-app.get('/api/user-by-memberid/:memberId', auth, adminAuth, async (req, res) => {
-    try {
-        const user = await User.findOne({ memberId: req.params.memberId }).select('-password');
-        if (!user) return res.status(404).json({ msg: 'Member dengan ID tersebut tidak ditemukan.' });
-        res.json(user);
-    } catch (error) {
-        res.status(500).send('Server error');
-    }
-});
-
-// RUTE BARU: Admin membuat transaksi koreksi manual
-app.post('/api/transactions/correction', auth, adminAuth, async (req, res) => {
-    const { amount, note } = req.body;
-
-    // Validasi input
-    if (!amount || !note || isNaN(parseInt(amount))) {
-        return res.status(400).json({ msg: 'Jumlah dan catatan wajib diisi dengan benar.' });
-    }
-
-    try {
-        const adminUser = await User.findById(req.user.id);
-
-        const newTransaction = new Transaction({
-            user: req.user.id,
-            username: adminUser.username, // atau bisa juga 'ADMIN'
-            packageName: note, // Gunakan field ini untuk menyimpan catatan koreksi
-            amount: parseInt(amount)
-        });
-
-        await newTransaction.save();
-        res.status(201).json({ msg: 'Transaksi koreksi berhasil ditambahkan.' });
-
-    } catch (error) {
-        console.error("Error saat membuat transaksi koreksi:", error);
-        res.status(500).send('Server error');
-    }
-});
-
-// --- RUTE BARU: ADMIN MEMPERPANJANG MASA AKTIF MEMBER ---
-app.post('/api/users/:id/extend-membership', auth, adminAuth, async (req, res) => {
-    const { months } = req.body;
-    const monthsToAdd = parseInt(months, 10);
-
-    if (!monthsToAdd || ![1, 3, 6].includes(monthsToAdd)) {
-        return res.status(400).json({ msg: 'Durasi perpanjangan tidak valid.' });
-    }
-
-    try {
-        const user = await User.findById(req.params.id);
-        if (!user || !user.membership) {
-            return res.status(404).json({ msg: 'Data member tidak ditemukan.' });
-        }
-
-        // Ambil tanggal kedaluwarsa saat ini, atau tanggal hari ini jika sudah lewat
-        const today = new Date();
-        const currentExpiry = new Date(user.membership.expiresAt);
-        const startDate = currentExpiry < today ? today : currentExpiry;
-
-        // Tambahkan bulan sesuai permintaan
-        const newExpiryDate = new Date(startDate.setMonth(startDate.getMonth() + monthsToAdd));
-
-        user.membership.expiresAt = newExpiryDate;
-        user.markModified('membership');
-        await user.save();
-
-        res.json({ msg: `Masa aktif ${user.username} berhasil diperpanjang ${monthsToAdd} bulan.` });
-
-    } catch (error) {
-        console.error("Error di /api/users/:id/extend-membership:", error);
-        res.status(500).send('Server error');
-    }
-});
-
-// Rute untuk menggunakan jatah cuci (scan barcode)
-/*app.post('/api/use-wash', auth, adminAuth, async (req, res) => { // <-- PERBAIKAN DI SINI
-    const { userId } = req.body;
-    try {
-        const user = await User.findOne({ memberId: userId });
-        if (!user) return res.status(404).json({ msg: 'Pengguna tidak ditemukan.' });
-        if (!user.membership) return res.status(400).json({ msg: 'Pengguna bukan member.' });
-        if (!user.membership.isPaid) {
-            return res.status(400).json({ msg: 'Paket member pengguna ini belum lunas.' });
-        }
-        if (user.membership.remainingWashes <= 0) {
-            return res.status(400).json({ msg: 'Jatah cuci pengguna ini sudah habis.' });
-        }
-        user.membership.remainingWashes -= 1;
-        await user.save();
-        res.json({ 
-            msg: `Berhasil menggunakan 1 jatah cuci untuk ${user.username}.`,
-            remaining: user.membership.remainingWashes 
-        }); 
-    } catch (error) {
-        res.status(500).send('Server error');
-    }
-});*/
-
-// --- RUTE KONFIRMASI PEMBAYARAN (DIPERBARUI) ---
-app.post('/api/confirm-payment/:userId/:packageId', auth, adminAuth, async (req, res) => {
-    try {
-        const user = await User.findById(req.params.userId);
-        if (!user) {
-            return res.status(404).json({ msg: 'Data member tidak ditemukan.' });
-        }
-        
-        // Cari paket spesifik di dalam array memberships
-        const membership = user.memberships.id(req.params.packageId);
-        if (!membership) {
-            return res.status(404).json({ msg: 'Paket spesifik tidak ditemukan.' });
-        }
-        
-        if (membership.isPaid) {
-            return res.status(400).json({ msg: 'Pembayaran untuk paket ini sudah pernah dikonfirmasi.' });
-        }
-
-        membership.isPaid = true;
-
-        // Logika untuk kartu nano jika paketnya adalah nano coating
-        if (membership.packageName.includes('Nano Coating')) {
-            const coatingDate = new Date();
-            const expiryDate = new Date(coatingDate);
-            expiryDate.setFullYear(expiryDate.getFullYear() + 1);
-
-            user.nanoCoatingCard = {
-                cardNumber: `NC-${Date.now()}`,
-                ownerName: user.username,
-                coatingDate: coatingDate,
-                expiresAt: expiryDate,
-                isActive: true
-            };
-            user.markModified('nanoCoatingCard');
-        }
-
-        await user.save();
-        
-        // (Opsional: Catat transaksi jika perlu)
-
-        res.json({ msg: `Pembayaran untuk paket "${membership.packageName}" telah dikonfirmasi.`, user });
-
-    } catch (error) {
-        console.error("Error di /api/confirm-payment:", error.message);
-        res.status(500).send('Server error');
-    }
-});
-
-// --- RUTE ADMIN MENGEDIT KARTU MAINTENANCE NANO (DIPERBARUI) ---
-app.put('/api/users/:id/update-nanocard', auth, adminAuth, async (req, res) => {
-    // Ambil kedua data dari body
-    const { ownerName, plateNumber } = req.body;
-
-    try {
-        const user = await User.findById(req.params.id);
-        if (!user || !user.nanoCoatingCard) {
-            return res.status(404).json({ msg: 'Kartu maintenance untuk user ini tidak ditemukan.' });
-        }
-
-        // Simpan kedua data
-        user.nanoCoatingCard.ownerName = ownerName;
-        user.nanoCoatingCard.plateNumber = plateNumber;
-        user.markModified('nanoCoatingCard');
-        await user.save();
-
-        res.json({ msg: `Data kartu untuk ${user.username} berhasil diperbarui.` });
-
-    } catch (error) {
-        console.error("Error di update-nanocard:", error);
-        res.status(500).send('Server error');
-    }
-});
-
-// --- RUTE BARU: KIRIM ULANG OTP ---
-app.post('/api/resend-otp', async (req, res) => {
-    const { email } = req.body;
-    try {
-        const user = await User.findOne({ email: email });
-
-        if (!user) {
-            return res.status(404).json({ msg: 'Pengguna dengan email ini tidak ditemukan.' });
-        }
-        if (user.isVerified) {
-            return res.status(400).json({ msg: 'Akun ini sudah terverifikasi.' });
-        }
-
-        // Buat OTP baru dan perbarui masa berlakunya
-        const otp = generateOTP();
-        user.otp = otp;
-        user.otpExpires = new Date(Date.now() + 10 * 60 * 1000); // Berlaku 10 menit
-        await user.save();
-
-        console.log(`[Kirim Ulang] OTP baru untuk ${email} adalah: ${otp}`);
-
-        // Kirim OTP baru ke email pengguna
-        await transporter.sendMail({
-            from: `"AUTOHIDROLIK" <${process.env.GMAIL_USER}>`,
-            to: email,
-            subject: 'Kode Verifikasi Pendaftaran Baru',
-            text: `Kode OTP baru Anda adalah: ${otp}. Kode ini berlaku selama 10 menit.`
-        });
-
-        res.json({ msg: 'Kode OTP baru telah berhasil dikirim ke email Anda.' });
-
-    } catch (error) {
-        console.error("Error di /api/resend-otp:", error);
-        res.status(500).send('Server error');
-    }
-});
-
-app.post('/api/reset-password', async (req, res) => {
-    // Pastikan Anda mengambil semua data yang diperlukan
-    const { email, otp, newPassword } = req.body;
-    try {
-        const user = await User.findOne({
-            email: email,
-            otp: otp,
-            otpExpires: { $gt: Date.now() }
-        });
-        
-        if (!user) {
-            return res.status(400).json({ msg: 'Kode OTP tidak valid atau kedaluwarsa.' });
-        }
-
-        user.password = await bcrypt.hash(newPassword, 10);
-        user.otp = null;
-        user.otpExpires = null;
-        await user.save();
-
-        res.json({ msg: 'Kata sandi berhasil direset! Silakan login dengan sandi baru Anda.' });
-    } catch (error) {
-        console.error("Error di /api/reset-password:", error);
-        res.status(500).send('Server error');
-    }
-});
-
-// --- New Route for Excel Data Download ---
-// --- New Route for Excel Data Download (Diperbarui dengan Tanggal Kedaluwarsa) ---
-app.get('/api/download-data', auth, adminAuth, async (req, res) => {
-    try {
-        const users = await User.find({ role: 'user' }).sort({ date: 1 });
-
-        const workbook = new exceljs.Workbook();
-        workbook.creator = 'AUTOHIDROLIK Admin';
-        workbook.created = new Date();
-
-        const memberSheet = workbook.addWorksheet('Data Member');
-        const nonMemberSheet = workbook.addWorksheet('Data Non-Member');
-
-        // ======================= PERUBAHAN DI SINI =======================
-        // Tambahkan kolom baru untuk Tanggal Kedaluwarsa
-        memberSheet.columns = [
-            { header: 'Tanggal Bergabung', key: 'date', width: 20, style: { numFmt: 'dd/mm/yyyy' } },
-            { header: 'Nama', key: 'username', width: 30 },
-            { header: 'Nama Paket Pembelian', key: 'packageName', width: 30 },
-            { header: 'Tanggal Kedaluwarsa', key: 'expiresAt', width: 20, style: { numFmt: 'dd/mm/yyyy' } }
-        ];
-        // ===================== AKHIR DARI PERUBAHAN =====================
-
-        nonMemberSheet.columns = [
-            { header: 'Tanggal Gabung', key: 'date', width: 20, style: { numFmt: 'dd/mm/yyyy' } },
-            { header: 'Nama', key: 'username', width: 30 }
-        ];
-
-        memberSheet.getRow(1).font = { bold: true };
-        nonMemberSheet.getRow(1).font = { bold: true };
-
-        users.forEach(user => {
-            if (user.membership && user.membership.isPaid) {
-                // ======================= PERUBAHAN DI SINI =======================
-                // Tambahkan data 'expiresAt' saat membuat baris baru
-                memberSheet.addRow({
-                    date: user.date,
-                    username: user.username,
-                    packageName: user.membership.packageName,
-                    expiresAt: user.membership.expiresAt ? new Date(user.membership.expiresAt) : '-'
-                });
-                // ===================== AKHIR DARI PERUBAHAN =====================
+            if (hasActivePackage) {
+                activeMembers.push(user);
             } else {
-                nonMemberSheet.addRow({
-                    date: user.date,
-                    username: user.username
-                });
+                expiredMembers.push(user);
             }
         });
-
-        res.setHeader(
-            'Content-Type',
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        );
-        res.setHeader(
-            'Content-Disposition',
-            `attachment; filename=data_autohidrolik_${new Date().toISOString().slice(0,10)}.xlsx`
-        );
-
-        await workbook.xlsx.write(res);
-        res.end();
-
-    } catch (error) {
-        console.error("Error creating Excel file:", error);
-        res.status(500).send("Failed to create Excel file.");
-    }
-});
-
-// --- PENAMBAHAN BARU: Rute untuk data grafik tren pendapatan ---
-app.get('/api/revenue-trend', auth, adminAuth, async (req, res) => {
-    try {
-        // Mengambil data transaksi 7 hari terakhir
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-        const revenueData = await Transaction.aggregate([
-            {
-                $match: {
-                    transactionDate: { $gte: sevenDaysAgo } // Filter data 7 hari terakhir
-                }
-            },
-            {
-                $group: {
-                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$transactionDate" } }, // Kelompokkan berdasarkan hari
-                    totalAmount: { $sum: "$amount" } // Jumlahkan pendapatan per hari
-                }
-            },
-            {
-                $sort: { _id: 1 } // Urutkan berdasarkan tanggal dari yang terlama
-            }
-        ]);
         
-        // Format data agar mudah dibaca oleh Chart.js
-        const labels = revenueData.map(data => data._id);
-        const data = revenueData.map(data => data.totalAmount);
-
-        res.json({ labels, data });
+        displayMembers(activeMembers);
+        displayExpiredMembers(expiredMembers);
+        displayNonMembers(nonMembers);
 
     } catch (error) {
-        console.error("Error mengambil data tren pendapatan:", error);
-        res.status(500).send('Server error');
+        const errorMsg = `<tr><td colspan="8" class="text-center text-danger">${error.message}</td></tr>`;
+        memberTableBody.innerHTML = errorMsg;
+        expiredMemberTableBody.innerHTML = errorMsg;
+        nonMemberTableBody.innerHTML = errorMsg;
     }
-});
+};
 
-// API BARU: Mengambil data member yang sudah lunas (aktif)
-app.get('/api/members/active', auth, adminAuth, async (req, res) => {
+
+    const fetchReviews = async () => {
+        try {
+            const response = await fetch('/api/reviews/all', { headers: getHeaders(false) });
+            if (!response.ok) throw new Error('Gagal mengambil data ulasan.');
+            cachedReviews = await response.json();
+            displayReviews(cachedReviews);
+        } catch (error) {
+            reviewTableBody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">${error.message}</td></tr>`;
+        }
+    };
+
+const displayMembers = (members) => {
+    memberTableBody.innerHTML = '';
+    if (members.length === 0) {
+        memberTableBody.innerHTML = `<tr><td colspan="8" class="text-center text-muted">Belum ada member aktif.</td></tr>`;
+        return;
+    }
+    let counter = 1;
+    members.forEach(user => {
+        const row = document.createElement('tr');
+        row.dataset.userId = user._id;
+
+        // Ambil SEMUA paket yang aktif
+        const activePackages = user.memberships.filter(p => p.isPaid && new Date(p.expiresAt) >= new Date());
+        
+        // Gabungkan detail dari setiap paket aktif menjadi satu tampilan
+        const membershipStatus = activePackages.map(p => {
+            return `<div>${p.packageName} (Sisa: ${p.remainingWashes}x)</div>`;
+        }).join('');
+
+        // Cari tanggal kedaluwarsa terdekat dari semua paket aktif
+        const closestExpiry = new Date(Math.min(...activePackages.map(p => new Date(p.expiresAt))));
+
+        // Tombol aksi
+        const actionButtons = `<button class="btn btn-sm btn-outline-info view-barcode-btn" title="QR Code"><i class="bi bi-qr-code"></i></button>
+                             <button class="btn btn-sm btn-warning edit-user-btn" title="Edit User"><i class="bi bi-pencil-square"></i></button>
+                             <button class="btn btn-sm btn-info set-package-btn" title="Tambah Paket Baru"><i class="bi bi-plus-circle"></i></button>`;
+
+        row.innerHTML = `<td>${counter++}</td>
+                         <td>${user.username}</td>
+                         <td>${user.email || '-'}</td>
+                         <td>${user.phone || '-'}</td>
+                         <td>${membershipStatus}</td>
+                         <td><span class="badge bg-success">Aktif</span></td>
+                         <td>${closestExpiry.toLocaleDateString('id-ID')}</td>
+                         <td><div class="btn-group">${actionButtons}</div></td>`;
+        memberTableBody.appendChild(row);
+    });
+};
+
+// TAMBAHKAN FUNGSI BARU INI
+// TAMBAHKAN FUNGSI BARU INI
+const displayPendingPayments = (users) => {
+    // Pastikan Anda sudah menambahkan const ini di bagian atas file
+    const pendingPaymentTableBody = document.getElementById('pending-payment-table-body');
+    
+    pendingPaymentTableBody.innerHTML = '';
+    if (users.length === 0) {
+        pendingPaymentTableBody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Tidak ada pembayaran yang tertunda.</td></tr>`;
+        return;
+    }
+
+    let html = '';
+    users.forEach(user => {
+        // Buat baris terpisah untuk SETIAP paket yang belum lunas
+        user.memberships.filter(p => !p.isPaid).forEach(pkg => {
+            html += `
+                <tr data-user-id="${user._id}" data-package-id="${pkg._id}">
+                    <td>${user.username}</td>
+                    <td>${user.phone || '-'}</td>
+                    <td>${pkg.packageName}</td>
+                    <td>${new Date(pkg.purchaseDate).toLocaleDateString('id-ID')}</td>
+                    <td>
+                        <button class="btn btn-sm btn-success confirm-payment-btn">
+                            <i class="bi bi-check-circle"></i> Konfirmasi
+                        </button>
+                    </td>
+                </tr>`;
+        });
+    });
+    pendingPaymentTableBody.innerHTML = html;
+};
+
+    const displayExpiredMembers = (members) => {
+        expiredMemberTableBody.innerHTML = '';
+        if (members.length === 0) {
+            expiredMemberTableBody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">Tidak ada member yang kedaluwarsa.</td></tr>`;
+            return;
+        }
+        let counter = 1;
+        members.forEach(user => {
+            const row = document.createElement('tr');
+            row.dataset.userId = user._id;
+            const lastPackage = `${user.membership.packageName}`;
+            const expiryDate = new Date(user.membership.expiresAt);
+            const formattedDate = expiryDate.toLocaleString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+            const actionButtons = `<button class="btn btn-sm btn-success set-package-btn" title="Perbarui Paket Member"><i class="bi bi-arrow-clockwise"></i> Perbarui Paket</button>`;
+            row.innerHTML = `<td>${String(counter++)}</td><td>${user.username}</td><td>${user.email || '-'}</td><td>${lastPackage}</td><td><span class="text-danger fw-bold">${formattedDate}</span></td><td><div class="btn-group">${actionButtons}</div></td>`;
+            expiredMemberTableBody.appendChild(row);
+        });
+    };
+
+    const displayNonMembers = (nonMembers) => {
+        nonMemberTableBody.innerHTML = '';
+        if (nonMembers.length === 0) {
+            nonMemberTableBody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Tidak ada pengguna non-member.</td></tr>`;
+            return;
+        }
+        let counter = 1;
+        nonMembers.forEach(user => {
+            const row = document.createElement('tr');
+            row.dataset.userId = user._id;
+            let actionButtons = `<button class="btn btn-sm btn-outline-success set-package-btn" title="Jadikan Member"><i class="bi bi-gem"></i></button><button class="btn btn-sm btn-outline-warning edit-user-btn" title="Edit"><i class="bi bi-pencil-square"></i></button><button class="btn btn-sm btn-outline-danger delete-user-btn" title="Hapus"><i class="bi bi-trash3"></i></button>`;
+            row.innerHTML = `<td>${String(counter++)}</td><td>${user.username}</td><td>${user.email}</td><td>${user.phone || '-'}</td><td><div class="btn-group">${actionButtons}</div></td>`;
+            nonMemberTableBody.appendChild(row);
+        });
+    };
+
+    const displayReviews = (reviews) => {
+        reviewTableBody.innerHTML = '';
+        reviews.forEach(review => {
+            const row = document.createElement('tr');
+            row.dataset.reviewId = review._id;
+            const ratingStars = '<span class="rating-stars">' + '★'.repeat(review.rating) + '☆'.repeat(5 - review.rating) + '</span>';
+            const username = review.user ? review.user.username : '<em class="text-muted">Pengguna Dihapus</em>';
+            row.innerHTML = `<td>${username}</td><td>${ratingStars}</td><td>${review.comment}</td><td><div class="btn-group"><button class="btn btn-sm btn-outline-warning edit-review-btn"><i class="bi bi-pencil-square"></i></button><button class="btn btn-sm btn-outline-danger delete-review-btn"><i class="bi bi-trash3"></i></button></div></td>`;
+            reviewTableBody.appendChild(row);
+        });
+    };
+
+const handleConfirmPayment = async (userId, packageId) => {
+    if (!confirm('Anda yakin ingin mengonfirmasi pembayaran untuk paket ini?')) return;
     try {
-        const activeMembers = await User.find({ 
-            'membership.isPaid': true 
-        }).sort({ date: 1 });
-        res.json(activeMembers);
-    } catch (err) {
-        res.status(500).send('Server error');
+        const response = await fetch(`/api/confirm-payment/${userId}/${packageId}`, { 
+            method: 'POST', 
+            headers: getHeaders(false) 
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.msg || 'Gagal konfirmasi.');
+        showAlert(`Pembayaran untuk ${result.user.username} berhasil dikonfirmasi.`, 'success');
+        fetchUsers(); // Muat ulang semua data tabel
+        fetchDashboardStats();
+    } catch (error) { 
+        showAlert(error.message, 'danger'); 
     }
-});
+};
 
-// API BARU: Mengambil data member yang menunggu pembayaran
-app.get('/api/members/pending', auth, adminAuth, async (req, res) => {
-    try {
-        const pendingMembers = await User.find({
-            'membership.isPaid': false
-        }).sort({ 'membership.purchaseDate': 1 }); // Urutkan berdasarkan tanggal pembelian
-        res.json(pendingMembers);
-    } catch (err) {
-        res.status(500).send('Server error');
+    const deleteUser = async (userId) => {
+        if (!confirm('Anda yakin ingin menghapus pengguna ini? Tindakan ini tidak dapat dibatalkan.')) return;
+        try {
+            const response = await fetch(`/api/users/${userId}`, { method: 'DELETE', headers: getHeaders(false) });
+            if (!response.ok) throw new Error('Gagal menghapus pengguna.');
+            showAlert('Pengguna berhasil dihapus.', 'success');
+            fetchUsers();
+            fetchDashboardStats();
+        } catch (error) { showAlert(error.message); }
+    };
+
+    const deleteReview = async (reviewId) => {
+        if (!confirm('Anda yakin ingin menghapus ulasan ini?')) return;
+        try {
+            const response = await fetch(`/api/reviews/${reviewId}`, { method: 'DELETE', headers: getHeaders(false) });
+            if (!response.ok) throw new Error('Gagal menghapus ulasan.');
+            showAlert('Ulasan berhasil dihapus.', 'success');
+            fetchReviews();
+        } catch (error) { showAlert(error.message); }
+    };
+
+    // --- FUNGSI-FUNGSI MODAL (POP-UP) ---
+    const openEditModal = (user) => {
+        document.getElementById('edit-user-id').value = user._id;
+        document.getElementById('edit-username').value = user.username;
+        document.getElementById('edit-email').value = user.email;
+        document.getElementById('edit-phone').value = user.phone;
+        document.getElementById('edit-role').value = user.role;
+        editUserModal.show();
+    };
+
+    const openBarcodeModal = (user) => {
+        document.getElementById('barcode-username').textContent = user.username;
+        const qrCodeContainer = document.getElementById('barcode-container');
+        qrCodeContainer.innerHTML = '';
+        if (user.memberId) {
+            new QRCode(qrCodeContainer, { text: user.memberId, width: 200, height: 200 });
+        } else {
+            qrCodeContainer.innerHTML = '<p class="text-danger">Member ID tidak ditemukan.</p>';
+        }
+        viewBarcodeModal.show();
+    };
+
+    const openSetPackageModal = (user) => {
+        document.getElementById('package-username').textContent = user.username;
+        document.getElementById('set-package-userid').value = user._id;
+        document.getElementById('set-package-form').reset();
+        setPackageModal.show();
+    };
+
+    const openResetPasswordModal = (user) => {
+        document.getElementById('reset-password-username').textContent = user.username;
+        document.getElementById('reset-password-userid').value = user._id;
+        document.getElementById('reset-password-form').reset();
+        resetPasswordModal.show();
+    };
+
+    const openEditReviewModal = (review) => {
+        document.getElementById('edit-review-id').value = review._id;
+        document.getElementById('edit-rating').value = review.rating;
+        document.getElementById('edit-comment').value = review.comment;
+        editReviewModal.show();
+    };
+
+    const openEditComboWashesModal = (user) => {
+        document.getElementById('edit-combo-userid').value = user._id;
+        document.getElementById('edit-combo-username').textContent = user.username;
+        document.getElementById('edit-bodywash-count').value = user.membership.washes.bodywash;
+        document.getElementById('edit-hidrolik-count').value = user.membership.washes.hidrolik;
+        editComboWashesModal.show();
+    };
+
+    const openEditExpiryModal = (user) => {
+        document.getElementById('edit-expiry-userid').value = user._id;
+        document.getElementById('edit-expiry-username').textContent = user.username;
+        if (user.membership.expiresAt) {
+            const currentDate = new Date(user.membership.expiresAt);
+            const year = currentDate.getFullYear();
+            const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+            const day = String(currentDate.getDate()).padStart(2, '0');
+            document.getElementById('edit-expiry-date').value = `${year}-${month}-${day}`;
+        }
+        editExpiryModal.show();
+    };
+
+    const openExtendMembershipModal = (user) => {
+        document.getElementById('extend-userid').value = user._id;
+        document.getElementById('extend-username').textContent = user.username;
+        const currentExpiry = new Date(user.membership.expiresAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+        document.getElementById('extend-current-expiry').textContent = currentExpiry;
+        extendMembershipModal.show();
+    };
+    
+    // --- EVENT LISTENER UTAMA ---
+
+    document.body.addEventListener('click', async (e) => {
+        const button = e.target.closest('button');
+        if (!button) return;
+
+        if (button.classList.contains('extend-btn')) {
+            const userId = document.getElementById('extend-userid').value;
+            const months = button.dataset.months;
+            button.disabled = true;
+            button.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+            try {
+                const response = await fetch(`/api/users/${userId}/extend-membership`, {
+                    method: 'POST',
+                    headers: getHeaders(),
+                    body: JSON.stringify({ months })
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.msg);
+                showAlert(result.msg, 'success');
+                extendMembershipModal.hide();
+                fetchUsers();
+            } catch (error) {
+                showAlert(error.message);
+            } finally {
+                document.querySelectorAll('.extend-btn').forEach((btn, index) => {
+                    btn.disabled = false;
+                    const durations = [1, 3, 6];
+                    btn.innerHTML = `+ ${durations[index]} Bulan`;
+                });
+            }
+            return;
+        }
+
+        const userRow = button.closest('tr[data-user-id]');
+        if (userRow) {
+            const userId = userRow.dataset.userId;
+            const user = cachedUsers.find(u => u._id === userId);
+            if (user) {
+               if (button.classList.contains('confirm-payment-btn')) {
+    const row = button.closest('tr');
+    // Pastikan kita mendapatkan kedua ID dari baris tabel
+    if (row && row.dataset.userId && row.dataset.packageId) {
+        handleConfirmPayment(row.dataset.userId, row.dataset.packageId);
     }
-});
+    return;
+}
+                if (button.classList.contains('delete-user-btn')) return deleteUser(userId);
+                if (button.classList.contains('edit-user-btn')) return openEditModal(user);
+                if (button.classList.contains('view-barcode-btn')) return openBarcodeModal(user);
+                if (button.classList.contains('set-package-btn')) return openSetPackageModal(user);
+                if (button.classList.contains('reset-password-btn')) return openResetPasswordModal(user);
+                if (button.classList.contains('edit-combo-btn')) return openEditComboWashesModal(user);
+                if (button.classList.contains('edit-expiry-btn')) return openEditExpiryModal(user);
+                if (button.classList.contains('extend-membership-btn')) return openExtendMembershipModal(user);
+            }
+        }
 
-// ======================================================
-// --- Rute untuk Menyajikan Halaman HTML ---
-// ======================================================
+        const reviewRow = button.closest('tr[data-review-id]');
+        if (reviewRow) {
+            const reviewId = reviewRow.dataset.reviewId;
+            const review = cachedReviews.find(r => r._id === reviewId);
+            if (button.classList.contains('delete-review-btn')) return deleteReview(reviewId);
+            if (review && button.classList.contains('edit-review-btn')) return openEditReviewModal(review);
+        }
+    });
 
-// PERBAIKAN: Pindahkan rute '/' ke sebelum express.static
-app.get('/', async (req, res) => {
-    try {
-        await Visitor.findOneAndUpdate(
-            { identifier: 'global-visitor-count' }, 
-            { $inc: { count: 1 } }, 
-            { upsert: true }
-        );
-    } catch (error) {
-        console.error("Gagal menghitung visitor:", error);
-    }
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+    // --- EVENT LISTENER UNTUK FORM SUBMISSIONS ---
+    document.getElementById('add-user-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const userData = {
+            username: document.getElementById('add-username').value,
+            email: document.getElementById('add-email').value,
+            phone: document.getElementById('add-phone').value,
+            password: document.getElementById('add-password').value,
+            role: document.getElementById('add-role').value,
+        };
+        try {
+            const response = await fetch('/api/users', { method: 'POST', headers: getHeaders(), body: JSON.stringify(userData) });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.msg);
+            showAlert('Pengguna baru berhasil ditambahkan.', 'success');
+            addUserModal.hide();
+            fetchUsers();
+            fetchDashboardStats();
+        } catch (error) { showAlert(error.message); }
+    });
 
-app.use(express.static(path.join(__dirname, 'public')));
+    document.getElementById('edit-user-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const userId = document.getElementById('edit-user-id').value;
+        const userData = {
+            username: document.getElementById('edit-username').value,
+            email: document.getElementById('edit-email').value,
+            phone: document.getElementById('edit-phone').value,
+            role: document.getElementById('edit-role').value,
+        };
+        try {
+            const response = await fetch(`/api/users/${userId}`, { method: 'PUT', headers: getHeaders(), body: JSON.stringify(userData) });
+            if (!response.ok) throw new Error('Gagal mengupdate user.');
+            showAlert('Data pengguna berhasil diperbarui.', 'success');
+            editUserModal.hide();
+            fetchUsers();
+        } catch (error) { showAlert(error.message); }
+    });
 
-app.get('/Login', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'login.html'));
-});
-app.get('/Register-User', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'register.html'));
-});
-app.get('/Profile', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'profile.html'));
-});
-app.get('/Admin-Dashboard', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
-});
-// Rute baru untuk halaman status
-app.get('/Server-Status', auth, adminAuth, (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'status.html'));
-});
+    document.getElementById('edit-transaction-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const amount = document.getElementById('transaction-amount').value;
+        const note = document.getElementById('transaction-note').value;
+        try {
+            const response = await fetch('/api/transactions/correction', { method: 'POST', headers: getHeaders(), body: JSON.stringify({ amount, note }) });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.msg);
+            showAlert('Transaksi koreksi berhasil disimpan.', 'success');
+            editTransactionModal.hide();
+            document.getElementById('edit-transaction-form').reset();
+            fetchDashboardStats();
+            fetchRevenueTrend();
+        } catch (error) { showAlert(error.message); }
+    });
 
+    document.getElementById('reset-password-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const userId = document.getElementById('reset-password-userid').value;
+        const newPassword = document.getElementById('new-password-admin').value;
+        try {
+            const response = await fetch(`/api/users/${userId}/reset-password`, { method: 'POST', headers: getHeaders(), body: JSON.stringify({ newPassword }) });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.msg);
+            showAlert(result.msg, 'success');
+            resetPasswordModal.hide();
+        } catch (error) { showAlert(error.message); }
+    });
 
-// --- PENAMBAHAN BARU: Rute untuk halaman scanner ---
-app.get('/Scanner-QRCODE', (req, res) => {
-    // Pastikan halaman ini hanya bisa diakses setelah login sebagai admin
-    // Middleware 'auth' dan 'adminAuth' bisa ditambahkan di sini jika perlu
-    res.sendFile(path.join(__dirname, 'public', 'scan.html'));
+    document.getElementById('edit-expiry-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const userId = document.getElementById('edit-expiry-userid').value;
+        const newExpiryDate = document.getElementById('edit-expiry-date').value;
+        try {
+            const response = await fetch(`/api/users/${userId}/update-expiry`, { method: 'PUT', headers: getHeaders(), body: JSON.stringify({ newExpiryDate }) });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.msg);
+            showAlert(result.msg, 'success');
+            editExpiryModal.hide();
+            fetchUsers();
+        } catch (error) { showAlert(error.message); }
+    });
+
+    document.getElementById('set-package-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const userId = document.getElementById('set-package-userid').value;
+        const select = document.getElementById('package-name');
+        const selectedOption = select.options[select.selectedIndex];
+        const packageData = {
+            packageName: selectedOption.value,
+            totalWashes: parseInt(selectedOption.dataset.washes)
+        };
+        try {
+            const response = await fetch(`/api/purchase-membership-admin/${userId}`, { method: 'POST', headers: getHeaders(), body: JSON.stringify(packageData) });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.msg);
+            showAlert(result.msg, 'success');
+            setPackageModal.hide();
+            fetchUsers();
+        } catch (error) { showAlert(error.message); }
+    });
+
+    document.getElementById('edit-review-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const reviewId = document.getElementById('edit-review-id').value;
+        const reviewData = {
+            rating: document.getElementById('edit-rating').value,
+            comment: document.getElementById('edit-comment').value,
+        };
+        try {
+            const response = await fetch(`/api/reviews/${reviewId}`, { method: 'PUT', headers: getHeaders(), body: JSON.stringify(reviewData) });
+            if (!response.ok) throw new Error('Gagal mengupdate ulasan.');
+            showAlert('Ulasan berhasil diperbarui.', 'success');
+            editReviewModal.hide();
+            fetchReviews();
+        } catch (error) { showAlert(error.message); }
+    });
+
+    document.getElementById('edit-combo-washes-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const userId = document.getElementById('edit-combo-userid').value;
+        const comboData = {
+            bodywash: document.getElementById('edit-bodywash-count').value,
+            hidrolik: document.getElementById('edit-hidrolik-count').value,
+        };
+        try {
+            const response = await fetch(`/api/users/${userId}/update-combo-washes`, { method: 'PUT', headers: getHeaders(), body: JSON.stringify(comboData) });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.msg);
+            showAlert(result.msg, 'success');
+            editComboWashesModal.hide();
+            fetchUsers();
+        } catch (error) { showAlert(error.message); }
+    });
+    
+    downloadButton.addEventListener('click', async () => {
+        downloadButton.disabled = true;
+        downloadButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Mengunduh...';
+        try {
+            const response = await fetch('/api/download-data', { headers: getHeaders(false) });
+            if (!response.ok) throw new Error('Gagal mengunduh data.');
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `data_autohidrolik_${new Date().toISOString().slice(0,10)}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            a.remove();
+        } catch (error) {
+            showAlert(error.message);
+        } finally {
+            downloadButton.disabled = false;
+            downloadButton.innerHTML = '<i class="bi bi-download"></i> Download Data';
+        }
+    });
+
+    document.getElementById('logout-button').addEventListener('click', () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('userRole');
+        window.location.href = '/login.html';
+    });
+
+    // --- INISIALISASI SAAT HALAMAN DIMUAT ---
+    fetchDashboardStats();
+    fetchUsers();
+    fetchReviews();
+    fetchRevenueTrend();
 });
-
-// --- Jalankan Server ---
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server berjalan di port ${PORT}`));
