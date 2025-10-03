@@ -592,18 +592,15 @@ app.put('/api/profile/update-nanocard', auth, async (req, res) => {
 });
 
 // --- RUTE ADMIN: MANAJEMEN PENGGUNA ---
-// --- RUTE ADMIN: MANAJEMEN PENGGUNA ---
 app.get('/api/users', auth, adminAuth, async (req, res) => {
     try {
-        // Kode ini sudah benar, pastikan tidak ada yang terlewat
         const users = await User.find({ role: { $ne: 'admin' } })
-            .populate('memberships') // Baris ini akan bekerja setelah skema diperbaiki
             .select('-password')
-            .sort({ date: 1 });
+            .sort({ date: 1 }); // Mengurutkan dari terlama ke terbaru
       
         res.json(users);
     } catch (err) {
-        console.error("Error di /api/users (GET):", err.message);
+        console.error(err.message);
         res.status(500).send('Server error');
     }
 });
