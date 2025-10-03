@@ -100,20 +100,17 @@ const fetchUsers = async () => {
         if (!response.ok) throw new Error('Gagal mengambil data pengguna.');
         cachedUsers = await response.json();
 
-        // --- AWAL LOGIKA BARU UNTUK MEMBACA ARRAY ---
         const today = new Date();
         const activeMembers = [];
         const expiredMembers = [];
         const nonMembers = [];
 
         cachedUsers.forEach(user => {
-            // Cek jika pengguna tidak punya array 'memberships' atau array-nya kosong
             if (!user.memberships || user.memberships.length === 0) {
                 nonMembers.push(user);
-                return; // Lanjutkan ke pengguna berikutnya
+                return;
             }
 
-            // Cek apakah ada SETIDAKNYA SATU paket yang aktif di dalam array
             const hasActivePackage = user.memberships.some(
                 pkg => pkg.isPaid && new Date(pkg.expiresAt) >= today
             );
@@ -121,13 +118,10 @@ const fetchUsers = async () => {
             if (hasActivePackage) {
                 activeMembers.push(user);
             } else {
-                // Jika tidak ada yang aktif, berarti semua paketnya sudah kedaluwarsa
                 expiredMembers.push(user);
             }
         });
-        // --- AKHIR LOGIKA BARU ---
         
-        // Panggil fungsi display dengan data yang sudah benar
         displayMembers(activeMembers);
         displayExpiredMembers(expiredMembers);
         displayNonMembers(nonMembers);
