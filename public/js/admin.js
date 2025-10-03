@@ -126,7 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- FUNGSI TAMPILAN (DISPLAY) ---
-    const displayMembers = (members) => {
+       const displayMembers = (members) => {
         memberTableBody.innerHTML = '';
         if (members.length === 0) {
             memberTableBody.innerHTML = `<tr><td colspan="8" class="text-center text-muted">Belum ada member aktif.</td></tr>`;
