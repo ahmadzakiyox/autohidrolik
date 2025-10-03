@@ -878,9 +878,7 @@ app.post('/api/purchase-membership', auth, async (req, res) => {
     }
 });
 
-// Di dalam file server.js Anda
 // Rute Pengaturan Paket oleh Admin (DIREVISI TOTAL)
-// server.js
 app.post('/api/purchase-membership-admin/:userId', auth, adminAuth, async (req, res) => {
     const { packageName, totalWashes } = req.body;
     try {
@@ -918,7 +916,6 @@ app.post('/api/purchase-membership-admin/:userId', auth, adminAuth, async (req, 
 });
 
 // Rute Penggunaan Jatah Cuci / Scanner (DIREVISI TOTAL)
-// server.js
 app.post('/api/use-wash', auth, adminAuth, async (req, res) => {
     // QR code akan berisi: "memberId;packageId"
     const { qrData, washType } = req.body;
@@ -933,6 +930,7 @@ app.post('/api/use-wash', auth, adminAuth, async (req, res) => {
         const user = await User.findOne({ memberId: memberId });
         if (!user) return res.status(404).json({ msg: 'Data member tidak ditemukan.' });
         
+        // Cari paket yang sesuai di dalam array memberships
         const membership = user.memberships.find(p => p.packageId === packageId);
         if (!membership) return res.status(404).json({ msg: 'Paket member spesifik tidak ditemukan.' });
 
