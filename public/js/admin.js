@@ -94,26 +94,44 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const fetchUsers = async () => {
-        try {
-            const response = await fetch('/api/users', { headers: getHeaders(false) });
-            if (!response.ok) throw new Error('Gagal mengambil data pengguna.');
-            cachedUsers = await response.json();
-            const today = new Date();
-            const activeMembers = cachedUsers.filter(user => user.membership && user.membership.expiresAt && new Date(user.membership.expiresAt) >= today);
-            const expiredMembers = cachedUsers.filter(user => user.membership && user.membership.expiresAt && new Date(user.membership.expiresAt) < today);
-            const nonMembers = cachedUsers.filter(user => !user.membership);
-            displayMembers(activeMembers);
-            displayExpiredMembers(expiredMembers);
-            displayNonMembers(nonMembers);
-        } catch (error) {
-            const errorMsg = `<tr><td colspan="8" class="text-center text-danger">${error.message}</td></tr>`;
-            memberTableBody.innerHTML = errorMsg;
-            expiredMemberTableBody.innerHTML = errorMsg;
-            nonMemberTableBody.innerHTML = errorMsg;
-        }
-    };
+// Ganti dengan fungsi fetchUsers yang baru
+const fetchUsers = async () => {
+    try {
+        const response = await fetch('/api/users', { headers: getHeaders(false) });
+        if (!response.ok) throw new Error('Gagal mengambil data pengguna.');
+        cachedUsers = await response.json();
 
+        // --- LOGIKA KLASIFIKASI BARU ---
+        const today = new Date();
+        const activeMembers = [];
+        const pendingUsers = []; // Pengguna dengan paket yang belum lunas
+        const expiredMembers = [];
+        const nonMembers = [];
+
+        cachedUsers.forEach(user => {
+            if (!user.memberships || user.memberships.length === 0) {
+                nonMembers.push(user);
+                return;
+            }
+
+            const hasActivePackage = user.memberships.some(p => p.isPaid && new Date(p.expiresAt) >= today);
+            const hasPendingPackage = user.memberships.some(p => !p.isPaid);
+
+            if (hasActivePackage) activeMembers.push(user);
+            if (hasPendingPackage) pendingUsers.push(user);
+            if (!hasActivePackage && !hasPendingPackage) expiredMembers.push(user);
+        });
+        
+        // Panggil fungsi-fungsi display
+        displayMembers(activeMembers);
+        displayPendingPayments(pendingUsers); // Ini fungsi baru
+        displayExpiredMembers(expiredMembers);
+        displayNonMembers(nonMembers);
+
+    } catch (error) {
+        showAlert(error.message, 'danger');
+    }
+};
     const fetchReviews = async () => {
         try {
             const response = await fetch('/api/reviews/all', { headers: getHeaders(false) });
@@ -125,45 +143,73 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // --- FUNGSI TAMPILAN (DISPLAY) ---
-    const displayMembers = (members) => {
-        memberTableBody.innerHTML = '';
-        if (members.length === 0) {
-            memberTableBody.innerHTML = `<tr><td colspan="8" class="text-center text-muted">Belum ada member aktif.</td></tr>`;
-            return;
-        }
-        let counter = 1;
-        members.forEach(user => {
-            const row = document.createElement('tr');
-            row.dataset.userId = user._id;
-            let membershipStatus = '';
-            if (user.membership.packageName === 'Paket Kombinasi') {
-                membershipStatus = `<div>Paket Kombinasi</div><small class="text-muted">Bodywash: <strong>${user.membership.washes.bodywash}x</strong>, Hidrolik: <strong>${user.membership.washes.hidrolik}x</strong></small>`;
-            } else {
-                membershipStatus = `${user.membership.packageName} (${user.membership.remainingWashes}x)`;
-            }
-            const paymentStatus = user.membership.isPaid ? '<span class="badge bg-success">Lunas</span>' : '<span class="badge bg-warning text-dark">Belum Bayar</span>';
-            let expiryDateHtml = '-';
-            if (user.membership.expiresAt) {
-                const expiryDate = new Date(user.membership.expiresAt);
-                const isExpired = expiryDate < new Date();
-                const formattedDate = expiryDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-                const editButton = `<button class="btn btn-sm btn-link p-0 ms-2 edit-expiry-btn" title="Edit Tanggal"><i class="bi bi-pencil"></i></button>`;
-                expiryDateHtml = (isExpired ? `<span class="text-danger fw-bold">${formattedDate}</span>` : formattedDate) + editButton;
-            }
-            let actionButtons = `<button class="btn btn-sm btn-info extend-membership-btn" title="Perpanjang"><i class="bi bi-calendar-plus"></i></button><button class="btn btn-sm btn-outline-secondary reset-password-btn" title="Reset Sandi"><i class="bi bi-key-fill"></i></button><button class="btn btn-sm btn-outline-success edit-user-btn" title="Edit"><i class="bi bi-pencil-square"></i></button><button class="btn btn-sm btn-outline-danger delete-user-btn" title="Hapus"><i class="bi bi-trash3"></i></button><button class="btn btn-sm btn-outline-info set-package-btn" title="Atur/Ganti Paket"><i class="bi bi-gem"></i></button>`;
-            if (user.membership.packageName === 'Paket Kombinasi') {
-                actionButtons = `<button class="btn btn-sm btn-outline-primary edit-combo-btn" title="Edit Jatah Kombinasi"><i class="bi bi-sliders"></i></button>` + actionButtons;
-            }
-            if (user.membership.isPaid) {
-                actionButtons = `<button class="btn btn-sm btn-outline-info view-barcode-btn" title="QR Code"><i class="bi bi-qr-code"></i></button>` + actionButtons;
-            } else {
-                actionButtons = `<button class="btn btn-sm btn-info confirm-payment-btn" title="Konfirmasi Bayar"><i class="bi bi-check-circle"></i></button>` + actionButtons;
-            }
-            row.innerHTML = `<td>${String(counter++).padStart(3, '0')}</td><td>${user.username}</td><td>${user.email}</td><td>${user.phone || '-'}</td><td>${membershipStatus}</td><td>${paymentStatus}</td><td>${expiryDateHtml}</td><td><div class="btn-group">${actionButtons}</div></td>`;
-            memberTableBody.appendChild(row);
+// Ganti dengan fungsi displayMembers yang baru
+const displayMembers = (members) => {
+    memberTableBody.innerHTML = '';
+    if (members.length === 0) {
+        memberTableBody.innerHTML = `<tr><td colspan="8" class="text-center text-muted">Belum ada member aktif.</td></tr>`;
+        return;
+    }
+    let counter = 1;
+    members.forEach(user => {
+        const row = document.createElement('tr');
+        row.dataset.userId = user._id;
+
+        const activePackages = user.memberships.filter(p => p.isPaid && new Date(p.expiresAt) >= new Date());
+        
+        // Gabungkan semua paket aktif menjadi satu tampilan HTML
+        const membershipStatus = activePackages.map(p => {
+            return `<div>${p.packageName} (Sisa: ${p.remainingWashes}x)</div>`;
+        }).join('');
+
+        const closestExpiry = new Date(Math.min(...activePackages.map(p => new Date(p.expiresAt))));
+
+        const actionButtons = `<button class="btn btn-sm btn-outline-info view-barcode-btn" title="QR Code"><i class="bi bi-qr-code"></i></button>
+                             <button class="btn btn-sm btn-warning edit-user-btn" title="Edit User"><i class="bi bi-pencil-square"></i></button>
+                             <button class="btn btn-sm btn-info set-package-btn" title="Tambah Paket Baru"><i class="bi bi-plus-circle"></i></button>`;
+
+        row.innerHTML = `<td>${String(counter++)}</td>
+                         <td>${user.username}</td>
+                         <td>${user.email || '-'}</td>
+                         <td>${user.phone || '-'}</td>
+                         <td>${membershipStatus}</td>
+                         <td><span class="badge bg-success">Aktif</span></td>
+                         <td>${closestExpiry.toLocaleDateString('id-ID')}</td>
+                         <td><div class="btn-group">${actionButtons}</div></td>`;
+        memberTableBody.appendChild(row);
+    });
+};
+
+// TAMBAHKAN FUNGSI BARU INI
+const displayPendingPayments = (users) => {
+    // Pastikan Anda sudah menambahkan const pendingPaymentTableBody di atas
+    const pendingPaymentTableBody = document.getElementById('pending-payment-table-body');
+    
+    pendingPaymentTableBody.innerHTML = '';
+    if (users.length === 0) {
+        pendingPaymentTableBody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Tidak ada pembayaran yang tertunda.</td></tr>`;
+        return;
+    }
+    let html = '';
+    users.forEach(user => {
+        // Buat baris terpisah untuk SETIAP paket yang belum lunas
+        user.memberships.filter(p => !p.isPaid).forEach(pkg => {
+            html += `
+                <tr data-user-id="${user._id}" data-package-id="${pkg._id}">
+                    <td>${user.username}</td>
+                    <td>${user.phone || '-'}</td>
+                    <td>${pkg.packageName}</td>
+                    <td>${new Date(pkg.purchaseDate).toLocaleDateString('id-ID')}</td>
+                    <td>
+                        <button class="btn btn-sm btn-success confirm-payment-btn">
+                            <i class="bi bi-check-circle"></i> Konfirmasi
+                        </button>
+                    </td>
+                </tr>`;
         });
-    };
+    });
+    pendingPaymentTableBody.innerHTML = html;
+};
 
     const displayExpiredMembers = (members) => {
         expiredMemberTableBody.innerHTML = '';
@@ -213,17 +259,22 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- FUNGSI-FUNGSI AKSI (OPERASI CRUD) ---
-    const handleConfirmPayment = async (userId) => {
-        if (!confirm('Anda yakin ingin mengonfirmasi pembayaran untuk pengguna ini?')) return;
-        try {
-            const response = await fetch(`/api/confirm-payment/${userId}`, { method: 'POST', headers: getHeaders(false) });
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.msg || 'Gagal konfirmasi.');
-            showAlert(`Pembayaran untuk ${result.user.username} berhasil dikonfirmasi.`, 'success');
-            fetchUsers();
-            fetchDashboardStats();
-        } catch (error) { showAlert(error.message); }
-    };
+const handleConfirmPayment = async (userId, packageId) => {
+    if (!confirm('Anda yakin ingin mengonfirmasi pembayaran untuk paket ini?')) return;
+    try {
+        const response = await fetch(`/api/confirm-payment/${userId}/${packageId}`, { 
+            method: 'POST', 
+            headers: getHeaders(false) 
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.msg || 'Gagal konfirmasi.');
+        showAlert(`Pembayaran untuk ${result.user.username} berhasil dikonfirmasi.`, 'success');
+        fetchUsers(); // Muat ulang semua data tabel
+        fetchDashboardStats();
+    } catch (error) { 
+        showAlert(error.message, 'danger'); 
+    }
+};
 
     const deleteUser = async (userId) => {
         if (!confirm('Anda yakin ingin menghapus pengguna ini? Tindakan ini tidak dapat dibatalkan.')) return;
@@ -357,7 +408,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const userId = userRow.dataset.userId;
             const user = cachedUsers.find(u => u._id === userId);
             if (user) {
-                if (button.classList.contains('confirm-payment-btn')) return handleConfirmPayment(userId);
+                if (button.classList.contains('confirm-payment-btn')) {
+    const row = button.closest('tr');
+    if (row && row.dataset.userId && row.dataset.packageId) {
+        handleConfirmPayment(row.dataset.userId, row.dataset.packageId);
+    }
+    return; // Hentikan proses setelah ini
+}
                 if (button.classList.contains('delete-user-btn')) return deleteUser(userId);
                 if (button.classList.contains('edit-user-btn')) return openEditModal(user);
                 if (button.classList.contains('view-barcode-btn')) return openBarcodeModal(user);
