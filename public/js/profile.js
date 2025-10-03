@@ -1,5 +1,3 @@
-// File: public/js/profile.js (Gunakan kode ini)
-
 document.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -7,20 +5,18 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    let currentUserData = null;
-    const editPackageDetailModal = new bootstrap.Modal(document.getElementById('editPackageDetailModal'));
-
     const fetchProfileData = async () => {
         try {
             document.getElementById('profile-loading').classList.remove('d-none');
             document.getElementById('profile-content').classList.add('d-none');
             const response = await fetch('/api/profile', { headers: { 'x-auth-token': token } });
             if (!response.ok) throw new Error('Sesi tidak valid, silakan login kembali.');
-            currentUserData = await response.json();
+            const currentUserData = await response.json();
             displayProfile(currentUserData);
         } catch (error) {
             alert(error.message);
             localStorage.removeItem('token');
+            localStorage.removeItem('userRole');
             window.location.href = '/login.html';
         }
     };
@@ -41,34 +37,33 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Urutkan paket: yang belum lunas paling atas, lalu yang aktif, lalu yang kedaluwarsa
         user.memberships.sort((a, b) => {
             if (a.isPaid !== b.isPaid) return a.isPaid ? 1 : -1;
             return new Date(b.expiresAt) - new Date(a.expiresAt);
         });
 
         user.memberships.forEach(pkg => {
-            const card = createPackageCard(pkg, user.memberId);
+            const card = createPackageCard(pkg);
             membershipsContainer.appendChild(card);
             
-            // Generate QR Code hanya untuk paket yang lunas dan belum kedaluwarsa
             if (pkg.isPaid && new Date() < new Date(pkg.expiresAt)) {
-                // Pastikan ada sisa layanan (bukan nano) atau ini adalah paket nano
-                if (pkg.remainingWashes > 0 || pkg.packageName.toLowerCase().includes('nano')) {
-                    const qrContainer = document.getElementById(`qrcode-container-${pkg._id}`);
-                    if (qrContainer && user.memberId && pkg._id) {
-                         new QRCode(qrContainer, {
-                            text: `${user.memberId};${pkg.packageId}`, // Menggunakan packageId yang unik
-                            width: 128,
-                            height: 128,
-                        });
-                    }
+                const qrContainer = document.getElementById(`qrcode-container-${pkg._id}`);
+                const isNano = pkg.packageName.toLowerCase().includes('nano');
+                
+                if (qrContainer && (pkg.remainingWashes > 0 || isNano)) {
+                     const qrData = `${user.memberId};${pkg.packageId}`;
+                     console.log(`Generating QR for packageId: ${pkg.packageId}`);
+                     new QRCode(qrContainer, {
+                        text: qrData,
+                        width: 128,
+                        height: 128,
+                    });
                 }
             }
         });
     };
 
-    const createPackageCard = (pkg, memberId) => {
+    const createPackageCard = (pkg) => {
         const card = document.createElement('div');
         card.className = 'card mb-4';
         const formatDate = (dateString) => new Date(dateString).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
