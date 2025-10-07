@@ -34,30 +34,25 @@ document.addEventListener('DOMContentLoaded', () => {
         const membershipsContainer = document.getElementById('memberships-container');
         membershipsContainer.innerHTML = '';
 
-        // --- PERUBAHAN UTAMA: Cek array 'memberships' ---
         if (!user.memberships || user.memberships.length === 0) {
             membershipsContainer.innerHTML = `<div class="card card-body text-center"><p>Anda belum memiliki paket aktif.</p><a href="/" class="btn btn-primary">Lihat Pilihan Paket</a></div>`;
             return;
         }
 
-        // Urutkan paket: yang belum lunas di atas, lalu berdasarkan tanggal kedaluwarsa
         user.memberships.sort((a, b) => {
-            if (a.isPaid !== b.isPaid) return a.isPaid ? 1 : -1; // Tampilkan yg belum lunas dulu
+            if (a.isPaid !== b.isPaid) return a.isPaid ? 1 : -1;
             return new Date(b.expiresAt) - new Date(a.expiresAt);
         });
 
-        // Iterasi melalui setiap paket dalam array
         user.memberships.forEach(pkg => {
-            const card = createPackageCard(pkg, user.memberId); // Kirim memberId ke fungsi
+            const card = createPackageCard(pkg, user.memberId);
             membershipsContainer.appendChild(card);
             
-            // Generate QR Code jika paket aktif dan valid
             if (pkg.isPaid && new Date() < new Date(pkg.expiresAt)) {
                 const qrContainer = document.getElementById(`qrcode-container-${pkg._id}`);
                 const isNano = pkg.packageName.toLowerCase().includes('nano');
                 
                 if (qrContainer && (pkg.remainingWashes > 0 || isNano)) {
-                     // Data QR sekarang berisi memberId dan packageId unik
                      const qrData = `${user.memberId};${pkg.packageId}`;
                      console.log(`Generating QR for packageId: ${pkg.packageId}`);
                      new QRCode(qrContainer, {
@@ -70,7 +65,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    // Fungsi untuk membuat kartu paket
     const createPackageCard = (pkg) => {
         const card = document.createElement('div');
         card.className = 'card mb-4';
@@ -94,6 +88,19 @@ document.addEventListener('DOMContentLoaded', () => {
             detailsHtml = `
                 <p class="mb-1"><small>Nama Pemilik:</small> <strong>${pkg.ownerName || 'Belum diisi'}</strong></p>
                 <p><small>No. Polisi:</small> <strong>${pkg.plateNumber || 'Belum diisi'}</strong></p>
+                <hr>
+                <p><small>Berlaku hingga: <strong>${formatDate(pkg.expiresAt)}</strong></small></p>
+            `;
+        } else if (pkg.packageName.toLowerCase().includes('kombinasi')) {
+            detailsHtml = `
+                <div class="mb-2">
+                    <span class="fs-4 fw-bold">${pkg.washes.bodywash || 0}x</span>
+                    <span class="text-muted">Body Wash</span>
+                </div>
+                <div>
+                    <span class="fs-4 fw-bold">${pkg.washes.hidrolik || 0}x</span>
+                    <span class="text-muted">Cuci Hidrolik</span>
+                </div>
                 <hr>
                 <p><small>Berlaku hingga: <strong>${formatDate(pkg.expiresAt)}</strong></small></p>
             `;
