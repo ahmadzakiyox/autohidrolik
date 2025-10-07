@@ -31,7 +31,7 @@ const UserSchema = new Schema({
     phone: { type: String, required: true, trim: true },
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
     isVerified: { type: Boolean, default: true },
-    
+    displayOrder: { type: Number, default: 0 }, 
     // --- PERUBAHAN UTAMA DI SINI ---
     // 'membership' diubah menjadi 'memberships' dan menjadi array dari skema di atas
     memberships: [MembershipSchema],
