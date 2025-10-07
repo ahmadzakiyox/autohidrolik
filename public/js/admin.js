@@ -186,24 +186,33 @@ document.addEventListener('DOMContentLoaded', () => {
         const container = document.getElementById('packages-list-container');
         const activePackages = user.memberships.filter(pkg => pkg.isPaid && new Date(pkg.expiresAt) > new Date());
 
-        container.innerHTML = activePackages.length === 0
-            ? '<p class="text-center text-muted">Pengguna ini tidak memiliki paket aktif.</p>'
-            : activePackages.map(pkg => {
-                const sisaCuci = pkg.packageName.toLowerCase().includes('kombinasi')
-                    ? `Bodywash: <strong>${pkg.washes.bodywash}x</strong>, Hidrolik: <strong>${pkg.washes.hidrolik}x</strong>`
-                    : `${pkg.remainingWashes}x`;
-                return `
-                    <div class="card mb-3"><div class="card-body">
-                        <div class="row align-items-center">
-                            <div class="col-md-7">
-                                <h5 class="card-title">${pkg.packageName}</h5>
-                                <p class="card-text mb-1">Sisa Jatah: ${sisaCuci}</p>
-                                <p class="card-text"><small class="text-muted">Berlaku hingga: ${new Date(pkg.expiresAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</small></p>
-                            </div>
-                            <div class="col-md-5 text-center" id="qr-container-${pkg._id}"></div>
+        // ... di dalam fungsi openPackagesModal
+container.innerHTML = activePackages.length === 0
+    ? '<p class="text-center text-muted">Pengguna ini tidak memiliki paket aktif.</p>'
+    : activePackages.map(pkg => {
+        const sisaCuci = pkg.packageName.toLowerCase().includes('kombinasi')
+            ? `Bodywash: <strong>${pkg.washes.bodywash}x</strong>, Hidrolik: <strong>${pkg.washes.hidrolik}x</strong>`
+            : `${pkg.remainingWashes}x`;
+        return `
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-7">
+                            <h5 class="card-title">${pkg.packageName}</h5>
+                            <p class="card-text mb-1">Sisa Jatah: ${sisaCuci}</p>
+                            <p class="card-text"><small class="text-muted">Berlaku hingga: ${new Date(pkg.expiresAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</small></p>
+                            
+                            <button class="btn btn-sm btn-outline-danger delete-package-btn mt-2" data-user-id="${user._id}" data-package-id="${pkg._id}">
+                                <i class="bi bi-trash3"></i> Hapus Paket Ini
+                            </button>
+
                         </div>
-                    </div></div>`;
-            }).join('');
+                        <div class="col-md-5 text-center" id="qr-container-${pkg._id}"></div>
+                    </div>
+                </div>
+            </div>`;
+    }).join('');
+// ...
         
         modals.viewPackages.show();
         
@@ -305,6 +314,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     modals.editReview.show();
                 }
             }
+// ===== TAMBAHKAN BLOK BARU DI BAWAH INI =====
+else if (button.classList.contains('delete-package-btn')) {
+    const packageId = button.dataset.packageId;
+    if (confirm('Anda yakin ingin menghapus paket ini secara permanen? Tindakan ini tidak bisa dibatalkan.')) {
+        const result = await apiRequest(`/api/users/${userId}/packages/${packageId}`, { method: 'DELETE' });
+        showAlert(result.msg);
+        modals.viewPackages.hide(); // Tutup modal setelah berhasil
+        initialize(); // Muat ulang data
+    }
+}
         } catch (error) {
             showAlert(error.message, 'danger');
         }
