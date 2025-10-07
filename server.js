@@ -1,4 +1,5 @@
 
+
 // Import dependensi
 const express = require('express');
 const mongoose = require('mongoose');
@@ -199,6 +200,11 @@ app.post('/api/register', async (req, res) => {
         // 4. Proses Pembuatan User
         const hashedPassword = await bcrypt.hash(password, 10);
         const memberId = await generateUniqueMemberId();
+        
+        // ===== TAMBAHKAN LOGIKA INI =====
+// Cari user dengan nomor urut tertinggi
+const lastUser = await User.findOne().sort({ displayOrder: -1 });
+const newDisplayOrder = lastUser && lastUser.displayOrder ? lastUser.displayOrder + 1 : 1;
 
         // --- PERUBAHAN UTAMA DI SINI ---
         // Kita buat objek data user terlebih dahulu
@@ -626,7 +632,7 @@ app.get('/api/users', auth, adminAuth, async (req, res) => {
     try {
         const users = await User.find({ role: { $ne: 'admin' } })
             .select('-password')
-            .sort({ date: 1 }); // Mengurutkan dari terlama ke terbaru
+            .sort({ displayOrder: 1, date: 1 }); // Urutkan
       
         res.json(users);
     } catch (err) {
@@ -634,6 +640,30 @@ app.get('/api/users', auth, adminAuth, async (req, res) => {
         res.status(500).send('Server error');
     }
 });
+
+// --- RUTE BARU: ADMIN MENGEDIT NOMOR URUT USER ---
+app.put('/api/users/:id/update-order', auth, adminAuth, async (req, res) => {
+    try {
+        const { newOrder } = req.body;
+        if (newOrder === undefined || isNaN(parseInt(newOrder))) {
+            return res.status(400).json({ msg: 'Nomor urut harus berupa angka.' });
+        }
+
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            return res.status(404).json({ msg: 'User tidak ditemukan.' });
+        }
+
+        user.displayOrder = parseInt(newOrder);
+        await user.save();
+        res.json({ msg: `Nomor urut untuk ${user.username} berhasil diubah.` });
+
+    } catch (error) {
+        console.error("Error saat mengupdate nomor urut user:", error);
+        res.status(500).send('Server error');
+    }
+});
+
 
 // POST: Menambah pengguna baru (oleh Admin)
 app.post('/api/users', auth, adminAuth, async (req, res) => {
