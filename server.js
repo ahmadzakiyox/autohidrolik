@@ -912,19 +912,29 @@ app.post('/api/purchase-membership', auth, async (req, res) => {
         const user = await User.findById(req.user.id);
         if (!user) return res.status(404).json({ msg: 'Pengguna tidak ditemukan.' });
 
-        // Buat ID unik untuk paket baru ini
-        const packageId = `PKG-${Date.now()}`;
+      
+// ===== MODIFIKASI BLOK INI =====
+const newMembership = {
+    packageName: packageName,
+    isPaid: false,
+    expiresAt: calculateExpiryDate(),
+    packageId: packageId
+};
 
-        const newMembership = {
-            packageName: packageName,
-            totalWashes: totalWashes,
-            remainingWashes: totalWashes,
-            isPaid: false,
-            expiresAt: calculateExpiryDate(), // Menggunakan fungsi helper
-            packageId: packageId
-        };
-        
-        // ================== PERUBAHAN LOGIKA DI SINI ==================
+if (packageName.toLowerCase().includes('kombinasi')) {
+    // Logika khusus untuk Paket Kombinasi
+    newMembership.washes = {
+        bodywash: 5,
+        hidrolik: 5
+    };
+    newMembership.remainingWashes = 10; // Total dari kedua jenis cuci
+    newMembership.totalWashes = 10;
+} else {
+    // Logika untuk paket biasa
+    newMembership.totalWashes = totalWashes;
+    newMembership.remainingWashes = totalWashes;
+}
+// ===== AKHIR MODIFIKASI =====
         // Tambahkan paket baru ke dalam array 'memberships'
         user.memberships.push(newMembership);
         // ================= AKHIR PERUBAHAN =================
@@ -948,15 +958,28 @@ app.post('/api/purchase-membership-admin/:userId', auth, adminAuth, async (req, 
             return res.status(404).json({ msg: 'Pengguna tidak ditemukan.' });
         }
 
-        // PERBAIKAN UTAMA: Buat objek paket baru dan PUSH ke array
-        const newMembership = {
-            packageName: packageName,
-            totalWashes: totalWashes,
-            remainingWashes: totalWashes,
-            isPaid: false, // Paket yang ditambahkan admin defaultnya belum lunas
-            expiresAt: calculateExpiryDate(), // Menggunakan fungsi helper yang sudah ada
-            packageId: `PKG-${Date.now()}` // Buat ID unik untuk paket ini
-        };
+      // ===== MODIFIKASI BLOK INI =====
+const newMembership = {
+    packageName: packageName,
+    isPaid: false, 
+    expiresAt: calculateExpiryDate(),
+    packageId: `PKG-${Date.now()}`
+};
+
+if (packageName.toLowerCase().includes('kombinasi')) {
+    // Logika khusus untuk Paket Kombinasi
+    newMembership.washes = {
+        bodywash: 5,
+        hidrolik: 5
+    };
+    newMembership.remainingWashes = 10;
+    newMembership.totalWashes = 10;
+} else {
+    // Logika untuk paket biasa
+    newMembership.totalWashes = totalWashes;
+    newMembership.remainingWashes = totalWashes;
+}
+
 
         // Jika user belum punya array memberships, buat dulu
         if (!user.memberships) {
