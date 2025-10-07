@@ -254,12 +254,12 @@ container.innerHTML = activePackages.length === 0
         }
     };
     
-    // --- PENGELOLA EVENT ---
+// --- PENGELOLA EVENT ---
     document.body.addEventListener('click', async (e) => {
         const button = e.target.closest('button, a.dropdown-item');
         if (!button) return;
 
-        const userId = button.dataset.userId;
+        const userId = button.dataset.userId || button.closest('.user-order-cell')?.dataset.userId || button.closest('.input-group')?.querySelector('.edit-order-input')?.dataset.userId;
         const reviewId = button.closest('tr')?.dataset.reviewId;
 
         try {
@@ -316,17 +316,50 @@ container.innerHTML = activePackages.length === 0
                     form.querySelector('#edit-comment').value = review.comment;
                     modals.editReview.show();
                 }
+            } else if (button.classList.contains('delete-package-btn')) {
+                const packageId = button.dataset.packageId;
+                if (confirm('Anda yakin ingin menghapus paket ini secara permanen? Tindakan ini tidak bisa dibatalkan.')) {
+                    const result = await apiRequest(`/api/users/${userId}/packages/${packageId}`, { method: 'DELETE' });
+                    showAlert(result.msg);
+                    modals.viewPackages.hide(); // Tutup modal setelah berhasil
+                    initialize(); // Muat ulang data
+                }
+            } else if (button.classList.contains('edit-order-btn')) {
+                const cell = button.closest('.user-order-cell');
+                const textSpan = cell.querySelector('.user-order-text');
+                const currentOrder = textSpan.textContent.trim();
+            
+                cell.innerHTML = `
+                    <div class="input-group input-group-sm">
+                        <input type="number" class="form-control edit-order-input" value="${currentOrder}">
+                        <button class="btn btn-success save-order-btn" title="Simpan"><i class="bi bi-check-lg"></i></button>
+                        <button class="btn btn-danger cancel-edit-order-btn" title="Batal"><i class="bi bi-x-lg"></i></button>
+                    </div>
+                `;
+                cell.querySelector('.edit-order-input').focus();
             }
-// ===== TAMBAHKAN BLOK BARU DI BAWAH INI =====
-else if (button.classList.contains('delete-package-btn')) {
-    const packageId = button.dataset.packageId;
-    if (confirm('Anda yakin ingin menghapus paket ini secara permanen? Tindakan ini tidak bisa dibatalkan.')) {
-        const result = await apiRequest(`/api/users/${userId}/packages/${packageId}`, { method: 'DELETE' });
-        showAlert(result.msg);
-        modals.viewPackages.hide(); // Tutup modal setelah berhasil
-        initialize(); // Muat ulang data
-    }
-}
+            else if (button.classList.contains('save-order-btn')) {
+                const cell = button.closest('.user-order-cell');
+                const input = cell.querySelector('.edit-order-input');
+                const newOrder = parseInt(input.value, 10);
+            
+                if (!isNaN(newOrder)) {
+                    try {
+                        const result = await apiRequest(`/api/users/${userId}/update-order`, {
+                            method: 'PUT',
+                            body: { newOrder }
+                        });
+                        showAlert(result.msg);
+                    } catch (error) {
+                        showAlert(error.message, 'danger');
+                    } finally {
+                        initialize();
+                    }
+                }
+            }
+            else if (button.classList.contains('cancel-edit-order-btn')) {
+                initialize();
+            }
         } catch (error) {
             showAlert(error.message, 'danger');
         }
