@@ -232,6 +232,36 @@ app.post('/api/register', async (req, res) => {
     }
 });
 
+// --- RUTE BARU: ADMIN MENGHAPUS PAKET MEMBER ---
+app.delete('/api/users/:userId/packages/:packageId', auth, adminAuth, async (req, res) => {
+    try {
+        const { userId, packageId } = req.params;
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({ msg: 'User tidak ditemukan.' });
+        }
+
+        // Cari paket yang akan dihapus dari array memberships
+        const packageIndex = user.memberships.findIndex(p => p._id.toString() === packageId);
+
+        if (packageIndex === -1) {
+            return res.status(404).json({ msg: 'Paket tidak ditemukan.' });
+        }
+
+        // Hapus paket dari array
+        user.memberships.splice(packageIndex, 1);
+
+        await user.save(); // Simpan perubahan pada dokumen user
+
+        res.json({ msg: `Paket berhasil dihapus dari user ${user.username}.` });
+
+    } catch (error) {
+        console.error("Error di /api/users/:userId/packages/:packageId:", error.message);
+        res.status(500).send('Server error');
+    }
+});
+
 // Rute Verifikasi OTP dengan Logging
 app.post('/api/verify-otp', async (req, res) => {
     const { email, otp } = req.body;
