@@ -35,6 +35,8 @@ document.addEventListener('DOMContentLoaded', () => {
         editReview: new bootstrap.Modal(document.getElementById('editReviewModal')),
         resetPassword: new bootstrap.Modal(document.getElementById('resetPasswordModal')),
         editTransaction: new bootstrap.Modal(document.getElementById('editTransactionModal')),
+        editOrder: new bootstrap.Modal(document.getElementById('editOrderModal')) // <-- TAMBAHKAN INI
+
     };
 
     let cachedData = { users: [], reviews: [] };
@@ -106,10 +108,12 @@ document.addEventListener('DOMContentLoaded', () => {
             ? `<tr><td colspan="6" class="text-center text-muted">Tidak ada member aktif.</td></tr>`
             :  Object.values(usersMap).map((user) => ` // cari baris ini
     <tr>
-        <td class="user-order-cell" data-user-id="${user._id}">
-            <span class="user-order-text fw-bold">${user.displayOrder || '-'}</span>
-            <i class="bi bi-pencil-fill ms-2 text-primary edit-order-btn" style="cursor: pointer;" title="Edit No. Urut"></i>
-        </td>
+        <td>
+                <span class="fw-bold">${user.displayOrder || '-'}</span>
+                <button class="btn btn-sm btn-link p-0 edit-order-btn" data-user-id="${user._id}" title="Edit No. Urut">
+                    <i class="bi bi-pencil"></i>
+                </button>
+            </td>
                     <td>${user.username}</td>
                     <td>${user.email || '-'}</td>
                     <td>${user.phone || '-'}</td>
@@ -135,7 +139,12 @@ document.addEventListener('DOMContentLoaded', () => {
             ? `<tr><td colspan="6" class="text-center text-muted">Tidak ada member kedaluwarsa.</td></tr>`
             : items.map(({ user, pkg }, index) => `
                 <tr>
-                    <td>${index + 1}</td>
+                  <td>
+                <span class="fw-bold">${user.displayOrder || '-'}</span>
+                <button class="btn btn-sm btn-link p-0 edit-order-btn" data-user-id="${user._id}" title="Edit No. Urut">
+                    <i class="bi bi-pencil"></i>
+                </button>
+            </td>
                     <td>${user.username}</td>
                     <td>${user.email || '-'}</td>
                     <td>${pkg.packageName}</td>
@@ -149,7 +158,12 @@ document.addEventListener('DOMContentLoaded', () => {
             ? `<tr><td colspan="5" class="text-center text-muted">Tidak ada non-member.</td></tr>`
             : users.map((user, index) => `
                 <tr>
-                    <td>${index + 1}</td>
+                    <td>
+                <span class="fw-bold">${user.displayOrder || '-'}</span>
+                <button class="btn btn-sm btn-link p-0 edit-order-btn" data-user-id="${user._id}" title="Edit No. Urut">
+                    <i class="bi bi-pencil"></i>
+                </button>
+            </td>
                     <td>${user.username}</td>
                     <td>${user.email || '-'}</td>
                     <td>${user.phone || '-'}</td>
@@ -255,14 +269,15 @@ container.innerHTML = activePackages.length === 0
     };
     
 // --- PENGELOLA EVENT ---
-    document.body.addEventListener('click', async (e) => {
+       document.body.addEventListener('click', async (e) => {
         const button = e.target.closest('button, a.dropdown-item');
         if (!button) return;
 
-        const userId = button.dataset.userId || button.closest('.user-order-cell')?.dataset.userId || button.closest('.input-group')?.querySelector('.edit-order-input')?.dataset.userId;
+        const userId = button.dataset.userId;
         const reviewId = button.closest('tr')?.dataset.reviewId;
 
         try {
+            // (Logika untuk tombol lain seperti 'confirm-payment', 'view-packages', dll. tetap sama)
             if (button.classList.contains('confirm-payment-btn')) {
                 if (confirm('Anda yakin ingin mengonfirmasi pembayaran ini?')) {
                     const result = await apiRequest(`/api/confirm-payment/${button.dataset.userId}/${button.dataset.packageId}`, { method: 'POST' });
@@ -321,45 +336,44 @@ container.innerHTML = activePackages.length === 0
                 if (confirm('Anda yakin ingin menghapus paket ini secara permanen? Tindakan ini tidak bisa dibatalkan.')) {
                     const result = await apiRequest(`/api/users/${userId}/packages/${packageId}`, { method: 'DELETE' });
                     showAlert(result.msg);
-                    modals.viewPackages.hide(); // Tutup modal setelah berhasil
-                    initialize(); // Muat ulang data
+                    modals.viewPackages.hide();
+                    initialize();
                 }
-            } else if (button.classList.contains('edit-order-btn')) {
-                const cell = button.closest('.user-order-cell');
-                const textSpan = cell.querySelector('.user-order-text');
-                const currentOrder = textSpan.textContent.trim();
-            
-                cell.innerHTML = `
-                    <div class="input-group input-group-sm">
-                        <input type="number" class="form-control edit-order-input" value="${currentOrder}">
-                        <button class="btn btn-success save-order-btn" title="Simpan"><i class="bi bi-check-lg"></i></button>
-                        <button class="btn btn-danger cancel-edit-order-btn" title="Batal"><i class="bi bi-x-lg"></i></button>
-                    </div>
-                `;
-                cell.querySelector('.edit-order-input').focus();
-            }
-            else if (button.classList.contains('save-order-btn')) {
-                const cell = button.closest('.user-order-cell');
-                const input = cell.querySelector('.edit-order-input');
-                const newOrder = parseInt(input.value, 10);
-            
-                if (!isNaN(newOrder)) {
-                    try {
-                        const result = await apiRequest(`/api/users/${userId}/update-order`, {
-                            method: 'PUT',
-                            body: { newOrder }
-                        });
-                        showAlert(result.msg);
-                    } catch (error) {
-                        showAlert(error.message, 'danger');
-                    } finally {
-                        initialize();
-                    }
+            } 
+            // ===== LOGIKA BARU UNTUK TOMBOL EDIT NOMOR URUT =====
+            else if (button.classList.contains('edit-order-btn')) {
+                const user = cachedData.users.find(u => u._id === userId);
+                if (user) {
+                    document.getElementById('edit-order-userid').value = user._id;
+                    document.getElementById('edit-order-username').textContent = user.username;
+                    document.getElementById('edit-order-input').value = user.displayOrder || 0;
+                    modals.editOrder.show();
                 }
             }
-            else if (button.classList.contains('cancel-edit-order-btn')) {
-                initialize();
-            }
+        } catch (error) {
+            showAlert(error.message, 'danger');
+        }
+    });
+
+     // ===== EVENT LISTENER BARU UNTUK FORM EDIT NOMOR URUT =====
+    document.getElementById('edit-order-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const userId = document.getElementById('edit-order-userid').value;
+        const newOrder = parseInt(document.getElementById('edit-order-input').value, 10);
+        
+        if (isNaN(newOrder)) {
+            showAlert('Nomor urut harus berupa angka.', 'danger');
+            return;
+        }
+
+        try {
+            const result = await apiRequest(`/api/users/${userId}/update-order`, {
+                method: 'PUT',
+                body: { newOrder }
+            });
+            showAlert(result.msg);
+            modals.editOrder.hide();
+            initialize(); // Muat ulang data untuk melihat urutan baru
         } catch (error) {
             showAlert(error.message, 'danger');
         }
