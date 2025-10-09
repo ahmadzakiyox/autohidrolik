@@ -1,0 +1,134 @@
+/* public/css/admin-dashboard.css */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+:root {
+    --bs-primary: #6f42c1;
+    --bs-secondary: #6c757d;
+    --bs-light: #f8f9fa;
+    --bs-dark: #212529;
+    --sidebar-bg: #2c3e50;
+    --sidebar-link-hover: #34495e;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #eaedf1;
+}
+
+/* Sidebar Styling */
+.sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 100;
+    width: 260px;
+    background-color: var(--sidebar-bg);
+    color: #ecf0f1;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+}
+
+.sidebar .navbar-brand {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #fff;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar .nav-link {
+    font-weight: 500;
+    color: #bdc3c7;
+    padding: 0.8rem 1.5rem;
+    transition: all 0.2s ease-in-out;
+}
+
+.sidebar .nav-link:hover,
+.sidebar .nav-link.active {
+    background-color: var(--sidebar-link-hover);
+    color: #fff;
+    border-left: 4px solid var(--bs-primary);
+    padding-left: calc(1.5rem - 4px);
+}
+
+.sidebar .nav-link .bi {
+    margin-right: 0.75rem;
+    font-size: 1.1rem;
+    width: 24px;
+}
+
+.sidebar .logout-btn {
+    color: #e74c3c;
+    border: 1px solid #e74c3c;
+    border-radius: 0.375rem;
+    width: 100%;
+}
+.sidebar .logout-btn:hover {
+    background-color: #e74c3c;
+    color: #fff;
+}
+
+/* Main Content Styling */
+.main-content {
+    margin-left: 260px;
+    padding: 2rem;
+}
+
+/* Stat Cards */
+.stat-card {
+    border: none;
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+}
+.stat-card .card-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.stat-card .card-icon .bi {
+    font-size: 1.75rem;
+}
+
+/* Table Card */
+.table-card {
+    border-radius: 0.75rem;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.table-card .nav-tabs .nav-link {
+    font-weight: 600;
+}
+
+.table-card .table {
+    margin-bottom: 0;
+}
+.table-card .table th {
+    font-weight: 600;
+    color: #495057;
+}
+
+/* Modal Styling */
+.modal-content {
+    border-radius: 0.75rem;
+    border: none;
+}
+.modal-header {
+    background-color: var(--bs-light);
+    border-bottom: 1px solid #dee2e6;
+}
+.modal-title {
+    font-weight: 600;
+}
+.form-control:focus {
+    border-color: var(--bs-primary);
+    box-shadow: 0 0 0 0.25rem rgba(111, 66, 193, 0.25);
+}
