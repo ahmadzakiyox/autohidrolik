@@ -2,7 +2,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
 :root {
-    --bs-primary-rgb: 111, 66, 193; /* Bootstrap Primary Purple */
+    --bs-primary-rgb: 111, 66, 193;
     --bs-primary: #6f42c1;
     --sidebar-bg: #2c3e50;
     --sidebar-link-hover: #34495e;
@@ -14,7 +14,6 @@ body {
     background-color: var(--body-bg);
 }
 
-/* Sidebar Styling */
 .sidebar {
     position: fixed;
     top: 0;
@@ -65,13 +64,11 @@ body {
     color: #fff;
 }
 
-/* Main Content Styling */
 .main-content {
     margin-left: 260px;
     padding: 2rem;
 }
 
-/* Stat Cards */
 .stat-card {
     border: none;
     border-radius: 0.75rem;
@@ -94,7 +91,6 @@ body {
     font-size: 1.75rem;
 }
 
-/* Table Card */
 .table-card {
     border-radius: 0.75rem;
     border: none;
@@ -103,21 +99,17 @@ body {
 .table-card .nav-tabs .nav-link {
     font-weight: 600;
 }
-.table-card .table {
-    margin-bottom: 0;
-}
 .table-card .table th {
     font-weight: 600;
     color: #495057;
 }
 
-/* Modal Styling */
 .modal-content {
     border-radius: 0.75rem;
     border: none;
 }
 .modal-header {
-    background-color: var(--bs-light);
+    background-color: #f8f9fa;
     border-bottom: 1px solid #dee2e6;
 }
 .modal-title {
