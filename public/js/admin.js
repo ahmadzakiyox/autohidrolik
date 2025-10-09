@@ -1,9 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Penjaga untuk memastikan skrip hanya berjalan di halaman admin
     const adminPageMarker = document.getElementById('member-table-body');
     if (!adminPageMarker) return;
 
-    // --- KONFIGURASI & OTENTIKASI ---
     const token = localStorage.getItem('token');
     if (!token || localStorage.getItem('userRole') !== 'admin') {
         alert('Akses ditolak. Silakan login sebagai admin.');
@@ -11,7 +9,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    // --- ELEMEN UI & MODAL---
     const ui = {
         alertPlaceholder: document.getElementById('alert-placeholder'),
         memberCount: document.getElementById('member-count'),
@@ -40,7 +37,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let cachedData = { users: [], reviews: [] };
 
-    // --- FUNGSI HELPER & API ---
     const showAlert = (message, type = 'success') => {
         const wrapper = document.createElement('div');
         wrapper.innerHTML = `<div class="alert alert-${type} alert-dismissible fade show" role="alert">${message}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>`;
@@ -62,7 +58,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return await response.json();
     };
     
-    // --- FUNGSI RENDER UTAMA (LOGIKA DIPERBAIKI) ---
     const render = () => {
         const data = { pending: [], active: [], expired: [], nonMembers: [] };
 
@@ -87,22 +82,16 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
                 } else {
-                    if (!data.pending.find(item => item.pkg._id === pkg._id)) {
-                       data.pending.push({ user, pkg });
-                    }
+                    data.pending.push({ user, pkg });
                 }
             });
 
             if (hasActivePackage) {
-                if (!data.active.find(item => item.user._id === user._id)) {
-                    data.active.push({ user });
-                }
+                data.active.push({ user });
             } else if (latestExpiredPackage) {
-                if (!data.expired.find(item => item.user._id === user._id)) {
-                    data.expired.push({ user, pkg: latestExpiredPackage });
-                }
+                data.expired.push({ user, pkg: latestExpiredPackage });
             } else if (allPackagesPending) {
-                // Jangan masukkan ke non-member jika hanya punya paket pending
+                // Jangan tampilkan di mana-mana jika hanya punya paket pending
             } else {
                 data.nonMembers.push(user);
             }
@@ -115,8 +104,6 @@ document.addEventListener('DOMContentLoaded', () => {
         renderReviews(cachedData.reviews);
     };
 
-
-    // --- FUNGSI-FUNGSI RENDER TABEL ---
     const renderPending = (items) => {
         ui.tables.pending.innerHTML = items.length === 0
             ? `<tr><td colspan="5" class="text-center text-muted p-4">Tidak ada pembayaran menunggu.</td></tr>`
@@ -144,9 +131,22 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td class="align-middle">${user.username}</td>
                     <td class="align-middle">${user.email || '-'}</td>
                     <td class="align-middle">${user.phone || '-'}</td>
-                    <td class="text-center align-middle"><span class="badge bg-primary rounded-pill">${user.memberships.filter(p=>p.isPaid && new Date(p.expiresAt) > new Date()).length}</span></td>
+                    <td class="text-center align-middle"><span class="badge bg-primary rounded-pill">${user.memberships.filter(p => p.isPaid && new Date(p.expiresAt) > new Date()).length}</span></td>
                     <td class="text-center align-middle">
-                        <button class="btn btn-sm btn-primary view-packages-btn" data-user-id="${user._id}">Lihat Paket</button>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-primary view-packages-btn" data-user-id="${user._id}">Lihat Paket</button>
+                            <button type="button" class="btn btn-sm btn-primary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                                <span class="visually-hidden">Toggle Dropdown</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item set-package-btn" href="#" data-user-id="${user._id}"><i class="bi bi-gem me-2"></i>Tambah Paket Baru</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item edit-user-btn" href="#" data-user-id="${user._id}"><i class="bi bi-pencil-square me-2"></i>Edit User</a></li>
+                                <li><a class="dropdown-item reset-password-btn" href="#" data-user-id="${user._id}"><i class="bi bi-key-fill me-2"></i>Reset Password</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-danger delete-user-btn" href="#" data-user-id="${user._id}"><i class="bi bi-trash3 me-2"></i>Hapus User</a></li>
+                            </ul>
+                        </div>
                     </td>
                 </tr>`).join('');
     };
