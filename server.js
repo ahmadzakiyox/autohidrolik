@@ -1,5 +1,6 @@
 
 
+
 // Import dependensi
 const express = require('express');
 const mongoose = require('mongoose');
@@ -922,9 +923,9 @@ app.post('/api/purchase-membership', auth, async (req, res) => {
         };
 
         if (packageName.toLowerCase().includes('kombinasi')) {
-            newMembership.washes = { bodywash: 5, hidrolik: 5 };
-            newMembership.remainingWashes = 10;
-            newMembership.totalWashes = 10;
+            newMembership.washes = { bodywash: 5, hidrolik: 7 };
+            newMembership.remainingWashes = 12;
+            newMembership.totalWashes = 12;
         } else {
             newMembership.totalWashes = totalWashes;
             newMembership.remainingWashes = totalWashes;
