@@ -912,38 +912,31 @@ app.post('/api/purchase-membership', auth, async (req, res) => {
         const user = await User.findById(req.user.id);
         if (!user) return res.status(404).json({ msg: 'Pengguna tidak ditemukan.' });
 
-      
-// ===== MODIFIKASI BLOK INI =====
-const newMembership = {
-    packageName: packageName,
-    isPaid: false,
-    expiresAt: calculateExpiryDate(),
-    packageId: packageId
-};
+        const packageId = `PKG-${Date.now()}`; // Pindahkan deklarasi ke sini
 
-if (packageName.toLowerCase().includes('kombinasi')) {
-    // Logika khusus untuk Paket Kombinasi
-    newMembership.washes = {
-        bodywash: 5,
-        hidrolik: 5
-    };
-    newMembership.remainingWashes = 10; // Total dari kedua jenis cuci
-    newMembership.totalWashes = 10;
-} else {
-    // Logika untuk paket biasa
-    newMembership.totalWashes = totalWashes;
-    newMembership.remainingWashes = totalWashes;
-}
-// ===== AKHIR MODIFIKASI =====
-        // Tambahkan paket baru ke dalam array 'memberships'
+        const newMembership = {
+            packageName: packageName,
+            isPaid: false,
+            expiresAt: calculateExpiryDate(),
+            packageId: packageId // Sekarang variabel sudah ada
+        };
+
+        if (packageName.toLowerCase().includes('kombinasi')) {
+            newMembership.washes = { bodywash: 5, hidrolik: 5 };
+            newMembership.remainingWashes = 10;
+            newMembership.totalWashes = 10;
+        } else {
+            newMembership.totalWashes = totalWashes;
+            newMembership.remainingWashes = totalWashes;
+        }
+
         user.memberships.push(newMembership);
-        // ================= AKHIR PERUBAHAN =================
-
         await user.save();
         res.json({ msg: 'Paket berhasil ditambahkan! Menunggu konfirmasi pembayaran.', user });
     } catch (error) {
         console.error("Error di purchase-membership:", error);
-        res.status(500).send('Server error');
+        // Selalu kirim balasan dalam format JSON
+        res.status(500).json({ msg: 'Terjadi kesalahan pada server. Silakan coba lagi.' });
     }
 });
 
