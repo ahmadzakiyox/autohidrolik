@@ -62,7 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return await response.json();
     };
     
-    // --- FUNGSI RENDER UTAMA ---
+    // --- FUNGSI RENDER UTAMA (LOGIKA DIPERBAIKI) ---
     const render = () => {
         const data = { pending: [], active: [], expired: [], nonMembers: [] };
 
@@ -98,7 +98,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     data.active.push({ user });
                 }
             } else if (latestExpiredPackage) {
-                data.expired.push({ user, pkg: latestExpiredPackage });
+                if (!data.expired.find(item => item.user._id === user._id)) {
+                    data.expired.push({ user, pkg: latestExpiredPackage });
+                }
             } else if (allPackagesPending) {
                 // Jangan masukkan ke non-member jika hanya punya paket pending
             } else {
@@ -149,11 +151,50 @@ document.addEventListener('DOMContentLoaded', () => {
                 </tr>`).join('');
     };
 
-    const renderExpired = (items) => { /* ... (Fungsi ini sudah benar) */ };
-    const renderNonMembers = (users) => { /* ... (Fungsi ini sudah benar) */ };
-    const renderReviews = (reviews) => { /* ... (Fungsi ini sudah benar) */ };
+    const renderExpired = (items) => {
+        ui.tables.expired.innerHTML = items.length === 0
+            ? `<tr><td colspan="5" class="text-center text-muted p-4">Tidak ada member kedaluwarsa.</td></tr>`
+            : items.map(({ user, pkg }) => `
+                <tr>
+                    <td class="px-3 text-center align-middle">${user.displayOrder || '-'}</td>
+                    <td class="align-middle">${user.username}</td>
+                    <td class="align-middle">${pkg.packageName}</td>
+                    <td class="align-middle"><span class="text-danger">${new Date(pkg.expiresAt).toLocaleDateString('id-ID')}</span></td>
+                    <td class="text-center align-middle">
+                        <button class="btn btn-sm btn-info text-white set-package-btn" data-user-id="${user._id}">Perbarui</button>
+                    </td>
+                </tr>`).join('');
+    };
+
+    const renderNonMembers = (users) => {
+        ui.tables.nonMember.innerHTML = users.length === 0
+            ? `<tr><td colspan="5" class="text-center text-muted p-4">Tidak ada non-member.</td></tr>`
+            : users.map(user => `
+                <tr>
+                    <td class="px-3 text-center align-middle">${user.displayOrder || '-'}</td>
+                    <td class="align-middle">${user.username}</td>
+                    <td class="align-middle">${user.email || '-'}</td>
+                    <td class="align-middle">${user.phone || '-'}</td>
+                    <td class="text-center align-middle">
+                        <button class="btn btn-sm btn-success set-package-btn" data-user-id="${user._id}">Jadikan Member</button>
+                    </td>
+                </tr>`).join('');
+    };
+
+    const renderReviews = (reviews) => {
+        ui.tables.reviews.innerHTML = reviews.length === 0
+            ? `<tr><td colspan="4" class="text-center text-muted p-4">Tidak ada ulasan.</td></tr>`
+            : reviews.map(review => `
+                <tr>
+                    <td class="px-3 align-middle">${review.username || '<em>Pengguna Dihapus</em>'}</td>
+                    <td class="align-middle" style="color: #ffc107;">${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}</td>
+                    <td class="align-middle">${review.comment}</td>
+                    <td class="text-center align-middle">
+                        <button class="btn btn-sm btn-outline-danger delete-review-btn" data-review-id="${review._id}"><i class="bi bi-trash3"></i></button>
+                    </td>
+                </tr>`).join('');
+    };
     
-    // --- FUNGSI MODAL "LIHAT PAKET" (DESAIN BARU & PERBAIKAN QR CODE) ---
     const openPackagesModal = (userId) => {
         const user = cachedData.users.find(u => u._id === userId);
         if (!user) return;
@@ -168,7 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const isKombinasi = pkg.packageName.toLowerCase().includes('kombinasi');
                 const sisaCuci = isKombinasi
                     ? `Bodywash: <strong class="text-dark">${pkg.washes.bodywash || 0}x</strong>, Hidrolik: <strong class="text-dark">${pkg.washes.hidrolik || 0}x</strong>`
-                    : `<strong class="text-dark">${pkg.remainingWashes}x</strong> Sisa Cuci`;
+                    : `<strong class="text-dark">${pkg.remainingWashes || 0}x</strong> Sisa Cuci`;
 
                 return `
                 <div class="card mb-3 shadow-sm">
@@ -196,7 +237,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         modals.viewPackages.show();
         
-        // Timeout untuk memastikan elemen modal sudah terlihat sebelum membuat QR Code
         setTimeout(() => {
             activePackages.forEach(pkg => {
                 const qrContainer = document.getElementById(`qr-container-${pkg._id}`);
@@ -204,16 +244,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 const totalWashesLeft = isKombinasi ? ((pkg.washes.bodywash || 0) + (pkg.washes.hidrolik || 0)) : (pkg.remainingWashes || 0);
                 
                 if (qrContainer && totalWashesLeft > 0) {
-                    qrContainer.innerHTML = ''; // Pastikan bersih sebelum membuat QR baru
+                    qrContainer.innerHTML = '';
                     new QRCode(qrContainer, { text: `${user.memberId};${pkg.packageId}`, width: 120, height: 120 });
                 } else if (qrContainer) {
-                    qrContainer.innerHTML = '<div style="width: 120px; height: 120px;" class="d-flex align-items-center justify-content-center text-center small fw-bold text-danger bg-light">Jatah Cuci Habis</div>';
+                    qrContainer.innerHTML = '<div style="width: 120px; height: 120px;" class="d-flex align-items-center justify-content-center text-center small fw-bold text-danger bg-light rounded">Jatah Habis</div>';
                 }
             });
-        }, 200); // Penundaan 200ms
+        }, 200);
     };
 
-    // --- INISIALISASI ---
     const initialize = async () => {
         try {
             const [users, stats, reviews] = await Promise.all([
@@ -222,7 +261,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 apiRequest('/api/reviews/all')
             ]);
 
-            users.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+            users.sort((a, b) => (a.displayOrder || Infinity) - (b.displayOrder || Infinity));
 
             cachedData = { users, reviews };
             ui.memberCount.textContent = stats.activeMembers;
@@ -234,7 +273,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
     
-    // --- PENGELOLA EVENT ---
     document.body.addEventListener('click', async (e) => {
         const button = e.target.closest('button, a.dropdown-item');
         if (!button) return;
@@ -323,7 +361,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     document.querySelectorAll('form').forEach(form => {
-        if (form.id === 'edit-order-form') return; // Ditangani terpisah
+        if (form.id === 'edit-order-form') return;
         form.addEventListener('submit', function(e) {
             e.preventDefault();
             const modalEl = this.closest('.modal');
@@ -362,8 +400,31 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.href = '/login.html';
     });
     
-    ui.downloadButton.addEventListener('click', async () => { /* ... (Tidak ada perubahan) */ });
-    document.getElementById('package-name-select')?.addEventListener('change', function() { /* ... (Tidak ada perubahan) */ });
+    document.getElementById('download-data-btn').addEventListener('click', async () => {
+        const btn = document.getElementById('download-data-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Mengunduh...';
+        try {
+            const response = await fetch('/api/download-data', { headers: { 'x-auth-token': token } });
+            if (!response.ok) throw new Error('Gagal mengunduh data.');
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `data_autohidrolik_${new Date().toISOString().slice(0,10)}.xlsx`;
+            document.body.appendChild(a); a.click(); a.remove(); window.URL.revokeObjectURL(url);
+        } catch (error) {
+            showAlert(error.message, 'danger');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-download me-2"></i> Download Data';
+        }
+    });
+    
+    document.getElementById('package-name-select')?.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        document.getElementById('total-washes-input').value = selectedOption.dataset.washes || 0;
+    });
 
     initialize();
 });
