@@ -2,17 +2,16 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
 :root {
+    --bs-primary-rgb: 111, 66, 193; /* Bootstrap Primary Purple */
     --bs-primary: #6f42c1;
-    --bs-secondary: #6c757d;
-    --bs-light: #f8f9fa;
-    --bs-dark: #212529;
     --sidebar-bg: #2c3e50;
     --sidebar-link-hover: #34495e;
+    --body-bg: #f4f7fc;
 }
 
 body {
     font-family: 'Poppins', sans-serif;
-    background-color: #eaedf1;
+    background-color: var(--body-bg);
 }
 
 /* Sidebar Styling */
@@ -25,7 +24,7 @@ body {
     width: 260px;
     background-color: var(--sidebar-bg);
     color: #ecf0f1;
-    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
 }
 
 .sidebar .navbar-brand {
@@ -41,27 +40,25 @@ body {
     color: #bdc3c7;
     padding: 0.8rem 1.5rem;
     transition: all 0.2s ease-in-out;
+    border-left: 4px solid transparent;
 }
 
 .sidebar .nav-link:hover,
 .sidebar .nav-link.active {
     background-color: var(--sidebar-link-hover);
     color: #fff;
-    border-left: 4px solid var(--bs-primary);
-    padding-left: calc(1.5rem - 4px);
+    border-left-color: var(--bs-primary);
 }
 
 .sidebar .nav-link .bi {
-    margin-right: 0.75rem;
+    margin-right: 0.85rem;
     font-size: 1.1rem;
     width: 24px;
 }
 
 .sidebar .logout-btn {
     color: #e74c3c;
-    border: 1px solid #e74c3c;
-    border-radius: 0.375rem;
-    width: 100%;
+    border-color: #e74c3c;
 }
 .sidebar .logout-btn:hover {
     background-color: #e74c3c;
@@ -103,11 +100,9 @@ body {
     border: none;
     box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
-
 .table-card .nav-tabs .nav-link {
     font-weight: 600;
 }
-
 .table-card .table {
     margin-bottom: 0;
 }
@@ -130,5 +125,5 @@ body {
 }
 .form-control:focus {
     border-color: var(--bs-primary);
-    box-shadow: 0 0 0 0.25rem rgba(111, 66, 193, 0.25);
+    box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
 }
