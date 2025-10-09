@@ -6,150 +6,115 @@
     <title>Admin Dashboard - AUTOHIDROLIK</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-        }
-        /* Style untuk Tab Aktif */
-        [data-tab-content] {
-            display: none;
-        }
-        .active[data-tab-content] {
-            display: block;
-        }
+        body { font-family: 'Poppins', sans-serif; }
+        /* Style untuk menyembunyikan/menampilkan konten tab */
+        [data-tab-content] { display: none; }
+        .active[data-tab-content] { display: block; }
+        /* Style kustom kecil untuk Dropdown Aksi di tabel agar tidak terpotong */
+        .action-button-group { position: relative; }
+        .action-dropdown { position: absolute; right: 0; z-index: 10; }
     </style>
 </head>
-<body class="bg-gray-100">
-
-    <nav class="bg-white shadow-md sticky top-0 z-50">
-        <div class="container mx-auto px-4">
-            <div class="flex justify-between items-center py-3">
-                <a class="text-xl font-bold text-gray-800" href="/">AUTOHIDROLIK ADMIN</a>
-                <div class="flex items-center space-x-3">
-                    <a href="/Server-Status" class="flex items-center text-sm text-gray-600 hover:text-blue-600 bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded-md transition">
-                        <i class="bi bi-hdd-stack mr-2"></i> Status
-                    </a>
-                    <a href="/Scanner-QRCODE" class="flex items-center text-sm text-white bg-cyan-500 hover:bg-cyan-600 px-3 py-2 rounded-md transition">
-                        <i class="bi bi-qr-code-scan mr-2"></i> Scanner
-                    </a>
-                    <button id="logout-button" class="flex items-center text-sm text-red-600 hover:text-white bg-red-100 hover:bg-red-500 px-3 py-2 rounded-md transition">
-                        <i class="bi bi-box-arrow-right mr-2"></i> Logout
-                    </button>
-                </div>
+<body class="bg-gray-50">
+    <div class="flex h-screen bg-gray-100">
+        <aside class="w-64 flex-shrink-0 bg-gray-800 text-gray-300 flex flex-col">
+            <div class="h-16 flex items-center justify-center border-b border-gray-700">
+                <h1 class="text-xl font-bold text-white">AUTOHIDROLIK</h1>
             </div>
-        </div>
-    </nav>
-
-    <main class="container mx-auto p-4 md:p-6">
-        <div id="alert-placeholder" class="mb-4"></div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            <div class="bg-white p-6 rounded-xl shadow-lg flex items-center">
-                <div class="bg-violet-100 p-4 rounded-full mr-4">
-                    <i class="bi bi-people-fill text-3xl text-violet-600"></i>
-                </div>
-                <div>
-                    <h6 class="text-sm font-medium text-gray-500">Total Member Aktif</h6>
-                    <h2 class="text-3xl font-bold text-gray-800" id="member-count">0</h2>
-                </div>
-            </div>
-            <div class="bg-white p-6 rounded-xl shadow-lg flex items-center">
-                <div class="bg-cyan-100 p-4 rounded-full mr-4">
-                    <i class="bi bi-eye-fill text-3xl text-cyan-600"></i>
-                </div>
-                <div>
-                    <h6 class="text-sm font-medium text-gray-500">Total Pengunjung Website</h6>
-                    <h2 class="text-3xl font-bold text-gray-800" id="visitor-count">0</h2>
-                </div>
-            </div>
-            <div class="bg-white p-6 rounded-xl shadow-lg flex items-center">
-                <div class="bg-green-100 p-4 rounded-full mr-4">
-                    <i class="bi bi-cash-coin text-3xl text-green-600"></i>
-                </div>
-                <div class="flex-grow">
-                    <h6 class="text-sm font-medium text-gray-500">Total Transaksi</h6>
-                    <h2 class="text-3xl font-bold text-gray-800" id="transaction-total">Rp 0</h2>
-                </div>
-                <button class="text-gray-400 hover:text-gray-600" data-bs-toggle="modal" data-bs-target="#editTransactionModal" title="Koreksi Pemasukan">
-                    <i class="bi bi-pencil-square"></i>
+            <nav class="flex-grow mt-4">
+                <a href="/Admin-Dashboard" class="flex items-center px-6 py-3 text-white bg-gray-700/50">
+                    <i class="bi bi-grid-1x2-fill w-6"></i>
+                    <span class="ml-4">Dashboard</span>
+                </a>
+                <a href="/Server-Status" class="flex items-center px-6 py-3 hover:bg-gray-700/50 transition">
+                    <i class="bi bi-hdd-stack w-6"></i>
+                    <span class="ml-4">Status Server</span>
+                </a>
+                <a href="/Scanner-QRCODE" class="flex items-center px-6 py-3 hover:bg-gray-700/50 transition">
+                    <i class="bi bi-qr-code-scan w-6"></i>
+                    <span class="ml-4">Scanner</span>
+                </a>
+            </nav>
+            <div class="p-4 border-t border-gray-700">
+                 <button id="logout-button" class="w-full flex items-center justify-center px-4 py-2 text-red-300 hover:bg-red-500 hover:text-white rounded-md transition">
+                    <i class="bi bi-box-arrow-right w-6"></i>
+                    <span class="ml-4">Logout</span>
                 </button>
             </div>
-        </div>
-        
-        <div class="bg-white rounded-xl shadow-lg">
-            <div class="p-6 border-b border-gray-200 flex justify-between items-center">
-                <h1 class="text-2xl font-bold text-gray-800">Manajemen Pengguna</h1>
-                <div class="flex space-x-3">
-                    <button class="btn btn-success" id="download-data-btn" style="background-color: #198754; color: white; padding: 8px 16px; border-radius: 6px; display: flex; align-items: center;">
-                        <i class="bi bi-download mr-2"></i> Download Data
-                    </button>
-                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal" style="background-color: #6f42c1; color: white; padding: 8px 16px; border-radius: 6px; display: flex; align-items: center;">
-                        <i class="bi bi-plus-circle mr-2"></i> Tambah User
-                    </button>
-                </div>
-            </div>
-            
-            <div class="px-6 border-b border-gray-200">
-                <nav class="flex space-x-4" id="tabs">
-                    <button data-tab-target="#pending-tab" class="tab active text-violet-600 border-b-2 border-violet-600 py-3 px-1 text-sm font-medium">Menunggu Konfirmasi</button>
-                    <button data-tab-target="#active-tab" class="tab text-gray-500 hover:text-violet-600 py-3 px-1 text-sm font-medium">Member Aktif</button>
-                    <button data-tab-target="#expired-tab" class="tab text-gray-500 hover:text-violet-600 py-3 px-1 text-sm font-medium">Member Kedaluwarsa</button>
-                    <button data-tab-target="#non-member-tab" class="tab text-gray-500 hover:text-violet-600 py-3 px-1 text-sm font-medium">Non-Member</button>
-                    <button data-tab-target="#reviews-tab" class="tab text-gray-500 hover:text-violet-600 py-3 px-1 text-sm font-medium">Ulasan</button>
-                </nav>
-            </div>
+        </aside>
 
-            <div class="p-4">
-                <div id="pending-tab" data-tab-content class="active">
-                    <div class="overflow-x-auto"><table class="w-full text-sm text-left text-gray-600"><thead class="text-xs text-gray-700 uppercase bg-gray-50"><tr><th class="px-6 py-3">Username</th><th class="px-6 py-3">No. WhatsApp</th><th class="px-6 py-3">Paket</th><th class="px-6 py-3">Tgl Beli</th><th class="px-6 py-3">Aksi</th></tr></thead><tbody id="pending-payment-table-body"></tbody></table></div>
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 flex-shrink-0">
+                <h2 class="text-xl font-semibold text-gray-800">Admin Dashboard</h2>
+            </header>
+            <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
+                <div id="alert-placeholder"></div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                    <div class="bg-white p-6 rounded-lg shadow-sm flex items-center"><i class="bi bi-people-fill text-3xl text-indigo-500 bg-indigo-100 p-3 rounded-full mr-4"></i><div><p class="text-sm text-gray-500">Total Member Aktif</p><p class="text-2xl font-bold" id="member-count">0</p></div></div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm flex items-center"><i class="bi bi-eye-fill text-3xl text-sky-500 bg-sky-100 p-3 rounded-full mr-4"></i><div><p class="text-sm text-gray-500">Total Pengunjung</p><p class="text-2xl font-bold" id="visitor-count">0</p></div></div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm flex items-center"><i class="bi bi-cash-coin text-3xl text-emerald-500 bg-emerald-100 p-3 rounded-full mr-4"></i><div class="flex-grow"><p class="text-sm text-gray-500">Total Transaksi</p><p class="text-2xl font-bold" id="transaction-total">Rp 0</p></div><button class="text-gray-400 hover:text-gray-600" data-bs-toggle="modal" data-bs-target="#editTransactionModal" title="Koreksi Pemasukan"><i class="bi bi-pencil-square"></i></button></div>
                 </div>
-                <div id="active-tab" data-tab-content>
-                    <div class="overflow-x-auto"><table class="w-full text-sm text-left text-gray-600"><thead class="text-xs text-gray-700 uppercase bg-gray-50"><tr><th class="px-6 py-3">No.</th><th class="px-6 py-3">Username</th><th class="px-6 py-3">Email</th><th class="px-6 py-3">No. WhatsApp</th><th class="px-6 py-3">Jumlah Paket</th><th class="px-6 py-3">Aksi</th></tr></thead><tbody id="member-table-body"></tbody></table></div>
+
+                <div class="bg-white rounded-lg shadow-sm">
+                    <div class="p-4 border-b flex justify-between items-center">
+                        <h3 class="text-lg font-semibold">Manajemen Pengguna</h3>
+                        <div class="flex space-x-2">
+                           <button id="download-data-btn" class="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 flex items-center"><i class="bi bi-download mr-2"></i>Download</button>
+                           <button data-bs-toggle="modal" data-bs-target="#addUserModal" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 flex items-center"><i class="bi bi-plus-circle mr-2"></i>Tambah User</button>
+                        </div>
+                    </div>
+                    
+                    <div class="px-4 border-b">
+                        <nav class="flex space-x-4" id="tabs">
+                             <button data-tab-target="#pending-tab" class="tab active text-indigo-600 border-b-2 border-indigo-600 py-3 px-1 text-sm font-medium">Menunggu Konfirmasi</button>
+                             <button data-tab-target="#active-tab" class="tab text-gray-500 hover:text-indigo-600 py-3 px-1 text-sm font-medium">Member Aktif</button>
+                             <button data-tab-target="#expired-tab" class="tab text-gray-500 hover:text-indigo-600 py-3 px-1 text-sm font-medium">Member Kedaluwarsa</button>
+                             <button data-tab-target="#non-member-tab" class="tab text-gray-500 hover:text-indigo-600 py-3 px-1 text-sm font-medium">Non-Member</button>
+                             <button data-tab-target="#reviews-tab" class="tab text-gray-500 hover:text-indigo-600 py-3 px-1 text-sm font-medium">Ulasan</button>
+                        </nav>
+                    </div>
+
+                    <div class="p-4">
+                        <div id="pending-tab" data-tab-content class="active"><div class="overflow-x-auto"><table class="w-full text-sm text-left text-gray-600"><thead class="text-xs text-gray-700 uppercase bg-gray-50"><tr><th class="px-6 py-3">Username</th><th class="px-6 py-3">No. WhatsApp</th><th class="px-6 py-3">Paket</th><th class="px-6 py-3">Tgl Beli</th><th class="px-6 py-3 text-center">Aksi</th></tr></thead><tbody id="pending-payment-table-body" class="divide-y"></tbody></table></div></div>
+                        <div id="active-tab" data-tab-content><div class="overflow-x-auto"><table class="w-full text-sm text-left text-gray-600"><thead class="text-xs text-gray-700 uppercase bg-gray-50"><tr><th class="px-6 py-3">No.</th><th class="px-6 py-3">Username</th><th class="px-6 py-3">Email</th><th class="px-6 py-3">No. WhatsApp</th><th class="px-6 py-3 text-center">Jml Paket</th><th class="px-6 py-3 text-center">Aksi</th></tr></thead><tbody id="member-table-body" class="divide-y"></tbody></table></div></div>
+                        <div id="expired-tab" data-tab-content><div class="overflow-x-auto"><table class="w-full text-sm text-left text-gray-600"><thead class="text-xs text-gray-700 uppercase bg-gray-50"><tr><th class="px-6 py-3">No.</th><th class="px-6 py-3">Username</th><th class="px-6 py-3">Paket</th><th class="px-6 py-3">Tgl Kedaluwarsa</th><th class="px-6 py-3 text-center">Aksi</th></tr></thead><tbody id="expired-member-table-body" class="divide-y"></tbody></table></div></div>
+                        <div id="non-member-tab" data-tab-content><div class="overflow-x-auto"><table class="w-full text-sm text-left text-gray-600"><thead class="text-xs text-gray-700 uppercase bg-gray-50"><tr><th class="px-6 py-3">No.</th><th class="px-6 py-3">Username</th><th class="px-6 py-3">Email</th><th class="px-6 py-3">No. WhatsApp</th><th class="px-6 py-3 text-center">Aksi</th></tr></thead><tbody id="non-member-table-body" class="divide-y"></tbody></table></div></div>
+                        <div id="reviews-tab" data-tab-content><div class="overflow-x-auto"><table class="w-full text-sm text-left text-gray-600"><thead class="text-xs text-gray-700 uppercase bg-gray-50"><tr><th class="px-6 py-3">Username</th><th class="px-6 py-3">Rating</th><th class="px-6 py-3 w-1/2">Ulasan</th><th class="px-6 py-3 text-center">Aksi</th></tr></thead><tbody id="review-table-body" class="divide-y"></tbody></table></div></div>
+                    </div>
                 </div>
-                <div id="expired-tab" data-tab-content>
-                    <div class="overflow-x-auto"><table class="w-full text-sm text-left text-gray-600"><thead class="text-xs text-gray-700 uppercase bg-gray-50"><tr><th class="px-6 py-3">No.</th><th class="px-6 py-3">Username</th><th class="px-6 py-3">Paket Terakhir</th><th class="px-6 py-3">Tgl Kedaluwarsa</th><th class="px-6 py-3">Aksi</th></tr></thead><tbody id="expired-member-table-body"></tbody></table></div>
-                </div>
-                <div id="non-member-tab" data-tab-content>
-                    <div class="overflow-x-auto"><table class="w-full text-sm text-left text-gray-600"><thead class="text-xs text-gray-700 uppercase bg-gray-50"><tr><th class="px-6 py-3">No.</th><th class="px-6 py-3">Username</th><th class="px-6 py-3">Email</th><th class="px-6 py-3">No. WhatsApp</th><th class="px-6 py-3">Aksi</th></tr></thead><tbody id="non-member-table-body"></tbody></table></div>
-                </div>
-                <div id="reviews-tab" data-tab-content>
-                    <div class="overflow-x-auto"><table class="w-full text-sm text-left text-gray-600"><thead class="text-xs text-gray-700 uppercase bg-gray-50"><tr><th class="px-6 py-3">Username</th><th class="px-6 py-3">Rating</th><th class="px-6 py-3 w-1/2">Ulasan</th><th class="px-6 py-3">Aksi</th></tr></thead><tbody id="review-table-body"></tbody></table></div>
-                </div>
-            </div>
+            </main>
         </div>
-    </main>
+    </div>
     
-    <div class="modal fade" id="addUserModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Tambah Pengguna Baru</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="add-user-form" data-endpoint="/api/users" data-method="POST" data-success-message="Pengguna baru berhasil ditambahkan."><div class="mb-3"><label class="form-label">Username</label><input type="text" class="form-control" name="username" required></div><div class="mb-3"><label class="form-label">Email</label><input type="email" class="form-control" name="email"></div><div class="mb-3"><label class="form-label">No. WhatsApp</label><input type="tel" class="form-control" name="phone" required></div><div class="mb-3"><label class="form-label">Password</label><input type="password" class="form-control" name="password" required></div><button type="submit" class="btn btn-primary w-100">Simpan</button></form></div></div></div></div>
-    <div class="modal fade" id="editUserModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Edit Pengguna</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="edit-user-form" data-endpoint="/api/users/:id" data-method="PUT" data-success-message="Data pengguna berhasil diperbarui."><input type="hidden" name="id" id="edit-user-id"><div class="mb-3"><label class="form-label">Username</label><input type="text" class="form-control" name="username" id="edit-username" required></div><div class="mb-3"><label class="form-label">Email</label><input type="email" class="form-control" name="email" id="edit-email"></div><div class="mb-3"><label class="form-label">No. WhatsApp</label><input type="tel" class="form-control" name="phone" id="edit-phone" required></div><button type="submit" class="btn btn-primary w-100">Update</button></form></div></div></div></div>
-    <div class="modal fade" id="setPackageModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Tambah Paket untuk <span id="package-username" class="fw-bold"></span></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="set-package-form" data-endpoint="/api/purchase-membership-admin/:id" data-method="POST"><input type="hidden" name="id" id="set-package-userid"><div class="mb-3"><label class="form-label">Pilih Paket</label><select name="packageName" class="form-select" id="package-name-select" required><option value="" selected disabled>-- Pilih Paket --</option><optgroup label="Cuci Reguler"><option value="Body Wash" data-washes="12">Body Wash (12x)</option><option value="Cuci Mobil Hidrolik" data-washes="10">Cuci Mobil Hidrolik (10x)</option><option value="Cuci Motor Besar" data-washes="10">Cuci Motor Besar (10x)</option><option value="Cuci Motor Kecil" data-washes="12">Cuci Motor Kecil (12x)</option><option value="Paket Kombinasi" data-washes="12">Paket Kombinasi (12x)</option><option value="Paket Komplit" data-washes="6">Paket Komplit (6x)</option></optgroup><optgroup label="Body Poles"><option value="Body Poles Biasa - Mobil Kecil" data-washes="1">Poles Biasa - Kecil</option><option value="Body Poles Bundling - Mobil Kecil" data-washes="5">Poles Bundling - Kecil</option><option value="Body Poles Biasa - Mobil Medium" data-washes="1">Poles Biasa - Medium</option><option value="Body Poles Bundling - Mobil Medium" data-washes="5">Poles Bundling - Medium</option><option value="Body Poles Biasa - Mobil Besar" data-washes="1">Poles Biasa - Besar</option><option value="Body Poles Bundling - Mobil Besar" data-washes="5">Poles Bundling - Besar</option></optgroup><optgroup label="Nano Coating"><option value="Nano Coating - Mobil Kecil (2 Layer)" data-washes="2">Nano Coating - Kecil</option><option value="Nano Coating - Mobil Medium (2 Layer)" data-washes="2">Nano Coating - Medium</option><option value="Nano Coating - Mobil Besar (3 Layer)" data-washes="2">Nano Coating - Besar</option></optgroup></select></div><input type="hidden" name="totalWashes" id="total-washes-input"><button type="submit" class="btn btn-primary w-100">Tambahkan Paket</button></form></div></div></div></div>
-    <div class="modal fade" id="viewPackagesModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Daftar Paket Aktif untuk <span id="packages-modal-username" class="fw-bold"></span></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body" id="packages-list-container"></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button></div></div></div></div>
-    <div class="modal fade" id="editReviewModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Edit Ulasan</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="edit-review-form" data-endpoint="/api/reviews/:id" data-method="PUT" data-success-message="Ulasan berhasil diperbarui."><input type="hidden" name="id" id="edit-review-id"><div class="mb-3"><label class="form-label">Rating</label><select name="rating" class="form-select" id="edit-rating" required><option value="5">★★★★★</option><option value="4">★★★★☆</option><option value="3">★★★☆☆</option><option value="2">★★☆☆☆</option><option value="1">★☆☆☆☆</option></select></div><div class="mb-3"><label class="form-label">Ulasan</label><textarea name="comment" class="form-control" id="edit-comment" rows="4" required></textarea></div><button type="submit" class="btn btn-primary w-100">Update Ulasan</button></form></div></div></div></div>
-    <div class="modal fade" id="resetPasswordModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Reset Sandi untuk <span id="reset-password-username"></span></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="reset-password-form" data-endpoint="/api/users/:id/reset-password" data-method="POST" data-success-message="Password berhasil direset."><input type="hidden" name="id" id="reset-password-userid"><div class="mb-3"><label class="form-label">Sandi Baru</label><input type="password" class="form-control" name="newPassword" required></div><button type="submit" class="btn btn-primary w-100">Simpan Sandi</button></form></div></div></div></div>
-    <div class="modal fade" id="editTransactionModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Koreksi Pemasukan</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><p>Gunakan tanda minus (-) untuk mengurangi.</p><form id="edit-transaction-form" data-endpoint="/api/transactions/correction" data-method="POST" data-success-message="Transaksi berhasil dikoreksi."><div class="mb-3"><label class="form-label">Jumlah (Rp)</label><input type="number" class="form-control" name="amount" required></div><div class="mb-3"><label class="form-label">Catatan</label><input type="text" class="form-control" name="note" required></div><button type="submit" class="btn btn-primary w-100">Simpan Koreksi</button></form></div></div></div></div>
-    <div class="modal fade" id="editOrderModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Edit Nomor Urut</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="edit-order-form"><input type="hidden" id="edit-order-userid"><p>Anda akan mengubah nomor urut untuk: <strong id="edit-order-username"></strong></p><div class="mb-3"><label for="edit-order-input" class="form-label">Masukkan Nomor Urut Baru</label><input type="number" class="form-control" id="edit-order-input" required></div><button type="submit" class="btn btn-primary w-100">Simpan Perubahan</button></form></div></div></div></div>
+    <div class="modal fade" id="addUserModal" tabindex="-1">...</div>
+    <div class="modal fade" id="editUserModal" tabindex="-1">...</div>
+    <div class="modal fade" id="setPackageModal" tabindex="-1">...</div>
+    <div class="modal fade" id="viewPackagesModal" tabindex="-1">...</div>
+    <div class="modal fade" id="editReviewModal" tabindex="-1">...</div>
+    <div class="modal fade" id="resetPasswordModal" tabindex="-1">...</div>
+    <div class="modal fade" id="editTransactionModal" tabindex="-1">...</div>
+    <div class="modal fade" id="editOrderModal" tabindex="-1">...</div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/davidshimjs-qrcodejs@0.0.2/qrcode.min.js"></script>
     <script src="/js/admin.js"></script>
 
     <script>
+        // Script untuk fungsionalitas Tab
         const tabs = document.querySelectorAll('.tab');
         const tabContents = document.querySelectorAll('[data-tab-content]');
-
         tabs.forEach(tab => {
             tab.addEventListener('click', () => {
                 const target = document.querySelector(tab.dataset.tabTarget);
-
-                tabContents.forEach(tabContent => {
-                    tabContent.classList.remove('active');
-                });
+                tabContents.forEach(tc => tc.classList.remove('active'));
                 tabs.forEach(t => {
-                    t.classList.remove('active', 'text-violet-600', 'border-violet-600');
+                    t.classList.remove('active', 'text-indigo-600', 'border-indigo-600');
                     t.classList.add('text-gray-500');
                 });
-
-                tab.classList.add('active', 'text-violet-600', 'border-b-2', 'border-violet-600');
+                tab.classList.add('active', 'text-indigo-600', 'border-b-2', 'border-indigo-600');
                 target.classList.add('active');
             });
         });
