@@ -266,34 +266,26 @@ app.delete('/api/users/:userId/packages/:packageId', auth, adminAuth, async (req
     }
 });
 
-// File: server.js
-
-// --- RUTE BARU: ADMIN MEMBATALKAN PESANAN PENDING ---
+// --- RUTE BARU (DIPERBAIKI): ADMIN MEMBATALKAN PESANAN PENDING ---
 app.delete('/api/cancel-payment/:userId/:packageId', auth, adminAuth, async (req, res) => {
     try {
         const { userId, packageId } = req.params;
-        const user = await User.findById(userId);
 
-        if (!user) {
+        // Menggunakan operasi atomik $pull untuk menghapus sub-dokumen
+        const result = await User.updateOne(
+            { _id: userId },
+            { $pull: { memberships: { _id: packageId } } }
+        );
+
+        // Memeriksa apakah ada dokumen yang berhasil diubah
+        if (result.matchedCount === 0) {
             return res.status(404).json({ msg: 'User tidak ditemukan.' });
         }
-
-        // Cari paket yang akan dihapus dari array memberships
-        const packageToRemove = user.memberships.id(packageId);
-
-        if (!packageToRemove) {
-            return res.status(404).json({ msg: 'Paket pesanan tidak ditemukan.' });
+        if (result.modifiedCount === 0) {
+            return res.status(404).json({ msg: 'Pesanan paket untuk dibatalkan tidak ditemukan.' });
         }
 
-        // Simpan nama paket untuk pesan respons
-        const packageName = packageToRemove.packageName;
-        
-        // Hapus paket dari array
-        packageToRemove.remove();
-
-        await user.save(); // Simpan perubahan pada dokumen user
-
-        res.json({ msg: `Pesanan paket "${packageName}" untuk user ${user.username} telah dibatalkan.` });
+        res.json({ msg: `Pesanan paket telah berhasil dibatalkan.` });
 
     } catch (error) {
         console.error("Error di /api/cancel-payment/:userId/:packageId:", error.message);
