@@ -9,17 +9,9 @@
     <link href="/css/admin-dashboard.css" rel="stylesheet">
 </head>
 <body>
-
-    <header class="mobile-header d-lg-none">
-        <button class="btn" id="sidebar-toggle-btn">
-            <i class="bi bi-list fs-3"></i>
-        </button>
-        <a href="/" class="navbar-brand">AUTOHIDROLIK</a>
-    </header>
-
-    <div class="d-flex">
+    <div class="wrapper">
         <aside class="sidebar d-flex flex-column p-3">
-            <a href="/" class="navbar-brand text-center d-none d-lg-block"><i class="bi bi-shield-check"></i> AUTOHIDROLIK</a>
+            <a href="/" class="navbar-brand text-center"><i class="bi bi-shield-check"></i> AUTOHIDROLIK</a>
             <hr class="text-secondary opacity-25">
             <ul class="nav nav-pills flex-column mb-auto">
                 <li class="nav-item mb-1"><a href="/Admin-Dashboard" class="nav-link active"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a></li>
@@ -32,7 +24,14 @@
             </div>
         </aside>
 
-        <main class="main-content flex-grow-1">
+        <div class="main-content">
+            <header class="mobile-header">
+                <button class="btn p-0" id="sidebar-toggle-btn">
+                    <i class="bi bi-list fs-2"></i>
+                </button>
+                <a href="/" class="navbar-brand">AUTOHIDROLIK</a>
+            </header>
+            
             <div id="alert-placeholder"></div>
             <h2 class="h4 fw-bold mb-4 text-dark">Ringkasan Sistem</h2>
             <div class="row g-4 mb-5">
@@ -50,13 +49,13 @@
             <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
                 <h2 class="h4 fw-bold text-dark mb-0">Manajemen Pengguna</h2>
                 <div class="d-flex gap-2 flex-wrap">
-                    <button class="btn btn-success" id="download-data-btn"><i class="bi bi-download me-2"></i> Download Data</button>
-                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal"><i class="bi bi-plus-circle me-2"></i> Tambah User</button>
+                    <button class="btn btn-success btn-sm" id="download-data-btn"><i class="bi bi-download me-2"></i> Download Data</button>
+                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addUserModal"><i class="bi bi-plus-circle me-2"></i> Tambah User</button>
                 </div>
             </div>
 
             <div class="card table-card">
-                <div class="card-header bg-white border-0 pt-3">
+                 <div class="card-header bg-white border-0 pt-3">
                     <ul class="nav nav-tabs card-header-tabs">
                         <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#pending-tab">Menunggu Konfirmasi</a></li>
                         <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#active-tab">Member Aktif</a></li>
@@ -75,7 +74,7 @@
                     </div>
                 </div>
             </div>
-        </main>
+        </div>
     </div>
 
     <div class="modal fade" id="addUserModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Tambah Pengguna Baru</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="add-user-form" data-endpoint="/api/users" data-method="POST" data-success-message="Pengguna baru berhasil ditambahkan."><div class="mb-3"><label class="form-label">Username</label><input type="text" class="form-control" name="username" required></div><div class="mb-3"><label class="form-label">Email (Opsional)</label><input type="email" class="form-control" name="email"></div><div class="mb-3"><label class="form-label">No. WhatsApp</label><input type="tel" class="form-control" name="phone" required></div><div class="mb-3"><label class="form-label">Password</label><input type="password" class="form-control" name="password" required></div><button type="submit" class="btn btn-primary w-100">Simpan</button></form></div></div></div></div>
@@ -96,13 +95,14 @@
         document.addEventListener('DOMContentLoaded', () => {
             const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
             const sidebar = document.querySelector('.sidebar');
+            const wrapper = document.querySelector('.wrapper');
             if(sidebarToggleBtn && sidebar) {
                 sidebarToggleBtn.addEventListener('click', () => {
                     sidebar.classList.toggle('active');
+                    wrapper.classList.toggle('sidebar-active');
                 });
             }
         });
     </script>
-
 </body>
 </html>
