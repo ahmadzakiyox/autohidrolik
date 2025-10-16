@@ -1453,7 +1453,7 @@ app.get('/Register-User', (req, res) => {
 app.get('/Profile', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'profile.html'));
 });
-app.get('/Admin-Dashboard', adminAuth, (req, res) => {
+app.get('/Admin-Dashboard', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 // Rute baru untuk halaman status
