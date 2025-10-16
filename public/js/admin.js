@@ -116,7 +116,7 @@ const renderPending = (items) => {
                 <td class="text-center align-middle">
                     <div class="btn-group" role="group">
                         <button class="btn btn-sm btn-success confirm-payment-btn" data-user-id="${user._id}" data-package-id="${pkg._id}">Konfirmasi</button>
-                        <button class="btn btn-sm btn-danger cancel-payment-btn" data-user-id="${user._id}" data-package-id="${pkg._id}">Batal</button>
+                        <button class="btn btn-sm btn-danger ms-2 cancel-payment-btn" data-user-id="${user._id}" data-package-id="${pkg._id}">Batal</button>
                     </div>
                 </td>
             </tr>`).join('');
@@ -290,15 +290,15 @@ const renderPending = (items) => {
                     showAlert(result.msg);
                     initialize();
                 }
-                else if (button.classList.contains('cancel-payment-btn')) {
+               else if (button.classList.contains('cancel-payment-btn')) {
             if (confirm('Anda yakin ingin MEMBATALKAN pesanan ini? Tindakan ini akan menghapus data pembelian.')) {
                 const userId = button.dataset.userId;
                 const packageId = button.dataset.packageId;
                 const result = await apiRequest(`/api/cancel-payment/${userId}/${packageId}`, { method: 'DELETE' });
                 showAlert(result.msg, 'warning'); // Tampilkan notifikasi
                 initialize(); // Muat ulang data tabel
-                 }
-               } 
+            }
+              }
             } else if (button.classList.contains('view-packages-btn')) {
                 openPackagesModal(userId);
             } else if (button.classList.contains('edit-user-btn')) {
