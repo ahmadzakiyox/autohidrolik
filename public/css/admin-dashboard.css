@@ -7,23 +7,31 @@
     --sidebar-bg: #2c3e50;
     --sidebar-link-hover: #34495e;
     --body-bg: #f4f7fc;
+    --sidebar-width: 260px; /* Variabel untuk lebar sidebar */
 }
 
 body {
     font-family: 'Poppins', sans-serif;
     background-color: var(--body-bg);
+    overflow-x: hidden; /* Mencegah scroll horizontal */
 }
 
 .sidebar {
     position: fixed;
     top: 0;
-    bottom: 0;
     left: 0;
-    z-index: 100;
-    width: 260px;
+    bottom: 0;
+    width: var(--sidebar-width);
+    z-index: 1000;
     background-color: var(--sidebar-bg);
     color: #ecf0f1;
     box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    transform: translateX(-100%); /* Sembunyikan di mobile by default */
+    transition: transform 0.3s ease-in-out;
+}
+
+.sidebar.active {
+    transform: translateX(0); /* Tampilkan sidebar */
 }
 
 .sidebar .navbar-brand {
@@ -65,8 +73,32 @@ body {
 }
 
 .main-content {
-    margin-left: 260px;
-    padding: 2rem;
+    padding: 1rem;
+    transition: margin-left 0.3s ease-in-out;
+    margin-top: 60px; /* Beri ruang untuk header mobile */
+}
+
+/* Header untuk mobile */
+.mobile-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 999;
+    background-color: #fff;
+    padding: 0.5rem 1rem;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.mobile-header .navbar-brand {
+    font-weight: bold;
+    color: var(--sidebar-bg);
+}
+
+#sidebar-toggle-btn {
+    color: var(--sidebar-bg);
 }
 
 .stat-card {
@@ -118,4 +150,25 @@ body {
 .form-control:focus {
     border-color: var(--bs-primary);
     box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+}
+
+
+/* Media Query untuk Desktop (Layar besar) */
+@media (min-width: 992px) {
+    .sidebar {
+        transform: translateX(0); /* Selalu tampilkan sidebar */
+        position: relative; /* Kembalikan ke posisi normal dalam flow */
+        height: 100vh;
+    }
+
+    .main-content {
+        margin-left: 0; /* Hapus margin kiri */
+        margin-top: 0; /* Hapus margin atas */
+        padding: 2rem;
+    }
+
+    /* Sembunyikan header mobile di desktop */
+    .mobile-header {
+        display: none;
+    }
 }
