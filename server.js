@@ -1457,7 +1457,7 @@ app.get('/Admin-Dashboard', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 // Rute baru untuk halaman status
-app.get('/Server-Status', auth, adminAuth, (req, res) => {
+app.get('/Server-Status', adminAuth, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'status.html'));
 });
 
