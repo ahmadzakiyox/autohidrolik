@@ -277,76 +277,82 @@ const renderPending = (items) => {
     };
     
     document.body.addEventListener('click', async (e) => {
-        const button = e.target.closest('button, a.dropdown-item');
-        if (!button) return;
-        
-        const userId = button.dataset.userId || button.closest('[data-user-id]')?.dataset.userId;
-        const reviewId = button.closest('tr')?.dataset.reviewId;
+    const button = e.target.closest('button, a.dropdown-item');
+    if (!button) return;
+    
+    const userId = button.dataset.userId || button.closest('[data-user-id]')?.dataset.userId;
+    const reviewId = button.closest('tr')?.dataset.reviewId;
 
-        try {
-            if (button.classList.contains('confirm-payment-btn')) {
-                if (confirm('Anda yakin ingin mengonfirmasi pembayaran ini?')) {
-                    const result = await apiRequest(`/api/confirm-payment/${button.dataset.userId}/${button.dataset.packageId}`, { method: 'POST' });
-                    showAlert(result.msg);
-                    initialize();
-                }
-               else if (button.classList.contains('cancel-payment-btn')) {
+    try {
+        if (button.classList.contains('confirm-payment-btn')) {
+            if (confirm('Anda yakin ingin mengonfirmasi pembayaran ini?')) {
+                const result = await apiRequest(`/api/confirm-payment/${button.dataset.userId}/${button.dataset.packageId}`, { method: 'POST' });
+                showAlert(result.msg);
+                initialize();
+            }
+        } 
+        // Logika Tombol Batal dipindahkan ke sini
+        else if (button.classList.contains('cancel-payment-btn')) { 
             if (confirm('Anda yakin ingin MEMBATALKAN pesanan ini? Tindakan ini akan menghapus data pembelian.')) {
                 const userId = button.dataset.userId;
                 const packageId = button.dataset.packageId;
                 const result = await apiRequest(`/api/cancel-payment/${userId}/${packageId}`, { method: 'DELETE' });
-                showAlert(result.msg, 'warning'); // Tampilkan notifikasi
-                initialize(); // Muat ulang data tabel
+                showAlert(result.msg, 'warning');
+                initialize();
             }
-              }
-            } else if (button.classList.contains('view-packages-btn')) {
-                openPackagesModal(userId);
-            } else if (button.classList.contains('edit-user-btn')) {
-                const user = cachedData.users.find(u => u._id === userId);
-                if (user) {
-                    if(modals.viewPackages._isShown) modals.viewPackages.hide();
-                    const form = document.getElementById('edit-user-form');
-                    form.querySelector('#edit-user-id').value = user._id;
-                    form.querySelector('#edit-username').value = user.username;
-                    form.querySelector('#edit-email').value = user.email || '';
-                    form.querySelector('#edit-phone').value = user.phone;
-                    modals.editUser.show();
-                }
-            } else if (button.classList.contains('set-package-btn')) {
-                 const user = cachedData.users.find(u => u._id === userId);
-                if (user) {
-                    document.getElementById('package-username').textContent = user.username;
-                    document.getElementById('set-package-userid').value = user._id;
-                    modals.setPackage.show();
-                }
-            } else if (button.classList.contains('delete-user-btn')) {
-                if (confirm('Anda yakin ingin menghapus pengguna ini?')) {
-                    const result = await apiRequest(`/api/users/${userId}`, { method: 'DELETE' });
-                    showAlert(result.msg);
-                    initialize();
-                }
-            } else if (button.classList.contains('delete-package-btn')) {
-                const packageId = button.dataset.packageId;
-                if (confirm('Anda yakin ingin menghapus paket ini secara permanen? Tindakan ini tidak bisa dibatalkan.')) {
-                    const result = await apiRequest(`/api/users/${userId}/packages/${packageId}`, { method: 'DELETE' });
-                    showAlert(result.msg);
-                    modals.viewPackages.hide();
-                    initialize();
-                }
-            } 
-            else if (button.classList.contains('edit-order-btn')) {
-                const user = cachedData.users.find(u => u._id === userId);
-                if (user) {
-                    document.getElementById('edit-order-userid').value = user._id;
-                    document.getElementById('edit-order-username').textContent = user.username;
-                    document.getElementById('edit-order-input').value = user.displayOrder || 0;
-                    modals.editOrder.show();
-                }
+        } 
+        else if (button.classList.contains('view-packages-btn')) {
+            openPackagesModal(userId);
+        } 
+        else if (button.classList.contains('edit-user-btn')) {
+            const user = cachedData.users.find(u => u._id === userId);
+            if (user) {
+                if(modals.viewPackages._isShown) modals.viewPackages.hide();
+                const form = document.getElementById('edit-user-form');
+                form.querySelector('#edit-user-id').value = user._id;
+                form.querySelector('#edit-username').value = user.username;
+                form.querySelector('#edit-email').value = user.email || '';
+                form.querySelector('#edit-phone').value = user.phone;
+                modals.editUser.show();
             }
-        } catch (error) {
-            showAlert(error.message, 'danger');
+        } 
+        else if (button.classList.contains('set-package-btn')) {
+            const user = cachedData.users.find(u => u._id === userId);
+            if (user) {
+                document.getElementById('package-username').textContent = user.username;
+                document.getElementById('set-package-userid').value = user._id;
+                modals.setPackage.show();
+            }
+        } 
+        else if (button.classList.contains('delete-user-btn')) {
+            if (confirm('Anda yakin ingin menghapus pengguna ini?')) {
+                const result = await apiRequest(`/api/users/${userId}`, { method: 'DELETE' });
+                showAlert(result.msg);
+                initialize();
+            }
+        } 
+        else if (button.classList.contains('delete-package-btn')) {
+            const packageId = button.dataset.packageId;
+            if (confirm('Anda yakin ingin menghapus paket ini secara permanen? Tindakan ini tidak bisa dibatalkan.')) {
+                const result = await apiRequest(`/api/users/${userId}/packages/${packageId}`, { method: 'DELETE' });
+                showAlert(result.msg);
+                modals.viewPackages.hide();
+                initialize();
+            }
+        } 
+        else if (button.classList.contains('edit-order-btn')) {
+            const user = cachedData.users.find(u => u._id === userId);
+            if (user) {
+                document.getElementById('edit-order-userid').value = user._id;
+                document.getElementById('edit-order-username').textContent = user.username;
+                document.getElementById('edit-order-input').value = user.displayOrder || 0;
+                modals.editOrder.show();
+            }
         }
-    });
+    } catch (error) {
+        showAlert(error.message, 'danger');
+    }
+});
 
     const handleFormSubmit = async (form, successMessage, modal) => {
         const formData = new FormData(form);
