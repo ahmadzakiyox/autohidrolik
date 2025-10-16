@@ -104,20 +104,23 @@ document.addEventListener('DOMContentLoaded', () => {
         renderReviews(cachedData.reviews);
     };
 
-    const renderPending = (items) => {
-        ui.tables.pending.innerHTML = items.length === 0
-            ? `<tr><td colspan="5" class="text-center text-muted p-4">Tidak ada pembayaran menunggu.</td></tr>`
-            : items.map(({ user, pkg }) => `
-                <tr>
-                    <td class="px-3 align-middle">${user.username}</td>
-                    <td class="align-middle">${user.phone || '-'}</td>
-                    <td class="align-middle">${pkg.packageName}</td>
-                    <td class="align-middle">${new Date(pkg.purchaseDate).toLocaleDateString('id-ID')}</td>
-                    <td class="text-center align-middle">
+const renderPending = (items) => {
+    ui.tables.pending.innerHTML = items.length === 0
+        ? `<tr><td colspan="5" class="text-center text-muted p-4">Tidak ada pembayaran menunggu.</td></tr>`
+        : items.map(({ user, pkg }) => `
+            <tr>
+                <td class="px-3 align-middle">${user.username}</td>
+                <td class="align-middle">${user.phone || '-'}</td>
+                <td class="align-middle">${pkg.packageName}</td>
+                <td class="align-middle">${new Date(pkg.purchaseDate).toLocaleDateString('id-ID')}</td>
+                <td class="text-center align-middle">
+                    <div class="btn-group" role="group">
                         <button class="btn btn-sm btn-success confirm-payment-btn" data-user-id="${user._id}" data-package-id="${pkg._id}">Konfirmasi</button>
-                    </td>
-                </tr>`).join('');
-    };
+                        <button class="btn btn-sm btn-danger cancel-payment-btn" data-user-id="${user._id}" data-package-id="${pkg._id}">Batal</button>
+                    </div>
+                </td>
+            </tr>`).join('');
+};
 
     const renderActive = (activeItems) => {
         ui.tables.active.innerHTML = activeItems.length === 0
@@ -287,6 +290,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     showAlert(result.msg);
                     initialize();
                 }
+                else if (button.classList.contains('cancel-payment-btn')) {
+            if (confirm('Anda yakin ingin MEMBATALKAN pesanan ini? Tindakan ini akan menghapus data pembelian.')) {
+                const userId = button.dataset.userId;
+                const packageId = button.dataset.packageId;
+                const result = await apiRequest(`/api/cancel-payment/${userId}/${packageId}`, { method: 'DELETE' });
+                showAlert(result.msg, 'warning'); // Tampilkan notifikasi
+                initialize(); // Muat ulang data tabel
+                 }
+               } 
             } else if (button.classList.contains('view-packages-btn')) {
                 openPackagesModal(userId);
             } else if (button.classList.contains('edit-user-btn')) {
