@@ -1,6 +1,3 @@
-
-
-
 // Import dependensi
 const express = require('express');
 const mongoose = require('mongoose');
@@ -964,7 +961,7 @@ if (packageName.toLowerCase().includes('kombinasi')) {
     // Logika khusus untuk Paket Kombinasi
     newMembership.washes = {
         bodywash: 5,
-        hidrolik: 5
+        hidrolik: 7
     };
     newMembership.remainingWashes = 10;
     newMembership.totalWashes = 10;
