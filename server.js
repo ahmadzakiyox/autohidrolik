@@ -266,6 +266,41 @@ app.delete('/api/users/:userId/packages/:packageId', auth, adminAuth, async (req
     }
 });
 
+// File: server.js
+
+// --- RUTE BARU: ADMIN MEMBATALKAN PESANAN PENDING ---
+app.delete('/api/cancel-payment/:userId/:packageId', auth, adminAuth, async (req, res) => {
+    try {
+        const { userId, packageId } = req.params;
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({ msg: 'User tidak ditemukan.' });
+        }
+
+        // Cari paket yang akan dihapus dari array memberships
+        const packageToRemove = user.memberships.id(packageId);
+
+        if (!packageToRemove) {
+            return res.status(404).json({ msg: 'Paket pesanan tidak ditemukan.' });
+        }
+
+        // Simpan nama paket untuk pesan respons
+        const packageName = packageToRemove.packageName;
+        
+        // Hapus paket dari array
+        packageToRemove.remove();
+
+        await user.save(); // Simpan perubahan pada dokumen user
+
+        res.json({ msg: `Pesanan paket "${packageName}" untuk user ${user.username} telah dibatalkan.` });
+
+    } catch (error) {
+        console.error("Error di /api/cancel-payment/:userId/:packageId:", error.message);
+        res.status(500).send('Server error');
+    }
+});
+
 // Rute Verifikasi OTP dengan Logging
 app.post('/api/verify-otp', async (req, res) => {
     const { email, otp } = req.body;
