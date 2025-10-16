@@ -7,31 +7,33 @@
     --sidebar-bg: #2c3e50;
     --sidebar-link-hover: #34495e;
     --body-bg: #f4f7fc;
-    --sidebar-width: 260px; /* Variabel untuk lebar sidebar */
+    --sidebar-width: 260px;
 }
 
 body {
     font-family: 'Poppins', sans-serif;
     background-color: var(--body-bg);
-    overflow-x: hidden; /* Mencegah scroll horizontal */
+    overflow-x: hidden;
 }
 
+.wrapper {
+    display: flex;
+    width: 100%;
+    min-height: 100vh;
+}
+
+/* Sidebar Styles */
 .sidebar {
+    width: var(--sidebar-width);
     position: fixed;
     top: 0;
     left: 0;
-    bottom: 0;
-    width: var(--sidebar-width);
-    z-index: 1000;
+    height: 100vh;
+    z-index: 1030;
     background-color: var(--sidebar-bg);
     color: #ecf0f1;
-    box-shadow: 0 0 20px rgba(0,0,0,0.1);
-    transform: translateX(-100%); /* Sembunyikan di mobile by default */
+    transform: translateX(calc(-1 * var(--sidebar-width)));
     transition: transform 0.3s ease-in-out;
-}
-
-.sidebar.active {
-    transform: translateX(0); /* Tampilkan sidebar */
 }
 
 .sidebar .navbar-brand {
@@ -67,108 +69,133 @@ body {
     color: #e74c3c;
     border-color: #e74c3c;
 }
+
 .sidebar .logout-btn:hover {
     background-color: #e74c3c;
     color: #fff;
 }
 
+/* Main Content Styles */
 .main-content {
+    width: 100%;
     padding: 1rem;
     transition: margin-left 0.3s ease-in-out;
-    margin-top: 60px; /* Beri ruang untuk header mobile */
 }
 
-/* Header untuk mobile */
+/* Mobile Header */
 .mobile-header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 999;
-    background-color: #fff;
+    display: flex; /* Ditampilkan oleh media query */
+    justify-content: space-between;
+    align-items: center;
+    background: white;
     padding: 0.5rem 1rem;
-    display: flex;
-    align-items: center;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 4px rgba(0,0,0,.1);
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+    margin: -1rem -1rem 1rem -1rem; /* Kompensasi padding */
 }
 
-.mobile-header .navbar-brand {
-    font-weight: bold;
-    color: var(--sidebar-bg);
-}
+/* =================================== */
+/* === RESPONSIVE STYLES START HERE === */
+/* =================================== */
 
-#sidebar-toggle-btn {
-    color: var(--sidebar-bg);
-}
-
-.stat-card {
-    border: none;
-    border-radius: 0.75rem;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-.stat-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-}
-.stat-card .card-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.stat-card .card-icon .bi {
-    font-size: 1.75rem;
-}
-
-.table-card {
-    border-radius: 0.75rem;
-    border: none;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-}
-.table-card .nav-tabs .nav-link {
-    font-weight: 600;
-}
-.table-card .table th {
-    font-weight: 600;
-    color: #495057;
-}
-
-.modal-content {
-    border-radius: 0.75rem;
-    border: none;
-}
-.modal-header {
-    background-color: #f8f9fa;
-    border-bottom: 1px solid #dee2e6;
-}
-.modal-title {
-    font-weight: 600;
-}
-.form-control:focus {
-    border-color: var(--bs-primary);
-    box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
-}
-
-
-/* Media Query untuk Desktop (Layar besar) */
-@media (min-width: 992px) {
+/* Tampilan DESKTOP (Layar besar, > 992px) */
+@media (min-width: 991.98px) {
     .sidebar {
         transform: translateX(0); /* Selalu tampilkan sidebar */
-        position: relative; /* Kembalikan ke posisi normal dalam flow */
-        height: 100vh;
     }
 
     .main-content {
-        margin-left: 0; /* Hapus margin kiri */
-        margin-top: 0; /* Hapus margin atas */
-        padding: 2rem;
+        margin-left: var(--sidebar-width);
     }
 
-    /* Sembunyikan header mobile di desktop */
     .mobile-header {
+        display: none; /* Sembunyikan header mobile di desktop */
+    }
+}
+
+/* Tampilan TABLET & MOBILE (Layar kecil, < 992px) */
+@media (max-width: 991.98px) {
+    .sidebar.active {
+        transform: translateX(0); /* Tampilkan sidebar saat aktif */
+    }
+}
+
+/* Tampilan MOBILE (Layar sangat kecil, < 768px) */
+@media (max-width: 767.98px) {
+    /* Sembunyikan header tabel asli */
+    .table thead {
         display: none;
+    }
+
+    /* Ubah setiap baris menjadi block/card */
+    .table, .table tbody, .table tr, .table td {
+        display: block;
+        width: 100%;
+    }
+
+    .table tr {
+        margin-bottom: 1rem;
+        border: 1px solid #dee2e6;
+        border-radius: .5rem;
+        padding: .5rem;
+        background-color: #fff;
+    }
+
+    .table td {
+        text-align: right;
+        padding: .5rem;
+        padding-left: 50%;
+        position: relative;
+        border: none;
+    }
+
+    /* Buat label dari header tabel menggunakan pseudo-element */
+    .table td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: .5rem;
+        width: 45%;
+        padding-right: 1rem;
+        text-align: left;
+        font-weight: bold;
+        color: #555;
+    }
+
+    /* Memberi label pada setiap kolom tabel */
+    #pending-payment-table-body td:nth-of-type(1)::before { content: "Username"; }
+    #pending-payment-table-body td:nth-of-type(2)::before { content: "No. WhatsApp"; }
+    #pending-payment-table-body td:nth-of-type(3)::before { content: "Paket"; }
+    #pending-payment-table-body td:nth-of-type(4)::before { content: "Tgl Beli"; }
+    #pending-payment-table-body td:nth-of-type(5)::before { content: "Aksi"; }
+
+    #member-table-body td:nth-of-type(1)::before { content: "No."; }
+    #member-table-body td:nth-of-type(2)::before { content: "Username"; }
+    #member-table-body td:nth-of-type(3)::before { content: "Email"; }
+    #member-table-body td:nth-of-type(4)::before { content: "No. WhatsApp"; }
+    #member-table-body td:nth-of-type(5)::before { content: "Jml Paket"; }
+    #member-table-body td:nth-of-type(6)::before { content: "Aksi"; }
+
+    #expired-member-table-body td:nth-of-type(1)::before { content: "No."; }
+    #expired-member-table-body td:nth-of-type(2)::before { content: "Username"; }
+    #expired-member-table-body td:nth-of-type(3)::before { content: "Paket Terakhir"; }
+    #expired-member-table-body td:nth-of-type(4)::before { content: "Tgl Kedaluwarsa"; }
+    #expired-member-table-body td:nth-of-type(5)::before { content: "Aksi"; }
+
+    #non-member-table-body td:nth-of-type(1)::before { content: "No."; }
+    #non-member-table-body td:nth-of-type(2)::before { content: "Username"; }
+    #non-member-table-body td:nth-of-type(3)::before { content: "Email"; }
+    #non-member-table-body td:nth-of-type(4)::before { content: "No. WhatsApp"; }
+    #non-member-table-body td:nth-of-type(5)::before { content: "Aksi"; }
+
+    #review-table-body td:nth-of-type(1)::before { content: "Username"; }
+    #review-table-body td:nth-of-type(2)::before { content: "Rating"; }
+    #review-table-body td:nth-of-type(3)::before { content: "Ulasan"; }
+    #review-table-body td:nth-of-type(4)::before { content: "Aksi"; }
+    
+    .table td:last-child {
+        text-align: center;
+        padding-left: .5rem; /* Reset padding untuk kolom aksi */
     }
 }
