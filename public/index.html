@@ -1,214 +1,855 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>System Interface</title>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      Auto Hidrolik Carwash Terbaik di indonesia - Cuci Mobil & Motor
+    </title>
+    <link rel="icon" type="image/png" href="/images/log.png" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    />
+    <link rel="stylesheet" href="/css/style.css" />
     <style>
-        /* Menggunakan font 'Inconsolata' yang mirip terminal */
-        @import url('https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;700&display=swap');
+      /* --- TEMA GITHUB DARK PURPLE --- */
+      body {
+        background-color: #0d1117;
+        color: #c9d1d9;
+      }
 
-        body, html {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            background-color: #000;
-            color: #00FF41; /* Warna teks hijau neon */
-            font-family: 'Inconsolata', monospace;
-            overflow: hidden; /* Mencegah scrollbar */
-        }
+      .navbar {
+        transition: background-color 0.3s ease-in-out;
+      }
+      .navbar-scrolled {
+        background-color: #161b22 !important;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+      }
+      .hero-section {
+        /* === PERUBAHAN DI SINI === */
+        /* Gradien 3 warna baru yang disesuaikan dengan gambar undangan Anda */
+        background: linear-gradient(135deg, #012a61, #0b2cff, #0686f7);
 
-        /* Canvas untuk latar belakang efek matrix */
-        #matrix-bg {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1; /* Di belakang konten */
-        }
+        background-size: cover;
+        background-position: center;
+        padding: 100px 0;
+        position: relative; /* Menambahkan position relative untuk watermark jika diperlukan */
+      }
+      /* Saya menghapus rule duplikat untuk .hero-section dan watermark yang tidak terpakai */
 
-        /* Konten utama di tengah */
-        .container {
-            position: relative;
-            z-index: 2; /* Di depan latar belakang */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100%;
-            text-align: center;
-            flex-direction: column;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-
-        .main-box {
-            border: 2px solid #00FF41;
-            padding: 2rem 3rem;
-            background-color: rgba(0, 0, 0, 0.85);
-            border-radius: 8px;
-            box-shadow: 0 0 25px rgba(0, 255, 65, 0.5);
-            max-width: 90%;
-            width: 700px;
-        }
-
-        h1 {
-            font-size: 2.5rem;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            margin-bottom: 1.5rem;
-            text-shadow: 0 0 10px #00FF41;
-            animation: glitch 1.5s linear infinite;
-        }
-
-        /* Animasi Glitch Sederhana */
-        @keyframes glitch {
-            2%, 64% {
-                transform: translate(2px, 0) skew(0deg);
-            }
-            4%, 60% {
-                transform: translate(-2px, 0) skew(0deg);
-            }
-            62% {
-                transform: translate(0, 0) skew(5deg);
-            }
-        }
-        
-        #typed-message-container {
-            font-size: 1.25rem;
-            line-height: 1.6;
-            text-align: left;
-            min-height: 150px; /* Memberi ruang untuk teks */
-            white-space: pre-wrap; /* Menghargai baris baru (\n) */
-        }
-        
-        /* Kursor mengetik */
-        #typed-message .cursor {
-            display: inline-block;
-            background-color: #00FF41;
-            width: 10px;
-            height: 1.25rem;
-            margin-left: 5px;
-            animation: blink-caret .75s step-end infinite;
-        }
-
-        /* Animasi kursor berkedip */
-        @keyframes blink-caret {
-            from, to { background-color: transparent }
-            50% { background-color: #00FF41; }
-        }
-
+      /* Pastikan konten di dalam hero section berada di atas elemen lain */
+      .hero-section .container {
+        position: relative;
+        z-index: 2;
+      }
+      /* --- AKHIR PERUBAHAN HERO SECTION --- */
+      .card {
+        background-color: #161b22;
+        border: 1px solid #30363d;
+        color: #d9c9c9;
+        transition:
+          transform 0.3s ease,
+          box-shadow 0.3s ease;
+      }
+      .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(130, 80, 223, 0.15);
+      }
+      .card .card-title,
+      h1,
+      h2,
+      h4,
+      h5,
+      h6 {
+        color: #f0f6fc;
+      }
+      .text-primary {
+        color: #a777ff !important;
+      }
+      .btn-custom,
+      .btn-primary {
+        background-color: #8250df;
+        border-color: #8250df;
+      }
+      .btn-custom:hover,
+      .btn-primary:hover {
+        background-color: #956ae6;
+        border-color: #956ae6;
+      }
+      .bg-light {
+        background-color: #0d1117 !important;
+        border-top: 1px solid #30363d;
+        border-bottom: 1px solid #30363d;
+      }
+      footer.bg-dark {
+        background-color: #161b22 !important;
+      }
+      .navbar-toggler-icon {
+        filter: invert(1) grayscale(100%) brightness(200%);
+      }
+      .price-member {
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: #a777ff;
+      }
+      .stars {
+        color: #ffc107;
+      }
+      .feature-icon {
+        font-size: 3rem;
+        color: #8250df;
+      }
+      .map-container {
+        position: relative;
+        overflow: hidden;
+        padding-top: 56.25%; /* 16:9 Aspect Ratio */
+        border-radius: 15px;
+        border: 1px solid #30363d;
+      }
+      .map-container iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+      }
+      /* Animasi Fade-in */
+      .fade-in-section {
+        opacity: 0;
+        transform: translateY(20px);
+        transition:
+          opacity 0.6s ease-out,
+          transform 0.6s ease-out;
+      }
+      .fade-in-section.is-visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      /* Style untuk review slider */
+      #reviewCarousel .carousel-item {
+        padding: 2rem;
+      }
+      #reviewCarousel .card {
+        background-color: #0d1117;
+      }
     </style>
-</head>
-<body>
-    <!-- Canvas untuk efek matrix -->
-    <canvas id="matrix-bg"></canvas>
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+      <div class="container">
+        <a class="navbar-brand d-flex align-items-center" href="#">
+          <img
+            src="/images/logo.png"
+            alt="AUTOHIDROLIK Logo"
+            style="height: 30px"
+            class="me-2"
+          />
+          <span class="fw-bold">AUTOHIDROLIK</span>
+        </a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <a class="nav-link active" href="/">Home</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#layanan">Layanan</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#paket-member">Paket Member</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#review">Review</a>
+            </li>
 
-    <div class="container">
-        <div class="main-box">
-            <h1>[ DANDY BOS JUDOL SUKA NGUTANG]</h1>
-            <!-- Pesan akan diketik di sini -->
-            <div id="typed-message-container">
-                <span id="typed-message"></span><span class="cursor"></span>
-            </div>
+            <li class="nav-item" id="nav-profile" style="display: none">
+              <a class="nav-link" href="/Profile">Profil</a>
+            </li>
+            <li class="nav-item" id="nav-admin" style="display: none">
+              <a class="nav-link" href="/Admin-Dashboard">Admin Dashboard</a>
+            </li>
+            <li class="nav-item" id="nav-logout" style="display: none">
+              <a class="nav-link" href="#" id="logout-btn">Logout</a>
+            </li>
+
+            <li class="nav-item" id="nav-login">
+              <a class="nav-link" href="/Login">Login</a>
+            </li>
+            <li class="nav-item" id="nav-register">
+              <a class="nav-link" href="/Register-User">Register</a>
+            </li>
+          </ul>
         </div>
+      </div>
+    </nav>
+
+    <header class="hero-section">
+      <div class="container text-center">
+        <img
+          src="/images/log2.png"
+          alt="AUTOHIDROLIK Logo"
+          style="height: 250px; margin-bottom: 50px"
+        />
+        <h1 class="display-4">Bersih Cepat dan Hemat</h1>
+        <p class="lead">
+          Berikan perawatan terbaik untuk kendaraan Anda bersama kami. Cepat,
+          bersih, dan profesional.
+        </p>
+        <a href="/Register-User" class="btn btn-custom btn-lg mt-3"
+          >Gabung Sekarang! Dapatkan Diskon 20%</a
+        >
+      </div>
+    </header>
+
+    <main class="container mt-5">
+      <section id="paket-member" class="text-center mb-5 pt-5 fade-in-section">
+        <h2>Paket Member</h2>
+        <p class="lead">Pilih paket terbaik untuk perawatan kendaraan Anda!</p>
+        <div class="row mt-4">
+          <!-- Kartu Body Wash -->
+          <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm">
+              <div class="card-body d-flex flex-column">
+                <h5 class="card-title">
+                  <i class="bi bi-emoji-smile-fill text-warning me-2"></i>Body
+                  Wash
+                </h5>
+                <p class="card-text text-success fw-bold">10x Cuci + FREE 2x</p>
+                <div class="price-wrapper">
+                  <span class="original-price"><del>Rp 600.000</del></span>
+                  <p class="price-member">Rp 500.000</p>
+                </div>
+                <button
+                  class="btn btn-primary mt-3 buy-btn"
+                  data-package="Body Wash"
+                >
+                  Beli Paket
+                </button>
+              </div>
+            </div>
+          </div>
+          <!-- Kartu Cuci Mobil Hidrolik -->
+          <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm">
+              <div class="card-body d-flex flex-column">
+                <h5 class="card-title">
+                  <i class="bi bi-emoji-smile-fill text-warning me-2"></i>Cuci
+                  Mobil Hidrolik
+                </h5>
+                <p class="card-text text-success fw-bold">8x Cuci + FREE 2x</p>
+                <div class="price-wrapper">
+                  <span class="original-price"><del>Rp 700.000</del></span>
+                  <p class="price-member">Rp 560.000</p>
+                </div>
+                <button
+                  class="btn btn-primary mt-3 buy-btn"
+                  data-package="Cuci Mobil Hidrolik"
+                >
+                  Beli Paket
+                </button>
+              </div>
+            </div>
+          </div>
+          <!-- Kartu Cuci Motor Besar -->
+          <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm">
+              <div class="card-body d-flex flex-column">
+                <h5 class="card-title">
+                  <i class="bi bi-emoji-smile-fill text-warning me-2"></i>Cuci
+                  Motor Besar
+                </h5>
+                <p class="card-text text-success fw-bold">8x Cuci + FREE 2x</p>
+                <div class="price-wrapper">
+                  <span class="original-price"><del>Rp 250.000</del></span>
+                  <p class="price-member">Rp 200.000</p>
+                </div>
+                <button
+                  class="btn btn-primary mt-3 buy-btn"
+                  data-package="Cuci Motor Besar"
+                >
+                  Beli Paket
+                </button>
+              </div>
+            </div>
+          </div>
+          <!-- Kartu Cuci Motor Kecil -->
+          <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm">
+              <div class="card-body d-flex flex-column">
+                <h5 class="card-title">
+                  <i class="bi bi-emoji-smile-fill text-warning me-2"></i>Cuci
+                  Motor Kecil
+                </h5>
+                <p class="card-text text-success fw-bold">10x Cuci + FREE 2x</p>
+                <div class="price-wrapper">
+                  <span class="original-price"><del>Rp 240.000</del></span>
+                  <p class="price-member">Rp 200.000</p>
+                </div>
+                <button
+                  class="btn btn-primary mt-3 buy-btn"
+                  data-package="Cuci Motor Kecil"
+                >
+                  Beli Paket
+                </button>
+              </div>
+            </div>
+          </div>
+          <!-- Kartu Paket Kombinasi -->
+          <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm border-primary">
+              <div class="card-body d-flex flex-column">
+                <h5 class="card-title">Paket Kombinasi</h5>
+                <p class="card-text">5x Body Wash + 5x Cuci Hidrolik</p>
+                <p class="card-text text-success fw-bold">10x Cuci + FREE 2x</p>
+                <div class="price-wrapper">
+                  <span class="original-price"><del>Rp 740.000</del></span>
+                  <p class="price-member">Rp 600.000</p>
+                </div>
+                <button
+                  class="btn btn-primary mt-3 buy-btn"
+                  data-package="Paket Kombinasi"
+                >
+                  Beli Paket
+                </button>
+              </div>
+            </div>
+          </div>
+          <!-- Kartu Add-On Vacuum -->
+          <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm">
+              <div class="card-body d-flex flex-column">
+                <h5 class="card-title">Add-On Vacuum Cleaner</h5>
+                <p class="card-text">(Hanya untuk Mobil)</p>
+                <div class="price-wrapper">
+                  <p class="price-member">Rp 20.000</p>
+                </div>
+                <button
+                  class="btn btn-primary mt-3 buy-btn"
+                  data-package="Add-On Vacuum Cleaner"
+                >
+                  Beli Paket
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm">
+              <div class="card-body d-flex flex-column text-center">
+                <h5 class="card-title">
+                  <i class="bi bi-brush-fill text-primary me-2"></i>Paket Body
+                  Poles
+                </h5>
+                <p class="card-text flex-grow-1">
+                  Mengembalikan kilap cat mobil Anda dan menghilangkan goresan
+                  halus.
+                </p>
+                <button
+                  class="btn btn-primary mt-auto"
+                  data-bs-toggle="modal"
+                  data-bs-target="#bodyPolesModal"
+                >
+                  Lihat Pilihan Paket
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm">
+              <div class="card-body d-flex flex-column text-center">
+                <h5 class="card-title">
+                  <i class="bi bi-shield-fill-check text-success me-2"></i>Paket
+                  Nano Coating
+                </h5>
+                <p class="card-text flex-grow-1">
+                  Memberikan proteksi super hidrofobik dan kilap tahan lama pada
+                  cat mobil.
+                </p>
+                <button
+                  class="btn btn-primary mt-auto"
+                  data-bs-toggle="modal"
+                  data-bs-target="#nanoCoatingModal"
+                >
+                  Lihat Pilihan Paket
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="mengapa-kami" class="text-center py-5 my-5 fade-in-section">
+        <div class="container">
+          <h2>Mengapa Memilih AUTOHIDROLIK?</h2>
+          <p class="lead">Komitmen kami adalah kepuasan Anda.</p>
+          <div class="row mt-5">
+            <div class="col-md-4 mb-4">
+              <i class="bi bi-shield-check feature-icon mb-3"></i>
+              <h4>Hasil Berkualitas</h4>
+              <p>
+                Kami menggunakan produk pembersih terbaik untuk memastikan mobil
+                Anda bersih sempurna tanpa merusak cat.
+              </p>
+            </div>
+            <div class="col-md-4 mb-4">
+              <i class="bi bi-clock-history feature-icon mb-3"></i>
+              <h4>Cepat & Efisien</h4>
+              <p>
+                Proses pengerjaan kami yang sistematis memastikan hasil maksimal
+                dalam waktu sesingkat mungkin.
+              </p>
+            </div>
+            <div class="col-md-4 mb-4">
+              <i class="bi bi-gem feature-icon mb-3"></i>
+              <h4>Layanan Premium</h4>
+              <p>
+                Dilengkapi ruang tunggu nyaman dan staf profesional yang siap
+                melayani kebutuhan kendaraan Anda.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="lokasi" class="py-5 my-5 bg-light rounded fade-in-section">
+        <div class="container">
+          <h2 class="text-center mb-5">Temukan Kami</h2>
+          <div class="row align-items-center">
+            <div class="col-lg-6 mb-4 mb-lg-0">
+              <div class="map-container">
+                <iframe
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3966.980488444589!2d106.82798417146385!3d-6.133323660125216!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e6a1fcd4f262a5b%3A0xbf514acc1338248a!2sMarketing%20Office%20Bursa%20Onderdil%20WTC%20Mangga%20Dua%20Tahap%202!5e0!3m2!1sid!2sid!4v1756125189281!5m2!1sid!2sid"
+                  width="600"
+                  height="450"
+                  style="border: 0"
+                  allowfullscreen=""
+                  loading="lazy"
+                  referrerpolicy="no-referrer-when-downgrade"
+                ></iframe>
+              </div>
+            </div>
+            <div class="col-lg-6">
+              <h4>Alamat Kami</h4>
+              <p>
+                WTC Mangga Dua, Jl. Mangga Dua Raya No.8, Ancol, Kec.
+                Pademangan, Jkt Utara, Daerah Khusus Ibukota Jakarta 14430
+              </p>
+              <h4>Jam Operasional</h4>
+              <ul class="list-unstyled">
+                <li><strong>Senin - Minggu:</strong> 09:00 - 20:00</li>
+              </ul>
+              <a
+                href="https://wa.me/6282264359639"
+                target="_blank"
+                class="btn btn-success"
+                ><i class="bi bi-whatsapp"></i> Hubungi via WhatsApp</a
+              >
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="review" class="py-5 rounded fade-in-section">
+        <div class="container">
+          <h2 class="text-center">Apa Kata Pelanggan Kami?</h2>
+
+          <!-- STRUKTUR BARU: CAROUSEL SLIDER -->
+          <div
+            id="reviewCarousel"
+            class="carousel slide mt-4"
+            data-bs-ride="carousel"
+          >
+            <div class="carousel-inner" id="review-list">
+              <!-- Ulasan akan dimuat di sini oleh JavaScript -->
+            </div>
+            <button
+              class="carousel-control-prev"
+              type="button"
+              data-bs-target="#reviewCarousel"
+              data-bs-slide="prev"
+            >
+              <span
+                class="carousel-control-prev-icon"
+                aria-hidden="true"
+              ></span>
+              <span class="visually-hidden">Previous</span>
+            </button>
+            <button
+              class="carousel-control-next"
+              type="button"
+              data-bs-target="#reviewCarousel"
+              data-bs-slide="next"
+            >
+              <span
+                class="carousel-control-next-icon"
+                aria-hidden="true"
+              ></span>
+              <span class="visually-hidden">Next</span>
+            </button>
+          </div>
+
+          <div id="add-review-section" class="mt-5" style="display: none">
+            <hr />
+            <h4 class="text-center mt-4">Bagikan Pengalaman Anda</h4>
+            <form id="add-review-form" class="card p-4 mt-3">
+              <div class="mb-3">
+                <label for="rating" class="form-label">Rating</label>
+                <select
+                  id="rating"
+                  class="form-select bg-dark text-white"
+                  required
+                >
+                  <option value="5">★★★★★ (Luar Biasa)</option>
+                  <option value="4">★★★★☆ (Baik)</option>
+                  <option value="3">★★★☆☆ (Cukup)</option>
+                  <option value="2">★★☆☆☆ (Kurang)</option>
+                  <option value="1">★☆☆☆☆ (Buruk)</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label for="comment" class="form-label">Ulasan Anda</label>
+                <textarea
+                  id="comment"
+                  class="form-control bg-dark text-white"
+                  rows="4"
+                  required
+                  placeholder="Ceritakan pengalaman Anda di sini..."
+                ></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary">
+                Kirim Ulasan
+              </button>
+            </form>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- PENAMBAHAN BARU: Modal Konfirmasi Pembelian -->
+    <div class="modal fade" id="purchaseModal" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Konfirmasi Pembelian</h5>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div id="purchase-message" class="mb-3"></div>
+
+            <div id="purchase-confirmation-content">
+              <p>
+                Anda yakin ingin membeli paket
+                <strong id="package-name"></strong> senilai
+                <strong id="package-price"></strong>?
+              </p>
+              <p class="small">
+                Setelah ini, silakan lakukan pembayaran dan tunggu konfirmasi
+                dari admin.
+              </p>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Batal
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              id="confirm-purchase-btn"
+            >
+              Yakin
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
+    <div class="modal fade" id="bodyPolesModal" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Pilihan Paket Body Poles</h5>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <h6 class="text-light border-bottom border-secondary pb-2 mb-3">
+              Mobil Kecil
+            </h6>
+            <ul class="list-group list-group-flush mb-4">
+              <li
+                class="list-group-item d-flex justify-content-between align-items-center"
+              >
+                <div>
+                  <strong>Paket Poles Biasa</strong>
+                  <small class="d-block"
+                    >Termasuk: 1x Body Poles + 1x Cuci Hidrolik + Vacuum</small
+                  >
+                </div>
+                <div class="text-end">
+                  <span class="d-block fw-bold fs-5">Rp 800.000</span>
+                  <button
+                    class="btn btn-outline-primary btn-sm mt-1 buy-btn"
+                    data-package-name="Body Poles Biasa - Mobil Kecil"
+                    data-package-price="800000"
+                    data-total-washes="1"
+                  >
+                    Pilih Paket
+                  </button>
+                </div>
+              </li>
+              <li
+                class="list-group-item d-flex justify-content-between align-items-center"
+              >
+                <div>
+                  <strong>Paket Bundling</strong>
+                  <small class="d-block"
+                    >Termasuk: 1x Body Poles + 5x Cuci Hidrolik + Vacuum</small
+                  >
+                </div>
+                <div class="text-end bundling-offer">
+                  <span class="hemat-badge">Hemat Rp 200.000</span>
+                  <span class="d-block fw-bold price-member">Rp 1.050.000</span>
+                  <button
+                    class="btn btn-primary btn-sm mt-1 buy-btn"
+                    data-package-name="Body Poles Bundling - Mobil Kecil"
+                    data-package-price="1050000"
+                    data-total-washes="5"
+                  >
+                    Pilih Paket
+                  </button>
+                </div>
+              </li>
+            </ul>
+
+            <h6 class="text-light border-bottom border-secondary pb-2 mb-3">
+              Mobil Medium
+            </h6>
+            <ul class="list-group list-group-flush mb-4">
+              <li
+                class="list-group-item d-flex justify-content-between align-items-center"
+              >
+                <div>
+                  <strong>Paket Poles Biasa</strong>
+                  <small class="d-block"
+                    >Termasuk: 1x Body Poles + 1x Cuci Hidrolik + Vacuum</small
+                  >
+                </div>
+                <div class="text-end">
+                  <span class="d-block fw-bold fs-5">Rp 1.000.000</span>
+                  <button
+                    class="btn btn-outline-primary btn-sm mt-1 buy-btn"
+                    data-package-name="Body Poles Biasa - Mobil Medium"
+                    data-package-price="1000000"
+                    data-total-washes="1"
+                  >
+                    Pilih Paket
+                  </button>
+                </div>
+              </li>
+              <li
+                class="list-group-item d-flex justify-content-between align-items-center"
+              >
+                <div>
+                  <strong>Paket Bundling</strong>
+                  <small class="d-block"
+                    >Termasuk: 1x Body Poles + 5x Cuci Hidrolik + Vacuum</small
+                  >
+                </div>
+                <div class="text-end bundling-offer">
+                  <span class="hemat-badge">Hemat Rp 200.000</span>
+                  <span class="d-block fw-bold price-member">Rp 1.250.000</span>
+                  <button
+                    class="btn btn-primary btn-sm mt-1 buy-btn"
+                    data-package-name="Body Poles Bundling - Mobil Medium"
+                    data-package-price="1250000"
+                    data-total-washes="5"
+                  >
+                    Pilih Paket
+                  </button>
+                </div>
+              </li>
+            </ul>
+
+            <h6 class="text-light border-bottom border-secondary pb-2 mb-3">
+              Mobil Besar
+            </h6>
+            <ul class="list-group list-group-flush">
+              <li
+                class="list-group-item d-flex justify-content-between align-items-center"
+              >
+                <div>
+                  <strong>Paket Poles Biasa</strong>
+                  <small class="d-block"
+                    >Termasuk: 1x Body Poles + 1x Cuci Hidrolik + Vacuum</small
+                  >
+                </div>
+                <div class="text-end">
+                  <span class="d-block fw-bold fs-5">Rp 1.200.000</span>
+                  <button
+                    class="btn btn-outline-primary btn-sm mt-1 buy-btn"
+                    data-package-name="Body Poles Biasa - Mobil Besar"
+                    data-package-price="1200000"
+                    data-total-washes="1"
+                  >
+                    Pilih Paket
+                  </button>
+                </div>
+              </li>
+              <li
+                class="list-group-item d-flex justify-content-between align-items-center"
+              >
+                <div>
+                  <strong>Paket Bundling</strong>
+                  <small class="d-block"
+                    >Termasuk: 1x Body Poles + 5x Cuci Hidrolik + Vacuum</small
+                  >
+                </div>
+                <div class="text-end bundling-offer">
+                  <span class="hemat-badge">Hemat Rp 200.000</span>
+                  <span class="d-block fw-bold price-member">Rp 1.450.000</span>
+                  <button
+                    class="btn btn-primary btn-sm mt-1 buy-btn"
+                    data-package-name="Body Poles Bundling - Mobil Besar"
+                    data-package-price="1450000"
+                    data-total-washes="5"
+                  >
+                    Pilih Paket
+                  </button>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="nanoCoatingModal" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Pilihan Paket Nano Coating</h5>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <p class="d-flex">
+              Semua paket sudah termasuk: 1x Nano Coating + 1x Cuci Hidrolik +
+              Vacuum + 1x Voucher Cuci.
+            </p>
+            <ul class="list-group list-group-flush">
+              <li
+                class="list-group-item d-flex justify-content-between align-items-center"
+              >
+                <div>
+                  <strong>Mobil Kecil</strong><br /><small>2 Layer</small>
+                </div>
+                <div class="text-end bundling-offer">
+                  <span class="hemat-badge">Hemat Rp 200.000</span>
+                  <span class="d-block fw-bold price-member">Rp 2.500.000</span>
+                  <small class="text-success">Harga Paket</small>
+                </div>
+              </li>
+              <li
+                class="list-group-item d-flex justify-content-between align-items-center"
+              >
+                <div>
+                  <strong>Mobil Medium</strong><br /><small>2 Layer</small>
+                </div>
+                <div class="text-end bundling-offer">
+                  <span class="hemat-badge">Hemat Rp 200.000</span>
+                  <span class="d-block fw-bold price-member">Rp 3.000.000</span>
+                  <small class="text-success">Harga Paket</small>
+                </div>
+              </li>
+              <li
+                class="list-group-item d-flex justify-content-between align-items-center"
+              >
+                <div>
+                  <strong>Mobil Besar</strong><br /><small>3 Layer</small>
+                </div>
+                <div class="text-end bundling-offer">
+                  <span class="d-block fw-bold price-member">Rp 4.000.000</span>
+                  <small class="text-success">Harga Paket</small>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="bg-dark text-white text-center py-4 mt-5">
+      <div class="container">
+        <p class="mb-0">
+          &copy; 2025 AUTOHIDROLIK Carwash. All Rights Reserved.
+        </p>
+      </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/index.js"></script>
     <script>
-        // --- Skrip Efek Matrix ---
-        const canvas = document.getElementById('matrix-bg');
-        const ctx = canvas.getContext('2d');
-
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-
-        // Karakter yang akan "jatuh"
-        const katakana = 'アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズブヅプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン';
-        const latin = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        const nums = '0123456789';
-        const alphabet = katakana + latin + nums;
-
-        const fontSize = 16;
-        const columns = canvas.width / fontSize;
-        const rainDrops = [];
-
-        // Inisialisasi rainDrops
-        for (let x = 0; x < columns; x++) {
-            rainDrops[x] = 1;
+      // Script untuk efek scroll pada navbar
+      const nav = document.querySelector(".navbar");
+      window.addEventListener("scroll", () => {
+        if (window.scrollY > 50) {
+          nav.classList.add("navbar-scrolled");
+        } else {
+          nav.classList.remove("navbar-scrolled");
         }
+      });
 
-        const drawMatrix = () => {
-            // Latar belakang hitam transparan untuk efek pudar
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            ctx.fillStyle = '#00FF41'; // Warna teks hijau
-            ctx.font = fontSize + 'px monospace';
-
-            for (let i = 0; i < rainDrops.length; i++) {
-                const text = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
-                ctx.fillText(text, i * fontSize, rainDrops[i] * fontSize);
-
-                // Mengirim tetesan kembali ke atas secara acak
-                if (rainDrops[i] * fontSize > canvas.height && Math.random() > 0.975) {
-                    rainDrops[i] = 0;
-                }
-                rainDrops[i]++;
+      // Script untuk animasi fade-in saat scroll
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add("is-visible");
             }
-        };
+          });
+        },
+        {
+          threshold: 0.1,
+        },
+      );
 
-        // Menjalankan animasi matrix
-        setInterval(drawMatrix, 33);
-
-        // Menyesuaikan canvas jika ukuran window berubah
-        window.addEventListener('resize', () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            // Anda mungkin perlu menginisialisasi ulang kolom dan rainDrops di sini
-        });
-
-        // --- Skrip Efek Mengetik ---
-        const typedTextElement = document.getElementById('typed-message');
-        const cursorElement = document.querySelector('.cursor');
-        
-        // Teks placeholder yang aman
-        const textLines = [
-            "> BAYAR UTANG LU",
-            "> BAYAR UTANG LU DONGO",
-            "> DANDY DARMA SAPUTRA BCA : WA : +628999228880 BCA : 7580879424",
-            "\n>",
-            "> BANDAR JUDOL MISKIN ",
-            "\n> [ HUTANG TUH DI BAYAR KONTOL]"
-        ];
-        
-        let lineIndex = 0;
-        let charIndex = 0;
-        let currentLine = "";
-
-        function typeWriter() {
-            if (lineIndex < textLines.length) {
-                if (charIndex < textLines[lineIndex].length) {
-                    currentLine += textLines[lineIndex].charAt(charIndex);
-                    typedTextElement.textContent = currentLine;
-                    charIndex++;
-                    setTimeout(typeWriter, Math.random() * 100 + 50); // Kecepatan ketik acak
-                } else {
-                    // Pindah ke baris baru
-                    currentLine += "\n";
-                    typedTextElement.textContent = currentLine;
-                    lineIndex++;
-                    charIndex = 0;
-                    setTimeout(typeWriter, 500); // Jeda sebelum baris baru
-                }
-            } else {
-                // Selesai mengetik, sembunyikan kursor
-                cursorElement.style.display = 'none';
-            }
-        }
-
-        // Mulai mengetik setelah 1 detik
-        setTimeout(typeWriter, 1000);
-
+      const sections = document.querySelectorAll(".fade-in-section");
+      sections.forEach((section) => {
+        observer.observe(section);
+      });
     </script>
-</body>
+  </body>
 </html>
